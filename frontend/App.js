@@ -6,6 +6,8 @@ import Register from './app/pages/Register';
 import Login from './app/pages/Login';
 import Update from './app/pages/Update';
 import RegisterOTP from './app/pages/auth/RegisterOTP';
+import OpenAccount from './app/pages/auth/OpenAccount';
+import RegisterAccount from './app/pages/auth/RegisterAccount';
 
 const Stack = createStackNavigator();
 
@@ -18,6 +20,8 @@ export default function App() {
                 <Stack.Screen name="Login" component={Login} />
                 <Stack.Screen name="Update" component={Update} />
                 <Stack.Screen name="RegisterOTP" component={RegisterOTP} />
+                <Stack.Screen name="OpenAccount" component={OpenAccount} />
+                <Stack.Screen name="RegisterAccount" component={RegisterAccount} />
             </Stack.Navigator>
         </NavigationContainer>
     );

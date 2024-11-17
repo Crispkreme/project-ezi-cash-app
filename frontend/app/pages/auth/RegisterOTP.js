@@ -7,10 +7,12 @@ import {
     TouchableOpacity,
     StyleSheet
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const RegisterOTP = () => {
   const [otp, setOtp] = useState(Array(6).fill(""));
   const inputs = useRef([]);
+  const navigation = useNavigation();
 
   const handleChange = (text, index) => {
     const newOtp = [...otp];
@@ -28,7 +30,11 @@ const RegisterOTP = () => {
 
   const handleNext = () => {
     const enteredOtp = otp.join("");
-    alert(`OTP Entered: ${enteredOtp}`);
+    if (enteredOtp.length === 6) {
+      navigation.navigate("OpenAccount");
+    } else {
+      alert("Please enter the complete 6-digit OTP.");
+    }
   };
 
   return (
