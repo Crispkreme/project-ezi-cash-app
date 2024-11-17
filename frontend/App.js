@@ -5,6 +5,7 @@ import Main from './app/pages/Main';
 import RegisterOTP from './app/pages/auth/RegisterOTP';
 import OpenAccount from './app/pages/auth/OpenAccount';
 import RegisterAccount from './app/pages/auth/RegisterAccount';
+import "./globals.css";
 
 const Stack = createStackNavigator();
 
