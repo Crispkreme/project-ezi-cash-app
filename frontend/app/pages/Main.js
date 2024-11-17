@@ -1,101 +1,87 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  Pressable
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
-const Main = ({ navigation, route }) => {
-  const [userArray, setUserArray] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+const Main = () => {
+  const navigation = useNavigation();
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // Handle new user addition
-  useEffect(() => {
-    if (route.params?.newUser) {
-      setUserArray((prevArray) => [...prevArray, route.params.newUser]);
+  const handleNext = () => {
+    if (mobileNumber.length !== 10) {
+      alert("Please enter a valid 10-digit mobile number.");
+      return;
     }
-  }, [route.params?.newUser]);
-
-  // Handle updated user
-  useEffect(() => {
-    if (route.params?.updatedUser) {
-      const { updatedUser, index } = route.params;
-      setUserArray((prevArray) =>
-        prevArray.map((user, i) => (i === index ? updatedUser : user))
-      );
-    }
-  }, [route.params?.updatedUser]);
-
-  const handleDelete = (index) => {
-    setUserArray((prevArray) => prevArray.filter((_, i) => i !== index));
+    setIsModalVisible(true);
   };
 
-  const handleUpdate = (index) => {
-    navigation.navigate('Update', { user: userArray[index], index });
+  const handleConfirm = () => {
+    setIsModalVisible(false);
+    navigation.navigate("RegisterOTP", { mobileNumber });
   };
-
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('http://192.168.1.37:3000/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-  
-      const data = await response.json();
-      if (data.success) {
-        setIsLoggedIn(false); 
-        navigation.navigate('Login');
-      } else {
-        alert(data.message);
-      }
-    } catch (error) {
-      console.error('Logout failed:', error);
-      alert('An error occurred while logging out.');
-    }
-  };
-  
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Header</Text>
+        <Text style={styles.headerText}>Logo</Text>
+        <Text style={styles.subHeaderText}>Enter mobile number to get started</Text>
       </View>
 
       <ScrollView style={styles.scrollContainer}>
-        {userArray.length > 0 && (
-          <View>
-            <Text style={styles.label}>Users:</Text>
-            {userArray.map((user, index) => (
-              <View key={index} style={styles.userItem}>
-                <Text style={styles.user}>
-                  {index + 1}. {user.name} ({user.email})
-                </Text>
-                <TouchableOpacity onPress={() => handleUpdate(index)}>
-                  <Text style={styles.update}>Update</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDelete(index)}>
-                  <Text style={styles.delete}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-        )}
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your mobile number"
+          value={mobileNumber}
+          onChangeText={(text) => setMobileNumber(text)}
+          keyboardType="phone-pad"
+          maxLength={10}
+        />
       </ScrollView>
 
       <View style={styles.footer}>
-        {isLoggedIn ? (
-          // Show logout if user is logged in
-          <TouchableOpacity onPress={handleLogout}>
-            <Text style={styles.link}>Logout</Text>
-          </TouchableOpacity>
-        ) : (
-          // Show Register and Login if user is not logged in
-          <>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.link}>Register</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.link}>Login</Text>
-            </TouchableOpacity>
-          </>
-        )}
+        <TouchableOpacity style={styles.button} onPress={handleNext}>
+          <Text style={styles.buttonText}>Next</Text>
+        </TouchableOpacity>
+        <Text style={styles.footerText}>
+          By tapping next, we will send you a One-Time Password (OTP) to your entered mobile number.
+        </Text>
       </View>
+
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirm Mobile Number</Text>
+            <Text style={styles.modalMessage}>Is this your mobile number?</Text>
+            <Text style={styles.modalNumber}>{mobileNumber}</Text>
+
+            <View style={styles.modalActions}>
+              <Pressable style={styles.modalButton} onPress={() => setIsModalVisible(false)}>
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={handleConfirm}
+              >
+                <Text style={styles.modalButtonText}>Send</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -105,57 +91,102 @@ export default Main;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 20,
+    backgroundColor: "#f9f9f9",
   },
   header: {
-    padding: 20,
-    backgroundColor: '#f8f8f8',
-    alignItems: 'center',
+    marginBottom: 20,
+    alignItems: "center",
   },
   headerText: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  subHeaderText: {
+    fontSize: 16,
+    color: "#555",
+    marginTop: 10,
+    textAlign: "center",
   },
   scrollContainer: {
     flex: 1,
-    padding: 20,
   },
-  label: {
-    fontSize: 16,
-    marginBottom: 10,
-    fontWeight: 'bold',
-  },
-  userItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    paddingBottom: 5,
-  },
-  user: {
-    fontSize: 14,
-  },
-  update: {
-    color: 'orange',
-    fontSize: 14,
-    textDecorationLine: 'underline',
-  },
-  delete: {
-    color: 'red',
-    fontSize: 14,
-    textDecorationLine: 'underline',
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 20,
   },
   footer: {
-    padding: 20,
-    backgroundColor: '#f8f8f8',
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    alignItems: "center",
   },
-  link: {
+  button: {
+    backgroundColor: "#6200ea",
+    padding: 15,
+    borderRadius: 5,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  buttonText: {
+    color: "#fff",
     fontSize: 16,
-    color: 'blue',
-    textDecorationLine: 'underline',
+    fontWeight: "bold",
+  },
+  footerText: {
+    fontSize: 14,
+    color: "#555",
+    textAlign: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalNumber: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  modalButton: {
+    padding: 10,
+    flex: 1,
+    margin: 5,
+    borderRadius: 5,
+    backgroundColor: "#ccc",
+    alignItems: "center",
+  },
+  modalButtonPrimary: {
+    backgroundColor: "#6200ea",
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
