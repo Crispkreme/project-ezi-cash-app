@@ -16,11 +16,11 @@ import DropdownComponent from "../../components/DropdownComponent";
 const RegisterAccount = () => {
   const navigation = useNavigation();
   const [formData, setFormData] = useState({
-    FirstName: "",
-    MiddleName: "",
-    LastName: "",
+    FirstName: "Victor",
+    MiddleName: "Atay",
+    LastName: "Chiong",
     Birthdate: new Date(), // Default to the current date
-    Email: "",
+    Email: "cjvicro@gmail.com",
     Nationality: "Nationality",
     MainSource: "Main Source of Funds",
     Province: "Province",
@@ -40,6 +40,16 @@ const RegisterAccount = () => {
     { label: 'Item 7', value: '7' },
     { label: 'Item 8', value: '8' },
   ];
+
+  const nationality = [
+    { label: 'Filipino', value: 'Filipino' },
+  ]
+
+  const fundSource = [
+    { label: 'Job', value: 'Job' },
+    { label: 'Allowance', value: 'Allowance' },
+    
+  ]
 
   // State for date picker visibility
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -68,7 +78,7 @@ const RegisterAccount = () => {
 
   // Navigate to ConfirmAccount
   const handleNext = () => {
-    navigation.navigate("ConfirmAccount", { formData });
+    navigation.navigate("ConfirmAccount", { formData: {...formData, Birthdate: formData.Birthdate.toLocaleDateString()} });
   };
 
   return (
@@ -76,7 +86,7 @@ const RegisterAccount = () => {
       <View style={styles.header}>
         <Text style={styles.headerText}>Register</Text>
         <Text className='text-primary font-semibold text-xl pt-8'>Tell us something about yourself</Text>
-        <Text className='text-gray-400'>Make sure everything is correct. You can no longer edit these details once you register</Text>
+        <Text className='text-gray-400'>Make sure everything is correct. You can no longer edit these details once you register.</Text>
       </View>
 
       <ScrollView className='text-primary'>
@@ -133,7 +143,6 @@ const RegisterAccount = () => {
           </Text>
         </TouchableOpacity>
         <Text className='text-sm text-gray-400 mb-2'>Must be 12 or older to create an eZiCash Account</Text>
-
         {showDatePicker && (
           <DateTimePicker
             value={formData.Birthdate}
@@ -154,11 +163,11 @@ const RegisterAccount = () => {
         <Text className='text-sm text-gray-400 mb-2'>Don’t use business or nicknames.</Text>
 
         <View className='mb-4'>
-          <DropdownComponent data={data} placeholder={"Nationality"}/>
+          <DropdownComponent setState={setFormData} data={nationality} placeholder={"Nationality"}/>
         </View>
 
         <View className='mb-4'>
-          <DropdownComponent data={data} placeholder={"Main Source of Funds"}/>
+          <DropdownComponent setState={setFormData} data={fundSource} placeholder={"Main Source of Funds"}/>
         </View>
 
         <View>
@@ -166,15 +175,15 @@ const RegisterAccount = () => {
         </View>
         
         <View className='mb-4'>
-          <DropdownComponent data={data} placeholder={"Province"}/>
+          <DropdownComponent setState={setFormData} data={data} placeholder={"Province"}/>
         </View>
 
         <View className='mb-4'>
-          <DropdownComponent data={data} placeholder={"City/Municipality"}/>
+          <DropdownComponent setState={setFormData} data={data} placeholder={"City/Municipality"}/>
         </View>
 
         <View className='mb-4'>
-          <DropdownComponent data={data} placeholder={"Barangay"}/>
+          <DropdownComponent setState={setFormData} data={data} placeholder={"Barangay"}/>
         </View>
       </ScrollView>
 
