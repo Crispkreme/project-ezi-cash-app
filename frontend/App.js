@@ -11,6 +11,9 @@ import ConfirmAccount from './app/pages/auth/ConfirmAccount';
 import SetMPIN from './app/pages/auth/SetMPIN';
 import Dashboard from './app/pages/Dashboard';
 import DashboardHeader from './app/components/DashboardHeader';
+import EWallet from './app/pages/EWallet';
+import HighHeader from './app/components/HighHeader';
+import AddAmount from './app/pages/AddAmount';
 
 const Stack = createStackNavigator({
   screens: {
@@ -40,6 +43,18 @@ const Stack = createStackNavigator({
       screen: Dashboard,
       options: {
         header: () => <DashboardHeader />
+      }
+    },
+    EWallet: {
+      screen: EWallet,
+      options: {
+        header: () => <HighHeader title={"Link E-wallet"}/>
+      }
+    },
+    AddAmount: {
+      screen: AddAmount,
+      options: {
+        header: () => <HighHeader title={"Add Location and Amount"}/>
       }
     }
   }

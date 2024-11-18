@@ -29,7 +29,7 @@ const Dashboard = ({ route, navigation }) => {
   };
 
   const handleNext = () => {
-    alert(5);
+    navigator.navigate("EWallet", {formData});
   };
 
   return (
@@ -50,7 +50,7 @@ const Dashboard = ({ route, navigation }) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={__gstyles__.shadow} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={handleNext}>
-          <View className='flex-row justify-center items-center p-2 px-4'>
+          <View className='flex-row justify-center items-center p-2 px-4 gap-4 w-full'>
             <Image alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
             <View>
               <Text className='font-semibold text-lg text-primary'>Cash Out</Text>
@@ -60,22 +60,22 @@ const Dashboard = ({ route, navigation }) => {
       </ScrollView>
       <View style={styles.footer} className='py-2 flex-row gap-4'>
         
-        <View className='relative' onPress={handleConfirm}>
+        <View style={styles.footerBtnContainer} className='relative' onPress={handleConfirm}>
           <Image className='' alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
           <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
         </View>
 
-        <View  className='flex-start'  onPress={handleConfirm}>
+        <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
           <Image alt="cash out" source={require("../../public/icn/transactions-icn.png")}></Image>
           <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Transactions</Text>
         </View>
 
-        <View className='flex-start'  onPress={handleConfirm}>
+        <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
           <Image alt="cash out" source={require("../../public/icn/profile-icn.png")}></Image>
           <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Profile</Text>
         </View>
 
-        <View className='flex-start' onPress={handleConfirm}>
+        <View style={styles.footerBtnContainer} onPress={handleConfirm}>
           <Image alt="cash out" source={require("../../public/icn/settings-icn.png")}></Image>
           <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Settings</Text>
         </View>
@@ -103,8 +103,13 @@ const styles = StyleSheet.create({
   buttonIcon: {
       marginLeft: 10,
   },
+  footerBtnContainer: {
+    justifyContent: 'center', 
+    alignItems: 'center'
+  },
   footerBtnLabel : {
-    maxWidth: 100
+    maxWidth: 100,
+    fontSize: 10
   },
   footer: {
     justifyContent: 'space-between',

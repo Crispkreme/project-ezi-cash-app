@@ -16,11 +16,11 @@ import DropdownComponent from "../../components/DropdownComponent";
 const RegisterAccount = () => {
   const navigation = useNavigation();
   const [formData, setFormData] = useState({
-    FirstName: "Victor",
-    MiddleName: "Atay",
-    LastName: "Chiong",
+    FirstName: "John",
+    MiddleName: "Sample",
+    LastName: "Doe",
     Birthdate: new Date(), // Default to the current date
-    Email: "cjvicro@gmail.com",
+    Email: "johndoe@gmail.com",
     Nationality: "Nationality",
     MainSource: "Main Source of Funds",
     Province: "Province",
