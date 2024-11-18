@@ -38,37 +38,40 @@ const RegisterOTP = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} className=''>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Authentication</Text>
-        <Text style={styles.subHeaderText}>
+        <Text className='text-center text-primary text-2xl font-semibold mb-4 mt-12'>Authentication</Text>
+        <Text className='px-8 text-sm mt-4'>
           We’ve sent a 6-digit authentication code to your registered mobile number{" "}
           <Text style={styles.blueText}>+63910******6</Text>
         </Text>
       </View>
 
-      <ScrollView style={styles.scrollContainer}>
-        <View style={styles.otpContainer}>
+      <ScrollView className='' style={styles.scrollContainer}>
+        <View style={styles.otpContainer} className='px-4'>
           {otp.map((value, index) => (
-            <TextInput
-              key={index}
-              style={styles.otpInput}
-              value={value}
-              onChangeText={(text) => handleChange(text, index)}
-              keyboardType="number-pad"
-              maxLength={1}
-              ref={(el) => (inputs.current[index] = el)} 
-            />
+            <TouchableOpacity key={index} style={styles.shadow}>
+              <TextInput
+                
+                
+                className='border border-primary h-14 w-12 p-4 text-lg rounded-md'
+                value={value}
+                onChangeText={(text) => handleChange(text, index)}
+                keyboardType="number-pad"
+                maxLength={1}
+                ref={(el) => (inputs.current[index] = el)} 
+              />
+            </TouchableOpacity>
           ))}
         </View>
         <TouchableOpacity onPress={handleResend}>
-          <Text style={styles.resendText}>Didn’t get the code? Resend Code</Text>
+          <Text className='text-sm text-center text-primary'>Didn’t get the code? <Text className='font-bold'>Resend Code</Text> </Text>
         </TouchableOpacity>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>Next</Text>
+      <View className='px-12'>
+        <TouchableOpacity className='w-full bg-primary p-4 rounded-xl' onPress={handleNext}>
+          <Text className='text-center text-white font-bold text-lg'>Next</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -78,6 +81,14 @@ const RegisterOTP = () => {
 export default RegisterOTP;
 
 const styles = StyleSheet.create({
+  shadow: {
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
   container: {
     flex: 1,
     padding: 20,

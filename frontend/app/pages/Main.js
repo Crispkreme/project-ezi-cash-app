@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  Pressable
+  Pressable,
+  Image
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import Logo from "../../public/svg/logo.jsx";
 
 const Main = () => {
   const navigation = useNavigation();
@@ -30,28 +32,31 @@ const Main = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View className='flex flex-col gap-4 h-full w-full p-4 bg-primary-bg' >
       <View style={styles.header}>
-        <Text style={styles.headerText}>Logo</Text>
+        <Logo></Logo>
         <Text style={styles.subHeaderText}>Enter mobile number to get started</Text>
       </View>
 
-      <ScrollView style={styles.scrollContainer}>
+      <View style={styles.scrollContainer} className='px-8 '>
         <TextInput
-          style={styles.input}
+          className=' p-4 border-b border-black mb-4 text-lg'
           placeholder="Enter your mobile number"
           value={mobileNumber}
           onChangeText={(text) => setMobileNumber(text)}
           keyboardType="phone-pad"
           maxLength={10}
         />
-      </ScrollView>
+      </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>Next</Text>
+      <View style={styles.footer} className='px-12'>
+        <TouchableOpacity className='w-full py-4 mb-4 bg-primary rounded-xl' onPress={handleNext}>
+          <Text className='text-white font-semibold text-2xl text-center content-center' >Next</Text>
         </TouchableOpacity>
-        <Text style={styles.footerText}>
+      </View>
+
+      <View className='px-8'>
+        <Text className='text-sm text-center'>
           By tapping next, we will send you a One-Time Password (OTP) to your entered mobile number.
         </Text>
       </View>
@@ -62,22 +67,22 @@ const Main = () => {
         animationType="slide"
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Mobile Number</Text>
-            <Text style={styles.modalMessage}>Is this your mobile number?</Text>
-            <Text style={styles.modalNumber}>{mobileNumber}</Text>
+        <View style={styles.modalOverlay} className='px-4'>
+          <View className='w-full bg-white p-4 rounded-md items-center gap-4'>
+            <Text className='font-bold text-base'>Do you want to link this device to your account?</Text>
+            <Text  className='text-sm p-2'>We need to do 2 step authentication before linking this account to your device. We will send to you mobile number a 6-digit code.</Text>
 
-            <View style={styles.modalActions}>
-              <Pressable style={styles.modalButton} onPress={() => setIsModalVisible(false)}>
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </Pressable>
+            <View className='gap-4 px-4 mb-4'>
               <Pressable
-                style={[styles.modalButton, styles.modalButtonPrimary]}
+                className='w-full bg-primary rounded-lg '
                 onPress={handleConfirm}
               >
-                <Text style={styles.modalButtonText}>Send</Text>
+                <Text className='p-4 text-center text-white font-bold'>Send</Text>
               </Pressable>
+              <Pressable className='w-full p-4 border border-primary bg-white rounded-lg' onPress={() => setIsModalVisible(false)}>
+                <Text className='text-primary font-bold text-center'>Cancel</Text>
+              </Pressable>
+              
             </View>
           </View>
         </View>
