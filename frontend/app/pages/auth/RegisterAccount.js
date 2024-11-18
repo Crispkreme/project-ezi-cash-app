@@ -10,17 +10,16 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
-import { Dropdown } from "react-native-element-dropdown";
 import DropdownComponent from "../../components/DropdownComponent";
 
 const RegisterAccount = () => {
   const navigation = useNavigation();
   const [formData, setFormData] = useState({
-    FirstName: "Victor",
-    MiddleName: "Atay",
-    LastName: "Chiong",
-    Birthdate: new Date(), // Default to the current date
-    Email: "cjvicro@gmail.com",
+    FirstName: "Marvin",
+    MiddleName: "Masaglang",
+    LastName: "Ramos",
+    Birthdate: new Date(), 
+    Email: "marvinramos.nutnull@gmail.com",
     Nationality: "Nationality",
     MainSource: "Main Source of Funds",
     Province: "Province",
