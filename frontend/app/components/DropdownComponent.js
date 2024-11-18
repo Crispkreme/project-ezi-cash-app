@@ -6,7 +6,7 @@ import { __gstyles__ } from '../globalStylesheet';
 
   
 
-  const DropdownComponent = ({data, placeholder}) => {
+  const DropdownComponent = ({data, placeholder ,setState}) => {
     const [value, setValue] = useState(null);
     const [isFocus, setIsFocus] = useState(false);
 

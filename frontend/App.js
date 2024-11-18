@@ -7,6 +7,10 @@ import OpenAccount from './app/pages/auth/OpenAccount';
 import RegisterAccount from './app/pages/auth/RegisterAccount';
 import "./globals.css";
 import Authentication from './app/components/Authentication';
+import ConfirmAccount from './app/pages/auth/ConfirmAccount';
+import SetMPIN from './app/pages/auth/SetMPIN';
+import Dashboard from './app/pages/Dashboard';
+import DashboardHeader from './app/components/DashboardHeader';
 
 const Stack = createStackNavigator({
   screens: {
@@ -25,6 +29,18 @@ const Stack = createStackNavigator({
     },
     RegisterAccount: {
       screen: RegisterAccount
+    },
+    ConfirmAccount: {
+      screen: ConfirmAccount
+    },
+    SetMPIN: {
+      screen: SetMPIN
+    },
+    Dashboard: {
+      screen: Dashboard,
+      options: {
+        header: () => <DashboardHeader />
+      }
     }
   }
 });
