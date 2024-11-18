@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import Logo from "../../../public/svg/logo";
 
 const OpenAccount = () => {
     const navigation = useNavigation();
@@ -21,24 +22,26 @@ const OpenAccount = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={styles.container} className='text-primary'>
             <View style={styles.header}>
-                <Text style={styles.headerText}>Account Activity</Text>
+                <Text className='text-2xl text-primary text-center font-semibold' >Account Activity</Text>
             </View>
-
+            <View className='items-center mb-32'>
+              <Logo></Logo>
+            </View>
             <ScrollView style={styles.scrollContainer}>
                 <TouchableOpacity style={styles.button} onPress={handleNext}>
-                    <View style={styles.buttonContent}>
+                    <View className='flex-row items-center p-2 px-4'>
                         <View style={styles.leftSection}>
-                            <Text style={styles.buttonTextHeader}>New Account</Text>
-                            <Text style={styles.buttonTextSubHeader}>
+                            <Text className='font-semibold text-lg text-primary'>New Account</Text>
+                            <Text className='text-sm text-primary'>
                                 Open a new eZiCash Account.
                             </Text>
                         </View>
                         <MaterialIcons
                             name="navigate-next"
                             size={24}
-                            color="#007BFF"
+                            className='text-primary'
                             style={styles.buttonIcon}
                         />
                     </View>
@@ -47,10 +50,10 @@ const OpenAccount = () => {
 
             <View style={styles.footer}>
                 <TouchableOpacity onPress={handleResend}>
-                    <Text style={styles.resendText}>Terms and Conditions</Text>
+                    <Text className='text-primary mb-2'>Terms and Conditions</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={handleResend}>
-                    <Text style={styles.resendText}>Privacy Notice</Text>
+                    <Text className='text-primary pb-8'>Privacy Notice</Text>
                 </TouchableOpacity>
             </View>
         </View>

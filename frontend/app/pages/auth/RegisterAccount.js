@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
+import { Dropdown } from "react-native-element-dropdown";
+import DropdownComponent from "../../components/DropdownComponent";
 
 const RegisterAccount = () => {
   const navigation = useNavigation();
@@ -27,6 +29,17 @@ const RegisterAccount = () => {
     ZipCode: "ZipCode",
     HasNoMiddleName: false,
   });
+
+  const data = [
+    { label: 'Item 1', value: '1' },
+    { label: 'Item 2', value: '2' },
+    { label: 'Item 3', value: '3' },
+    { label: 'Item 4', value: '4' },
+    { label: 'Item 5', value: '5' },
+    { label: 'Item 6', value: '6' },
+    { label: 'Item 7', value: '7' },
+    { label: 'Item 8', value: '8' },
+  ];
 
   // State for date picker visibility
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -62,60 +75,64 @@ const RegisterAccount = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Register</Text>
+        <Text className='text-primary font-semibold text-xl pt-8'>Tell us something about yourself</Text>
+        <Text className='text-gray-400'>Make sure everything is correct. You can no longer edit these details once you register</Text>
       </View>
 
-      <ScrollView style={styles.scrollContainer}>
-        <Text style={styles.sectionHeader}>PERSONAL INFORMATION</Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="First Name"
-          value={formData.FirstName}
-          onChangeText={(value) => handleInputChange("FirstName", value)}
-        />
-        <Text style={styles.label}>Don’t use business or nicknames.</Text>
+      <ScrollView className='text-primary'>
+        <Text className='text-lg font-semibold mb-4'>PERSONAL INFORMATION</Text>
+        <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
+          <TextInput
+            className='border border-gray-300 rounded-md p-4 bg-white'
+            placeholder="First Name"
+            value={formData.FirstName}
+            onChangeText={(value) => handleInputChange("FirstName", value)}
+          />
+        </TouchableOpacity>
+        <Text className='text-sm text-gray-400 mb-2'>Don’t use business or nicknames.</Text>
 
         {!formData.HasNoMiddleName && (
           <>
+          <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
             <TextInput
-              style={styles.input}
+              className='border border-gray-300 rounded-md p-4 bg-white'
               placeholder="Middle Name"
               value={formData.MiddleName}
               onChangeText={(value) => handleInputChange("MiddleName", value)}
             />
-            <Text style={styles.label}>Don’t use business or nicknames.</Text>
+          </TouchableOpacity>
+          <Text className='text-sm text-gray-400 mb-2'>Don’t use business or nicknames.</Text>
           </>
         )}
 
-        <TouchableOpacity
-          style={[styles.checkbox, formData.HasNoMiddleName && styles.checked]}
-          onPress={toggleNoMiddleName}
-        >
-          {formData.HasNoMiddleName && <Text style={styles.checkmark}>✔</Text>}
+        <View className='flex-row gap-2 pl-4'>
+          <TouchableOpacity
+            style={[styles.checkbox, formData.HasNoMiddleName && styles.checked]}
+            onPress={toggleNoMiddleName}
+          >
+            {formData.HasNoMiddleName && <Text style={styles.checkmark}>✔</Text>}
+          </TouchableOpacity>
+          <Text className='text-sm text-gray-400 mb-2'>I do not have a middle name</Text>
+        </View>
+
+        <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
+          <TextInput
+            className='border border-gray-300 rounded-md p-4 bg-white'
+            placeholder="Last Name"
+            value={formData.LastName}
+            onChangeText={(value) => handleInputChange("LastName", value)}
+          />
         </TouchableOpacity>
-        <Text style={styles.label}>I do not have a middle name</Text>
+        <Text className='text-sm text-gray-400 mb-2'>Don’t use business or nicknames.</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Last Name"
-          value={formData.LastName}
-          onChangeText={(value) => handleInputChange("LastName", value)}
-        />
-        <Text style={styles.label}>Don’t use business or nicknames.</Text>
-
-        <TouchableOpacity
-          onPress={() => setShowDatePicker(true)}
-          style={[styles.input, { justifyContent: "center" }]}
-        >
-          <Text>
-            {formData.Birthdate
+        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.shadow} className='rounded-md mb-2'>
+          <Text className='border border-gray-300 rounded-md p-4 bg-white'>
+          {formData.Birthdate
               ? formData.Birthdate.toDateString()
               : "Select Birthdate"}
           </Text>
         </TouchableOpacity>
-        <Text style={styles.label}>
-          Must be 12 or older to create an eZiCash Account
-        </Text>
+        <Text className='text-sm text-gray-400 mb-2'>Must be 12 or older to create an eZiCash Account</Text>
 
         {showDatePicker && (
           <DateTimePicker
@@ -126,18 +143,44 @@ const RegisterAccount = () => {
           />
         )}
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={formData.Email}
-          onChangeText={(value) => handleInputChange("Email", value)}
-        />
-        <Text style={styles.label}>Please enter your email address.</Text>
+        <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
+          <TextInput
+            className='border border-gray-300 rounded-md p-4 bg-white'
+            placeholder="Email"
+            value={formData.Email}
+            onChangeText={(value) => handleInputChange("Email", value)}
+          />
+        </TouchableOpacity>
+        <Text className='text-sm text-gray-400 mb-2'>Don’t use business or nicknames.</Text>
+
+        <View className='mb-4'>
+          <DropdownComponent data={data} placeholder={"Nationality"}/>
+        </View>
+
+        <View className='mb-4'>
+          <DropdownComponent data={data} placeholder={"Main Source of Funds"}/>
+        </View>
+
+        <View>
+          <Text className='text-lg font-semibold mb-4'>CURRENT ADDRESS</Text>
+        </View>
+        
+        <View className='mb-4'>
+          <DropdownComponent data={data} placeholder={"Province"}/>
+        </View>
+
+        <View className='mb-4'>
+          <DropdownComponent data={data} placeholder={"City/Municipality"}/>
+        </View>
+
+        <View className='mb-4'>
+          <DropdownComponent data={data} placeholder={"Barangay"}/>
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>Next</Text>
+        <TouchableOpacity className='w-full p-4 bg-primary rounded-lg' onPress={handleNext}>
+          <Text className='text-white font-semibold text-lg text-center'>Next</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -147,6 +190,14 @@ const RegisterAccount = () => {
 export default RegisterAccount;
 
 const styles = StyleSheet.create({
+  shadow: {
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
   container: {
     flex: 1,
     padding: 20,
