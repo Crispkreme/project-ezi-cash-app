@@ -64,7 +64,8 @@ const Main = () => {
       <Modal
         visible={isModalVisible}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
+        statusBarTranslucent={true}
         onRequestClose={() => setIsModalVisible(false)}
       >
         <View style={styles.modalOverlay} className='px-4'>

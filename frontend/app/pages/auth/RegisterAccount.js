@@ -133,10 +133,9 @@ const RegisterAccount = () => {
           </Text>
         </TouchableOpacity>
         <Text className='text-sm text-gray-400 mb-2'>Must be 12 or older to create an eZiCash Account</Text>
-
         {showDatePicker && (
           <DateTimePicker
-            value={formData.Birthdate}
+            value={formData.Birthdate || new Date()}
             mode="date"
             display={Platform.OS === "ios" ? "inline" : "default"}
             onChange={handleDateChange}

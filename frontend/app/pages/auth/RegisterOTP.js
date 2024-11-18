@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     View,
     Text,
@@ -39,18 +39,11 @@ const RegisterOTP = () => {
 
   return (
     <View style={styles.container} className=''>
-      <View style={styles.header}>
-        <Text className='text-center text-primary text-2xl font-semibold mb-4 mt-12'>Authentication</Text>
-        <Text className='px-8 text-sm mt-4'>
-          We’ve sent a 6-digit authentication code to your registered mobile number{" "}
-          <Text style={styles.blueText}>+63910******6</Text>
-        </Text>
-      </View>
 
       <ScrollView className='' style={styles.scrollContainer}>
         <View style={styles.otpContainer} className='px-4'>
           {otp.map((value, index) => (
-            <TouchableOpacity key={index} style={styles.shadow}>
+            <TouchableOpacity className='rounded-md' key={index} style={styles.shadow}>
               <TextInput
                 
                 
