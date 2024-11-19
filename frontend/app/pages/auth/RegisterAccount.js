@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
-import { Dropdown } from "react-native-element-dropdown";
 import DropdownComponent from "../../components/DropdownComponent";
 
 const RegisterAccount = () => {
