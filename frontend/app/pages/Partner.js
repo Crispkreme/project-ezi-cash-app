@@ -44,7 +44,7 @@ const Partner = ({ route, navigation }) => {
     //   console.error(error);
     //   alert("Error saving details. Please try again.");
     // }
-    navigator.navigate("PaymentConfirm", { formData, partner, payment: {type: "E-wallet", service: "Cash In", amount: 500, bank: "Paypal"} });
+    navigator.navigate("PaymentConfirm", { formData, partner, payment: {type: "E-wallet", balance: 0, service: "Cash In", amount: 500, bank: "Paypal"} });
   };
 
   const handleNext = () => {

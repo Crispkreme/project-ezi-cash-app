@@ -18,7 +18,8 @@ const PaymentConfirm = ({ route, navigation }) => {
     linkedWallet: '09222222',
     amount: 0,
     init: false,
-    active: 0
+    active: 0,
+    accepted: false
   });
 
   useEffect(() => {
@@ -51,24 +52,18 @@ const PaymentConfirm = ({ route, navigation }) => {
     navigator.navigate("Partner", { formData,  partner: {name: "Nicole Ayessa Alcover"}});
   };
 
+  const toggleConfirmCheckbox = () => setState(prev => ({...prev, accepted: !prev.accepted}));
+
   return (
     <View style={{flex: 1}}>
       <View className='items-center'>
         <HighHeader title="Partner" position="mid" />
       </View>
-      <View className='bg-primary-bg items-center'>
-        <Image style={{zIndex: 10, marginTop: -75}} className=' ' source={require("../../public/image/profile-pic-outline.png")}/>
-        <Image style={{zIndex: 10, marginTop: -127}} className=' ' source={require("../../public/image/pic.png")}/>
-      </View>
-      <ScrollView style={styles.container}>
-        
-
-        <View style={[__gstyles__.shadow]} className='bg-primary-bg px-4 py-2 rounded-lg mb-4 border border-gray-300'>
-          <View style={styles.header} className=' flex-row gap-2 w-full pt-8 items-center justify-center self-center'>
-            <View>
-              <Image alt="cash in"  source={require("../../public/icn/available-icn.png")}></Image>
-            </View>
+      <View style={styles.container}>
+        <View style={[__gstyles__.shadow, styles.card]} className='absolute w-full bg-primary-bg px-4 py-2 rounded-lg mb-4 border border-gray-300'>
+          <View style={styles.header} className=' gap-2 w-full py-8 items-center justify-center self-center'>
             <Text className='text-primary inline font-semibold text-xl'>{partner.name}</Text>
+            <Text className='text-primary inline text-sm'>{partner.address}</Text>
           </View>
 
           <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
@@ -77,8 +72,12 @@ const PaymentConfirm = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>E-wallet</Text>
               </View>
             </View>
-            <View>
-              <Text className='text-primary text-base text-primary'>{payment.bank}</Text>
+            <View style={{justifyContent:'flex-end', alignItems: 'flex-end'}}>
+              <View className='flex-row items-center gap-2'>
+                <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
+                <Text className='text-primary text-base text-primary'>{payment.bank}</Text>
+              </View>
+              <Text className='text-primary text-base text-primary'>{parseInt(payment.balance).toFixed(2)}</Text>
             </View>
           </View>
           
@@ -100,7 +99,7 @@ const PaymentConfirm = ({ route, navigation }) => {
             <Text className='text-gray-400 text-base text-primary'>{parseInt(payment.amount).toFixed(2)}</Text>
           </View>
 
-          <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
+          <View style={{justifyContent: 'space-between'}} className='flex-row items-center py-2 px-4'>
             <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
               <View style={styles.leftSection}>
                 <Text className='text-gray-400 text-base'>Transaction Fee</Text>
@@ -108,16 +107,47 @@ const PaymentConfirm = ({ route, navigation }) => {
             </View>
             <Text className='text-gray-400 text-base text-primary'>15.00</Text>
           </View>
+
+          <View className='p-4'>
+            <View
+              className='m-4 border-gray-500'
+              style={{
+                borderBottomWidth: StyleSheet.hairlineWidth,
+              }}
+            />
+          </View>
+
+          <View style={{justifyContent: 'space-between'}} className='flex-row items-center py-2 pb-4 px-4'>
+            <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={styles.leftSection}>
+                <Text className='text-gray-400 text-base'>Total Amount to Pay</Text>
+              </View>
+            </View>
+            <Text className='text-gray-400 text-base text-primary'>15.00</Text>
+          </View>
+        </View>
+        <View className='w-full absolute bottom-0'>
+          <Text className='text-sm text-center mb-6'>
+            Confirm Transaction will not be canceled. Please make 
+            sure everything is correct.
+          </Text>
+          <View className='flex-row gap-2 justify-center'>
+            <TouchableOpacity
+              style={[__gstyles__.checkbox, state.accepted && __gstyles__.checked]}
+              onPress={toggleConfirmCheckbox}
+            >
+              {state.accepted && <Text style={__gstyles__.checkmark}>✔</Text>}
+            </TouchableOpacity>
+            <Text className='text-primary mb-2 text-center text-sm'>I confirm that the details are accurate</Text>
+          </View>
+          <View className='py-8 mx-auto self-center w-full'>
+            <TouchableOpacity className='bg-primary p-4 rounded-lg' onPress={handleConfirm}>
+              <Text className='font-bold text-white text-center w-full'>OK</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-
-        <View className='py-8 mx-auto self-center w-full'>
-          <TouchableOpacity className='bg-primary p-4 rounded-lg' onPress={handleConfirm}>
-            <Text className='font-bold text-white text-center w-full'>OK</Text>
-          </TouchableOpacity>
-        </View>
-
-      </ScrollView>
+      </View>
     </View>
   );
 };
@@ -129,7 +159,13 @@ const styles = StyleSheet.create({
       flex: 1,
       padding: 20,
       backgroundColor: "#f9f9f9",
-      overflow:'visible'
+      overflow:'visible',
+      justifyContent: 'center',
+      alignItems: 'center'
+  },
+
+  card: {
+    top: -80
   },
   header: {
       marginBottom: 20,
