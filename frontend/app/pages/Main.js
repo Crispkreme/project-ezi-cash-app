@@ -32,7 +32,7 @@ const Main = () => {
   };
 
   return (
-    <View className='flex flex-col gap-4 h-full w-full p-4 bg-primary-bg' >
+    <ScrollView contentContainerStyle={{flex: 1}} className='flex flex-col gap-4 h-full w-full p-4 bg-primary-bg' >
       <View style={styles.header}>
         <Logo></Logo>
         <Text style={styles.subHeaderText}>Enter mobile number to get started</Text>
@@ -88,7 +88,7 @@ const Main = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 };
 

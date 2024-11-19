@@ -1,7 +1,7 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { View, Text, ImageBackground, StyleSheet, Image, TouchableOpacity } from "react-native";
 
-export default function HighHeader({title, position}) { // position is high, mid, low
+export default function HighHeaderV2({title, position}) { // position is high, mid, low
 
   const route = useRoute();
   const navigation = useNavigation();

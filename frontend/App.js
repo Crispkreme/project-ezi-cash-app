@@ -14,6 +14,10 @@ import DashboardHeader from './app/components/DashboardHeader';
 import EWallet from './app/pages/EWallet';
 import HighHeader from './app/components/HighHeader';
 import AddAmount from './app/pages/AddAmount';
+import SearchPartner from './app/pages/SearchPartner';
+import SearchHeader from './app/components/SearchHeader';
+import Partner from './app/pages/Partner';
+import PaymentConfirm from './app/pages/PaymentConfirm';
 
 const Stack = createStackNavigator({
   screens: {
@@ -48,13 +52,31 @@ const Stack = createStackNavigator({
     EWallet: {
       screen: EWallet,
       options: {
-        header: () => <HighHeader title={"Link E-wallet"}/>
+        header: () => <HighHeader title={"Link E-wallet"} position={"high"}/>
       }
     },
     AddAmount: {
       screen: AddAmount,
       options: {
-        header: () => <HighHeader title={"Add Location and Amount"}/>
+        header: () => <HighHeader title={"Add Location and Amount"} position={"high"}/>
+      }
+    },
+    SearchPartner: {
+      screen: SearchPartner,
+      options: {
+        header: () => <SearchHeader />
+      }
+    },
+    Partner: {
+      screen: Partner,
+      options: {
+        header: () => null
+      }
+    },
+    PaymentConfirm: {
+      screen: PaymentConfirm,
+      options: {
+        header: () => null
       }
     }
   }
