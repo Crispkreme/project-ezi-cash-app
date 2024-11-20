@@ -5,7 +5,7 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import { __gstyles__ } from "../globalStylesheet";
 
-const GoToStore = ({ route }) => {
+const FinishTransaction = ({ route }) => {
   const { formData, partner, payment } = route.params;
 
   const wLabels = {...formData};
@@ -31,7 +31,7 @@ const GoToStore = ({ route }) => {
     //   console.error(error);
     //   alert("Error saving details. Please try again.");
     // }
-    navigator.navigate("FinishTransaction", { formData, partner, payment });
+    navigator.navigate("TransactionComplete", { formData, partner, payment });
   };
 
   const handleNext = () => {
@@ -39,58 +39,26 @@ const GoToStore = ({ route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} className='justify-between'>
       
-      <ScrollView>
-        <Image alt="cash in" source={require("../../public/image/go-to-store.png")}></Image>
+      <Text style={{marginBottom: 40}} className='text-sm text-primary text-center'>Click Icon to finish the rest of the application</Text>
+      <TouchableOpacity onClick={handleNext} style={[__gstyles__.shadow, {padding: 40}]} className='bg-primary-bg rounded-lg mb-4 border border-gray-300 self-center'>
+        <Image alt="cash in" source={require("../../public/image/transaction-complete.png")}></Image>
+      </TouchableOpacity>
 
-        <View style={styles.header}>
-          <Text className='text-primary text-left font-semibold text-xl pt-8'>Chat</Text>
-        </View>
-
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300'>
-          <View className=' p-2 px-4'>
-            <View className='gap-2'>
-              <View style={styles.leftSection}>
-                <Text className='font-semibold bg-primary self-start rounded-full text-lg text-primary'>E-Wallet</Text>
-                <Text className='text-sm'>Ezicash Partner</Text>
-              </View>
-              <View className='text-right'>
-                <Text className='font-semibold bg-gray-400 text-gray-400 self-end rounded-full text-lg'>E-Wallet</Text>
-                <Text className='text-sm text-right'>You</Text>
-              </View>
-            </View>
-          </View>
-          <View className='flex-row'>
-            <TextInput
-              className='w-full p-4 mt-4 mb-4 text-sm bg-gray-200'
-              placeholder="Send message"
-              value={state.amount}
-              onChangeText={(am) => setState(prev => ({...prev, amount: am}))}
-              keyboardType="phone-pad"
-              maxLength={10}
-            />
-            <MaterialIcons
-              name="send"
-              size={16}
-              className=' absolute right-4 top-8'
-              style={styles.buttonIcon}
-            />
-          </View>
+      <View className='absolute py-4 mx-auto self-center bottom-4 w-full'>
+        <TouchableOpacity className='bg-primary p-4 rounded-lg' onPress={handleConfirm}>
+          <Text className='font-bold text-white text-center w-full'>Completed</Text>
         </TouchableOpacity>
-
-        <View className='py-4 mx-auto self-center bottom-4 w-full'>
-          <TouchableOpacity className='bg-primary p-4 rounded-lg' onPress={handleConfirm}>
-            <Text className='font-bold text-white text-center w-full'>Arrived</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        <Text style={{marginBottom: 10}} className='mt-4 text-sm text-primary text-center'>Click Complete button after finishing 
+        the transaction.</Text>
+      </View>
       
     </View>
   );
 };
 
-export default GoToStore;
+export default FinishTransaction;
 
 const styles = StyleSheet.create({
   container: {

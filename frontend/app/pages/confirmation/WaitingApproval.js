@@ -12,10 +12,10 @@ import AntDesign from "react-native-vector-icons/AntDesign";
 
 const WaitingApproval = ({route}) => {
   const navigation = useNavigation();
-  const { formData } = route.params;
+  const { formData, partner, payment } = route.params;
 
   setTimeout(() => {
-    navigation.navigate("Approved", {formData});
+    navigation.navigate("Approved", {formData, partner, payment});
   },3000);
   return (
     <View style={styles.container} className='bg-primary'>

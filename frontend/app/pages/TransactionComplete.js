@@ -7,8 +7,8 @@ import { __gstyles__, colors } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
 import { AirbnbRating, Rating } from "react-native-ratings";
 
-const PaymentConfirm = ({ route, navigation }) => {
-  const { formData, partner, payment, key } = route.params;
+const TransactionComplete = ({ route, navigation }) => {
+  const { formData, partner, payment } = route.params;
 
   const wLabels = {...formData};
   const navigator = useNavigation();
@@ -16,67 +16,34 @@ const PaymentConfirm = ({ route, navigation }) => {
   const [state, setState] = useState({
     linkedWallet: '09222222',
     amount: 0,
-    init: false,
     active: 0,
     accepted: false
   });
 
-  useEffect(() => {
-    if(!state.init) {
-      setState(prev => ({...prev, init: true}));
-    } else {
-
-    }
-  },[key]);
-
-  const handleConfirm = async () => {
-    // try {
-    //     const response = await fetch('http://192.168.1.33:3000/register', {
-    //         method: 'POST',
-    //         credentials: 'include',
-    //     }, formData);
-
-    //   alert("Details saved successfully!");
-    //   navigation.navigate("Home");
-
-    // } catch (error) {
-
-    //   console.error(error);
-    //   alert("Error saving details. Please try again.");
-    // }
-    navigator.navigate("WaitingApproval", { formData, partner, payment });
-  };
-
-  const handleNext = () => {
-    navigator.navigate("Partner", { formData,  partner: {name: "Nicole Ayessa Alcover"}});
-  };
-
-  const toggleConfirmCheckbox = () => setState(prev => ({...prev, accepted: !prev.accepted}));
+  setTimeout(() => {
+    navigator.navigate("RatePartner", {formData, partner, payment});
+  },3000);
 
   return (
     <View style={{flex: 1}}>
       <View className='items-center'>
-        <HighHeader title="Partner" position="mid" />
+        <HighHeader title="Transaction Completed!" position="mid" />
       </View>
       <View style={styles.container}>
         <View style={[__gstyles__.shadow, styles.card]} className='absolute w-full bg-primary-bg px-4 py-2 rounded-lg mb-4 border border-gray-300'>
-          <View style={styles.header} className=' gap-2 w-full py-8 items-center justify-center self-center'>
-            <Text className='text-primary inline font-semibold text-xl'>{partner.name}</Text>
-            <Text className='text-primary inline text-sm'>{partner.address}</Text>
+          <View style={styles.header} className=' gap-2 w-full py-4 items-center justify-center self-center'>
+            <Text className='text-primary inline font-semibold text-xl'>Sent</Text>
+            <Text className='text-primary inline text-sm'>Via Paypal</Text>
           </View>
 
-          <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
+          <View style={{justifyContent: 'space-between'}} className='flex-row items-center px-4'>
             <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
               <View style={styles.leftSection}>
-                <Text className='text-gray-400 text-base'>E-wallet</Text>
+                <Text className='text-gray-400 text-base'>eZiCash Partner</Text>
               </View>
             </View>
             <View style={{justifyContent:'flex-end', alignItems: 'flex-end'}}>
-              <View className='flex-row items-center gap-2'>
-                <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
-                <Text className='text-primary text-base text-primary'>{payment.bank}</Text>
-              </View>
-              <Text className='text-primary text-base text-primary'>{parseInt(payment.balance).toFixed(2)}</Text>
+              <Text className='text-sm'>{partner.name}</Text>
             </View>
           </View>
           
@@ -125,33 +92,13 @@ const PaymentConfirm = ({ route, navigation }) => {
             <Text className='text-gray-400 text-base text-primary'>15.00</Text>
           </View>
         </View>
-        <View className='w-full absolute bottom-0'>
-          <Text className='text-sm text-center mb-6'>
-            Confirm Transaction will not be canceled. Please make 
-            sure everything is correct.
-          </Text>
-          <View className='flex-row gap-2 justify-center'>
-            <TouchableOpacity
-              style={[__gstyles__.checkbox, state.accepted && __gstyles__.checked]}
-              onPress={toggleConfirmCheckbox}
-            >
-              {state.accepted && <Text style={__gstyles__.checkmark}>✔</Text>}
-            </TouchableOpacity>
-            <Text className='text-primary mb-2 text-center text-sm'>I confirm that the details are accurate</Text>
-          </View>
-          <View className='py-8 mx-auto self-center w-full'>
-            <TouchableOpacity className='bg-primary p-4 rounded-lg' onPress={handleConfirm}>
-              <Text className='font-bold text-white text-center w-full'>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
       </View>
     </View>
   );
 };
 
-export default PaymentConfirm;
+export default TransactionComplete;
 
 const styles = StyleSheet.create({
   container: {
