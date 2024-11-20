@@ -5,7 +5,6 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import { __gstyles__, colors } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
-import HighHeaderV2 from "../components/HighHeaderV2";
 import { AirbnbRating, Rating } from "react-native-ratings";
 
 const Partner = ({ route, navigation }) => {

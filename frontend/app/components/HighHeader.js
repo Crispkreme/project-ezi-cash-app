@@ -5,7 +5,6 @@ export default function HighHeader({title, position}) { // position is high, mid
 
   const route = useRoute();
   const navigation = useNavigation();
-  const { formData } = route.params || {}; // Retrieve the OTP from params
 
   const urls = {
     high: require('../../public/image/high-bg.png'),
@@ -20,6 +19,7 @@ export default function HighHeader({title, position}) { // position is high, mid
   const handleBack = () => {
     navigation.goBack();
   }
+
   return (
     <ImageBackground style={stylesA[position]} className='bg-primary-bg' resizeMode="contain" source={urls[position]}>
       <View style={styles.container}>
