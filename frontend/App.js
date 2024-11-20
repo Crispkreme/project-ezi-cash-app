@@ -18,6 +18,10 @@ import SearchPartner from './app/pages/SearchPartner';
 import SearchHeader from './app/components/SearchHeader';
 import Partner from './app/pages/Partner';
 import PaymentConfirm from './app/pages/PaymentConfirm';
+import WaitingApproval from './app/pages/confirmation/WaitingApproval';
+import PaymentConfirmationHeader from './app/components/PaymentConfirmationHeader';
+import Approved from './app/pages/confirmation/Approved';
+import GoToStore from './app/pages/GoToStore';
 
 const Stack = createStackNavigator({
   screens: {
@@ -77,6 +81,24 @@ const Stack = createStackNavigator({
       screen: PaymentConfirm,
       options: {
         header: () => null
+      }
+    },
+    WaitingApproval: {
+      screen: WaitingApproval,
+      options: {
+        header: () => <PaymentConfirmationHeader title="Waiting for Approval" />
+      }
+    },
+    Approved: {
+      screen: Approved,
+      options: {
+        header: () => <PaymentConfirmationHeader title="Approved" />
+      }
+    },
+    GoToStore: {
+      screen: GoToStore,
+      options: {
+        header: () => <HighHeader title="Go to the Store" position={"high"}/>
       }
     }
   }
