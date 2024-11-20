@@ -8,10 +8,10 @@ import AntDesign from "react-native-vector-icons/AntDesign";
 
 const Approved = ({route}) => {
   const navigation = useNavigation();
-  const { formData } = route.params;
+  const { formData, partner, payment } = route.params;
 
   setTimeout(() => {
-    navigation.navigate("GoToStore", {formData});
+    navigation.navigate("GoToStore", {formData, partner, payment});
   },3000);
   return (
     <View style={styles.container} className='bg-primary'>

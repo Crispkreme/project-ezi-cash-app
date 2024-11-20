@@ -22,6 +22,9 @@ import WaitingApproval from './app/pages/confirmation/WaitingApproval';
 import PaymentConfirmationHeader from './app/components/PaymentConfirmationHeader';
 import Approved from './app/pages/confirmation/Approved';
 import GoToStore from './app/pages/GoToStore';
+import FinishTransaction from './app/pages/FinishTransaction';
+import TransactionComplete from './app/pages/TransactionComplete';
+import RatePartner from './app/pages/RatePartner';
 
 const Stack = createStackNavigator({
   screens: {
@@ -99,6 +102,24 @@ const Stack = createStackNavigator({
       screen: GoToStore,
       options: {
         header: () => <HighHeader title="Go to the Store" position={"high"}/>
+      }
+    },
+    FinishTransaction: {
+      screen: FinishTransaction,
+      options: {
+        header: () => <HighHeader title="Transaction Completed!" position={"high"}/>
+      }
+    },
+    TransactionComplete: {
+      screen: TransactionComplete,
+      options: {
+        header: () => null
+      }
+    },
+    RatePartner: {
+      screen: RatePartner,
+      options: {
+        header: () => null
       }
     }
   }
