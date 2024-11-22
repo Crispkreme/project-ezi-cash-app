@@ -23,7 +23,7 @@ const ConfirmAccount = ({ route, navigation }) => {
     //   console.error(error);
     //   alert("Error saving details. Please try again.");
     // }
-    navigator.navigate("SetMPIN", {formData});
+    navigator.navigate("SetMPIN", {formData, isReset: false});
   };
 
   return (

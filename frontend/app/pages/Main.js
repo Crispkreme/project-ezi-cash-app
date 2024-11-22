@@ -28,7 +28,7 @@ const Main = () => {
 
   const handleConfirm = () => {
     setIsModalVisible(false);
-    navigation.navigate("RegisterOTP", { mobileNumber });
+    navigation.navigate("RegisterOTP", { mobileNumber, isLogin: false, setMPIN: false});
   };
 
   return (

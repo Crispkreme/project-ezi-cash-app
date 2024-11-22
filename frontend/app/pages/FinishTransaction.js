@@ -39,9 +39,9 @@ const FinishTransaction = ({ route }) => {
   };
 
   return (
-    <View style={styles.container} className='justify-between'>
+    <View style={styles.container} className=''>
       
-      <Text style={{marginBottom: 40}} className='text-sm text-primary text-center'>Click Icon to finish the rest of the application</Text>
+      <Text style={{marginBottom: 120}} className='text-sm text-primary text-center'>Click Icon to finish the rest of the application</Text>
       <TouchableOpacity onClick={handleNext} style={[__gstyles__.shadow, {padding: 40}]} className='bg-primary-bg rounded-lg mb-4 border border-gray-300 self-center'>
         <Image alt="cash in" source={require("../../public/image/transaction-complete.png")}></Image>
       </TouchableOpacity>

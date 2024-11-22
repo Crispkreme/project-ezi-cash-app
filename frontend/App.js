@@ -1,5 +1,5 @@
 import React from 'react';
-import { createStaticNavigation, NavigationContainer } from '@react-navigation/native';
+import { createStaticNavigation, Link, NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Main from './app/pages/Main';
 import RegisterOTP from './app/pages/auth/RegisterOTP';
@@ -25,9 +25,29 @@ import GoToStore from './app/pages/GoToStore';
 import FinishTransaction from './app/pages/FinishTransaction';
 import TransactionComplete from './app/pages/TransactionComplete';
 import RatePartner from './app/pages/RatePartner';
+import InitialLoading from './app/pages/InitialLoading';
+import Login from './app/pages/Login';
+import ResetMPINSuccessful from './app/pages/confirmation/ResetMPINSuccessful';
+import LinkLogin from './app/pages/auth/LinkLogin';
+import LinkAuthentication from './app/pages/auth/LinkAuthentication';
+import LinkMPIN from './app/pages/auth/LinkMPIN';
+import SuccessfulLink from './app/pages/confirmation/SuccessfulLink';
+import SuccessfulLinkHeader from './app/components/SuccessfulLinkHeader';
 
 const Stack = createStackNavigator({
   screens: {
+    InitialLoading: {
+      screen: InitialLoading,
+      options: {
+        header: () => null
+      }
+    },
+    Login: {
+      screen: Login,
+      options: {
+        header: () => null
+      }
+    },
     Main: {
       screen: Main,
       
@@ -48,7 +68,46 @@ const Stack = createStackNavigator({
       screen: ConfirmAccount
     },
     SetMPIN: {
-      screen: SetMPIN
+      screen: SetMPIN,
+      options: {
+        header: () => null
+      }
+    },
+    ResetMPIN: {
+      screen: SetMPIN,
+      options: {
+        header: () => null
+      }
+    },
+    LinkLogin: {
+      screen: LinkLogin,
+      options: {
+        header: () => null
+      }
+    },
+    LinkAuthentication: {
+      screen: LinkAuthentication,
+      options: {
+        header: () => null
+      }
+    },
+    LinkMPIN: {
+      screen: LinkMPIN,
+      options: {
+        header: () => null
+      }
+    },
+    SuccessfulLink: {
+      screen: SuccessfulLink,
+      options: {
+        header: () => <SuccessfulLinkHeader />
+      }
+    },
+    ResetMPINSuccessful: {
+      screen: ResetMPINSuccessful,
+      options: {
+        header: () => null
+      }
     },
     Dashboard: {
       screen: Dashboard,

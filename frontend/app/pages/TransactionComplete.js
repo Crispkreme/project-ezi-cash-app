@@ -27,7 +27,7 @@ const TransactionComplete = ({ route, navigation }) => {
   return (
     <View style={{flex: 1}}>
       <View className='items-center'>
-        <HighHeader title="Transaction Completed!" position="mid" />
+        <HighHeader title="Transaction Completed!" position="low" />
       </View>
       <View style={styles.container}>
         <View style={[__gstyles__.shadow, styles.card]} className='absolute w-full bg-primary-bg px-4 py-2 rounded-lg mb-4 border border-gray-300'>

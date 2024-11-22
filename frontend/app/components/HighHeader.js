@@ -8,12 +8,20 @@ export default function HighHeader({title, position}) { // position is high, mid
 
   const urls = {
     high: require('../../public/image/high-bg.png'),
-    mid: require('../../public/image/mid-bg.png')
+    mid: require('../../public/image/mid-bg.png'),
+    low: require('../../public/image/low-bg.png'),
   }
 
   const stylesA = {
     high: styles.background,
-    mid: styles.bgMid
+    mid: styles.bgMid,
+    low: styles.bgLow
+  }
+
+  const textStyles = {
+    high: styles.subtext,
+    mid: styles.subtext,
+    low: styles.lowsubtext
   }
   
   const handleBack = () => {
@@ -26,7 +34,7 @@ export default function HighHeader({title, position}) { // position is high, mid
         <TouchableOpacity onPress={handleBack}>
           <Image style={styles.back} source={require("../../public/image/back.png")}/>
         </TouchableOpacity>
-        <Text style={styles.subtext} className=' text-white'>
+        <Text style={textStyles[position]} className={`text-white ${position === "low" ? 'w-full': ''}`}>
           {title}
         </Text>
         <Image style={styles.notification} source={require("../../public/icn/notification-icn.png")}/>
@@ -45,6 +53,19 @@ const styles = StyleSheet.create({
     zIndex:-1,
     height: 208,
     width: 384,
+  },
+  bgLow: {
+    zIndex:-1,
+    height: 324,
+    width: 384,
+  },
+  lowsubtext: {
+    fontSize: 20,
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
+    top: 70
   },
   header: {
     marginVertical: 40,

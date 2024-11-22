@@ -53,7 +53,7 @@ const RatePartner = ({ route, navigation }) => {
   return (
     <View style={{flex: 1}}>
       <View className='items-center'>
-        <HighHeader title="Rate eZiCash Partner" position="mid" />
+        <HighHeader title="Rate eZiCash Partner" position="low" />
       </View>
       <View className='bg-primary-bg items-center'>
         <Image style={{zIndex: 10, marginTop: -75}} className=' ' source={require("../../public/image/profile-pic-outline.png")}/>

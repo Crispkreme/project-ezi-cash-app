@@ -27,7 +27,7 @@ const Dashboard = ({ route, navigation }) => {
     // }
     navigator.navigate("SetMPIN");
   };
-
+  
   const handleNext = () => {
     navigator.navigate("EWallet", {formData});
   };

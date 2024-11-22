@@ -38,6 +38,10 @@ const EWallet = ({ route, navigation }) => {
 
   };
 
+  const linkEWallet = () => {
+    navigator.navigate("LinkLogin", {formData});
+  }
+
   return (
     <View style={styles.container}>
       
@@ -71,7 +75,7 @@ const EWallet = ({ route, navigation }) => {
           <Text className='text-primary font-semibold text-xl pt-8'>Add E-Wallet</Text>
         </View>
 
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={handleNext}>
+        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={linkEWallet}>
           <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
             <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
               <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
@@ -88,7 +92,7 @@ const EWallet = ({ route, navigation }) => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={handleNext}>
+        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={linkEWallet}>
           <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
             <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
               <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>

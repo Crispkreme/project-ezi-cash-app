@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image } from "react-native";
 import { __gstyles__ } from "../../globalStylesheet";
 import { useNavigation } from "@react-navigation/native";
+import { ImageBackground } from "react-native";
 
 const SetMPIN = ({ route, navigation }) => {
 
-  const { formData } = route.params;
+  const { formData, isReset } = route.params;
   const navigator = useNavigation();
 
   const [state, setState] = useState({
@@ -32,7 +33,12 @@ const SetMPIN = ({ route, navigation }) => {
       return;
     }
 
-    navigator.navigate("Dashboard", {formData});
+    if(isReset) {
+      navigator.navigate("ResetMPINSuccessful", {formData});
+    } else {
+      navigator.navigate("Dashboard", {formData});
+    }
+    
   };
 
   // Handle input changes
@@ -44,61 +50,73 @@ const SetMPIN = ({ route, navigation }) => {
     setState((prev) => ({...prev, accepted: !prev.accepted}));
   };
 
+  const handleBack = () => {
+
+  }
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text className='text-primary font-semibold text-xl pt-8'>Tell us something about yourself</Text>
-        <Text className='text-gray-400'>Make sure everything is correct. You can no longer edit these details once you register</Text>
-      </View>
-      
-      <Text className='text-sm text-gray-400 mb-2 mt-8'>Enter a 4-digit MPIN</Text>
-      <TouchableOpacity style={__gstyles__.shadow} className='rounded-md mb-2'>
-        <TextInput
-          className='border border-gray-300 rounded-md p-4 bg-white'
-          letterSpacing={state.mpinShow || state.mpin.length === 0 ? 0 : 5}
-          placeholder="Enter MPIN"
-          value={state.mpin}
-          maxLength={4}
-          secureTextEntry
-          onChangeText={(value) => handleInputChange("mpin", value)}
-        />
-      </TouchableOpacity>
-
-      <Text className='text-sm text-gray-400 mb-2 mt-4'>Confirm MPIN</Text>
-      <TouchableOpacity style={__gstyles__.shadow} className='rounded-md mb-2'>
-        <TextInput
-          className='border border-gray-300 rounded-md p-4 bg-white'
-          placeholder="Confirm MPIN"
-          letterSpacing={state.confirmMpinShow || state.confirmMpin.length === 0 ? 0 : 5}
-          value={state.confirmMpin}
-          maxLength={4}
-          secureTextEntry
-          onChangeText={(value) => handleInputChange("confirmMpin", value)}
-        />
-      </TouchableOpacity>
-
-      <View className='py-4 mx-auto self-center absolute bottom-4'>
-        <View className='flex-row gap-2 pl-4 justify-center'>
-          <TouchableOpacity
-            style={[__gstyles__.checkbox, state.accepted && __gstyles__.checked]}
-            onPress={toggleTermsAndConditions}
-          >
-            {state.accepted && <Text style={__gstyles__.checkmark}>✔</Text>}
-          </TouchableOpacity>
-          <Text className='text-gray-400 mb-2 text-center text-sm'>I agree to the <Text className='text-primary font-semibold'>Terms and Conditions</Text></Text>
-        </View>
-        <TouchableOpacity className='bg-primary p-4 rounded-lg' onPress={handleConfirm}>
-          <Text className='font-bold text-white text-center'>Confirm</Text>
+    <ImageBackground style={{flex: 1}} source={require("../../../public/image/bg.png")}>
+      <View style={{paddingVertical: 60}} className='flex-row items-center'>
+        <TouchableOpacity onPress={handleBack} className='absolute left-6'>
+          <Image style={styles.back} source={require("../../../public/image/back.png")}/>
         </TouchableOpacity>
+        <Text className='text-white text-center w-full text-2xl'>{isReset ? "Account Recovery" : "Register"}</Text>
       </View>
-    </View>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text className='text-primary font-semibold text-xl pt-8'>Set MPIN</Text>
+          <Text className='text-gray-400'>MPIN serves as a password for eZiCash. Never share your MPIN to anyone.</Text>
+        </View>
+        
+        <Text className='text-sm text-gray-400 mb-2 mt-8'>Enter a 4-digit MPIN</Text>
+        <TouchableOpacity style={__gstyles__.shadow} className='rounded-md mb-2'>
+          <TextInput
+            className='border border-gray-300 rounded-md p-4 bg-white'
+            letterSpacing={state.mpinShow || state.mpin.length === 0 ? 0 : 5}
+            placeholder="Enter MPIN"
+            value={state.mpin}
+            maxLength={4}
+            secureTextEntry
+            onChangeText={(value) => handleInputChange("mpin", value)}
+          />
+        </TouchableOpacity>
+
+        <Text className='text-sm text-gray-400 mb-2 mt-4'>Confirm MPIN</Text>
+        <TouchableOpacity style={__gstyles__.shadow} className='rounded-md mb-2'>
+          <TextInput
+            className='border border-gray-300 rounded-md p-4 bg-white'
+            placeholder="Confirm MPIN"
+            letterSpacing={state.confirmMpinShow || state.confirmMpin.length === 0 ? 0 : 5}
+            value={state.confirmMpin}
+            maxLength={4}
+            secureTextEntry
+            onChangeText={(value) => handleInputChange("confirmMpin", value)}
+          />
+        </TouchableOpacity>
+
+        <View className='py-4 mx-auto self-center absolute bottom-4'>
+          <View className='flex-row gap-2 pl-4 justify-center'>
+            <TouchableOpacity
+              style={[__gstyles__.checkbox, state.accepted && __gstyles__.checked]}
+              onPress={toggleTermsAndConditions}
+            >
+              {state.accepted && <Text style={__gstyles__.checkmark}>✔</Text>}
+            </TouchableOpacity>
+            <Text className='text-gray-400 mb-2 text-center text-sm'>I agree to the <Text className='text-primary font-semibold'>Terms and Conditions</Text></Text>
+          </View>
+          <TouchableOpacity className='bg-primary p-4 rounded-lg' onPress={handleConfirm}>
+            <Text className='font-bold text-white text-center'>Confirm</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ImageBackground>
   );
 };
 
 export default SetMPIN;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff', borderTopStartRadius: 20, borderTopEndRadius: 20},
   key: {color: '#6b7280'},
   header: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
   row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 10 },

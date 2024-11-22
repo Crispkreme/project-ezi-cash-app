@@ -9,7 +9,9 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-const RegisterOTP = () => {
+const RegisterOTP = ({route}) => {
+
+  const {mobileNumber, isLogin, setMPIN} = route.params || {};
   const [otp, setOtp] = useState(Array(6).fill(""));
   const inputs = useRef([]);
   const navigation = useNavigation();
@@ -24,13 +26,37 @@ const RegisterOTP = () => {
     }
   };
 
+  const textInputOnKeyPress = (nativeEvent, index) => {
+    inputs.current[index].value = '';
+    if(nativeEvent.key === 'Backspace' && index > 0) {
+      inputs.current[index - 1].focus();
+    }
+  }
+
   const handleResend = () => {
     alert("Resend Code clicked!");
   };
 
   const handleNext = () => {
     const enteredOtp = otp.join("");
-    if (enteredOtp.length === 6) {
+
+    if(enteredOtp.length === 6 && isLogin) {
+      // Retrieve dat aand pass into formData
+      navigation.navigate("Dashboard", {formData: {
+        FirstName: "John",
+        MiddleName: "Sample",
+        LastName: "Doe",
+        Birthdate: new Date(), // Default to the current date
+        Email: "johndoe@gmail.com",
+        Nationality: "Nationality",
+        MainSource: "Main Source of Funds",
+        Province: "Province",
+        City: "City/Municipality",
+        Barangay: "Barangay",
+        ZipCode: "ZipCode",
+        HasNoMiddleName: false,
+      }});
+    }else if (enteredOtp.length === 6) {
       navigation.navigate("OpenAccount");
     } else {
       alert("Please enter the complete 6-digit OTP.");
@@ -45,10 +71,9 @@ const RegisterOTP = () => {
           {otp.map((value, index) => (
             <TouchableOpacity className='rounded-md' key={index} style={styles.shadow}>
               <TextInput
-                
-                
                 className='border border-primary h-14 w-12 p-4 text-lg rounded-md'
                 value={value}
+                onKeyPress={({nativeEvent}) => textInputOnKeyPress(nativeEvent, index)}
                 onChangeText={(text) => handleChange(text, index)}
                 keyboardType="number-pad"
                 maxLength={1}
