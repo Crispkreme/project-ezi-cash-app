@@ -43,21 +43,21 @@ const RegisterOTP = ({route}) => {
     if(enteredOtp.length === 6 && isLogin) {
       // Retrieve dat aand pass into formData
       navigation.navigate("Dashboard", {formData: {
-        FirstName: "John",
-        MiddleName: "Sample",
-        LastName: "Doe",
-        Birthdate: new Date(), // Default to the current date
-        Email: "johndoe@gmail.com",
-        Nationality: "Nationality",
-        MainSource: "Main Source of Funds",
-        Province: "Province",
-        City: "City/Municipality",
-        Barangay: "Barangay",
-        ZipCode: "ZipCode",
+        first_name: "John",
+        middle_name: "Sample",
+        last_name: "Doe",
+        birthdate: new Date(), // Default to the current date
+        email: "johndoe@gmail.com",
+        nationality: "Nationality",
+        main_source: "Main Source of Funds",
+        province: "Province",
+        city: "City/Municipality",
+        barangay: "Barangay",
+        zipcode: "ZipCode",
         HasNoMiddleName: false,
       }});
     }else if (enteredOtp.length === 6) {
-      navigation.navigate("OpenAccount");
+      navigation.navigate("OpenAccount", {mobileNumber});
     } else {
       alert("Please enter the complete 6-digit OTP.");
     }
@@ -83,7 +83,7 @@ const RegisterOTP = ({route}) => {
           ))}
         </View>
         <TouchableOpacity onPress={handleResend}>
-          <Text className='text-sm text-center text-primary'>Didn’t get the code? <Text className='font-bold'>Resend Code</Text> </Text>
+          <Text className='text-sm text-center text-primary'>Didn't get the code? <Text className='font-bold'>Resend Code</Text> </Text>
         </TouchableOpacity>
       </ScrollView>
 

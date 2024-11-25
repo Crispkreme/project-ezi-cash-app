@@ -10,11 +10,12 @@ import { useNavigation } from "@react-navigation/native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import Logo from "../../../public/svg/logo";
 
-const OpenAccount = () => {
+const OpenAccount = ({route}) => {
     const navigation = useNavigation();
+    const {mobileNumber} = route.params || {};
 
     const handleNext = () => {
-        navigation.navigate("RegisterAccount");
+        navigation.navigate("RegisterAccount", {mobileNumber});
     };
 
     const handleResend = () => {

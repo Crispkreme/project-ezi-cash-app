@@ -33,6 +33,7 @@ import LinkAuthentication from './app/pages/auth/LinkAuthentication';
 import LinkMPIN from './app/pages/auth/LinkMPIN';
 import SuccessfulLink from './app/pages/confirmation/SuccessfulLink';
 import SuccessfulLinkHeader from './app/components/SuccessfulLinkHeader';
+import Profile from './app/pages/Profile';
 
 const Stack = createStackNavigator({
   screens: {
@@ -113,6 +114,12 @@ const Stack = createStackNavigator({
       screen: Dashboard,
       options: {
         header: () => <DashboardHeader />
+      }
+    },
+    Profile: {
+      screen: Profile,
+      options: {
+        header:() => <DashboardHeader profile={true} />
       }
     },
     EWallet: {

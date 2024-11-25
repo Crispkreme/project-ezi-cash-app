@@ -1,7 +1,7 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { View, Text, ImageBackground, StyleSheet, Image, TouchableOpacity } from "react-native";
 
-export default function DashboardHeader() {
+export default function DashboardHeader({profile = false}) {
 
   const route = useRoute();
   const navigation = useNavigation();
@@ -13,15 +13,23 @@ export default function DashboardHeader() {
   return (
     <ImageBackground style={styles.background} className='bg-primary-bg' resizeMode="contain" source={require("../../public/image/dashboard-bg.png")}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.text} className='z-50 text-white w-full mt-8'>Hello!</Text>
-          </View>
+        <View style={[styles.header, {top: profile ? 50 : 0}]} className={`${profile ? 'flex-row items-center justify-center gap-4': 'flex-col'}`}>
+          { !profile && (
+            <View>
+              <Text style={styles.text} className='z-50 text-white w-full mt-8'>Hello!</Text>
+            </View>
+          )}
+
+          {
+            profile && (
+              <View className='w-24 h-24 rounded-full bg-white'></View>
+            )
+          }
           <Text style={styles.subtext} className=' mt-2 text-white'>
-            {formData.FirstName} {formData.MiddleName} {formData.LastName}
+            {formData.first_name} {formData.middle_name} {formData.last_name}
           </Text>
         </View>
-        <Image style={styles.notification} source={require("../../public/icn/notification-icn.png")}/>
+        <Image style={{marginHorizontal: profile ? 20 : 30, top: profile ? -50 : 0}} source={require("../../public/icn/notification-icn.png")}/>
       </View>
     </ImageBackground>
   )
@@ -50,7 +58,4 @@ const styles = StyleSheet.create({
   subtext: {
     fontSize: 20
   },
-  notification: {
-    marginHorizontal: 30
-  }
 })

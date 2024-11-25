@@ -12,20 +12,22 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import DropdownComponent from "../../components/DropdownComponent";
 
-const RegisterAccount = () => {
+const RegisterAccount = ({route}) => {
   const navigation = useNavigation();
+  const {mobileNumber} = route.params || {};
   const [formData, setFormData] = useState({
-    FirstName: "John",
-    MiddleName: "Sample",
-    LastName: "Doe",
-    Birthdate: new Date(), // Default to the current date
-    Email: "johndoe@gmail.com",
-    Nationality: "Nationality",
-    MainSource: "Main Source of Funds",
-    Province: "Province",
-    City: "City/Municipality",
-    Barangay: "Barangay",
-    ZipCode: "ZipCode",
+    user_phone_no: mobileNumber,
+    first_name: "John",
+    middle_name: "Sample",
+    last_name: "Doe",
+    birthdate: new Date(), // Default to the current date
+    email: "johndoe@gmail.com",
+    nationality: "Nationality",
+    main_source: "Main Source of Funds",
+    province: "Province",
+    city: "City/Municipality",
+    barangay: "Barangay",
+    zipcode: "ZipCode",
     HasNoMiddleName: false,
   });
 
@@ -63,7 +65,7 @@ const RegisterAccount = () => {
     setFormData((prev) => ({
       ...prev,
       HasNoMiddleName: !prev.HasNoMiddleName,
-      MiddleName: !prev.HasNoMiddleName ? "" : prev.MiddleName,
+      middle_name: !prev.HasNoMiddleName ? "" : prev.middle_name,
     }));
   };
 
@@ -71,13 +73,13 @@ const RegisterAccount = () => {
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
-      setFormData({ ...formData, Birthdate: selectedDate });
+      setFormData({ ...formData, birthdate: selectedDate });
     }
   };
 
   // Navigate to ConfirmAccount
   const handleNext = () => {
-    navigation.navigate("ConfirmAccount", { formData: {...formData, Birthdate: formData.Birthdate.toLocaleDateString()} });
+    navigation.navigate("ConfirmAccount", { formData: {...formData, birthdate: formData.birthdate.toLocaleDateString()} });
   };
 
   return (
@@ -94,11 +96,11 @@ const RegisterAccount = () => {
           <TextInput
             className='border border-gray-300 rounded-md p-4 bg-white'
             placeholder="First Name"
-            value={formData.FirstName}
-            onChangeText={(value) => handleInputChange("FirstName", value)}
+            value={formData.first_name}
+            onChangeText={(value) => handleInputChange("first_name", value)}
           />
         </TouchableOpacity>
-        <Text className='text-sm text-gray-400 mb-2'>Don’t use business or nicknames.</Text>
+        <Text className='text-sm text-gray-400 mb-2'>Don't use business or nicknames.</Text>
 
         {!formData.HasNoMiddleName && (
           <>
@@ -106,11 +108,11 @@ const RegisterAccount = () => {
             <TextInput
               className='border border-gray-300 rounded-md p-4 bg-white'
               placeholder="Middle Name"
-              value={formData.MiddleName}
-              onChangeText={(value) => handleInputChange("MiddleName", value)}
+              value={formData.middle_name}
+              onChangeText={(value) => handleInputChange("middle_name", value)}
             />
           </TouchableOpacity>
-          <Text className='text-sm text-gray-400 mb-2'>Don’t use business or nicknames.</Text>
+          <Text className='text-sm text-gray-400 mb-2'>Don't use business or nicknames.</Text>
           </>
         )}
 
@@ -128,23 +130,23 @@ const RegisterAccount = () => {
           <TextInput
             className='border border-gray-300 rounded-md p-4 bg-white'
             placeholder="Last Name"
-            value={formData.LastName}
-            onChangeText={(value) => handleInputChange("LastName", value)}
+            value={formData.last_name}
+            onChangeText={(value) => handleInputChange("last_name", value)}
           />
         </TouchableOpacity>
-        <Text className='text-sm text-gray-400 mb-2'>Don’t use business or nicknames.</Text>
+        <Text className='text-sm text-gray-400 mb-2'>Don't use business or nicknames.</Text>
 
         <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.shadow} className='rounded-md mb-2'>
           <Text className='border border-gray-300 rounded-md p-4 bg-white'>
-          {formData.Birthdate
-              ? formData.Birthdate.toDateString()
+          {formData.birthdate
+              ? formData.birthdate.toDateString()
               : "Select Birthdate"}
           </Text>
         </TouchableOpacity>
         <Text className='text-sm text-gray-400 mb-2'>Must be 12 or older to create an eZiCash Account</Text>
         {showDatePicker && (
           <DateTimePicker
-            value={formData.Birthdate}
+            value={formData.birthdate}
             mode="date"
             display={Platform.OS === "ios" ? "inline" : "default"}
             onChange={handleDateChange}
@@ -155,11 +157,11 @@ const RegisterAccount = () => {
           <TextInput
             className='border border-gray-300 rounded-md p-4 bg-white'
             placeholder="Email"
-            value={formData.Email}
-            onChangeText={(value) => handleInputChange("Email", value)}
+            value={formData.email}
+            onChangeText={(value) => handleInputChange("email", value)}
           />
         </TouchableOpacity>
-        <Text className='text-sm text-gray-400 mb-2'>Don’t use business or nicknames.</Text>
+        <Text className='text-sm text-gray-400 mb-2'>Don't use business or nicknames.</Text>
 
         <View className='mb-4'>
           <DropdownComponent setState={setFormData} data={nationality} placeholder={"Nationality"}/>

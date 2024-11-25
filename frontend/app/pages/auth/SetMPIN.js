@@ -36,6 +36,21 @@ const SetMPIN = ({ route, navigation }) => {
     if(isReset) {
       navigator.navigate("ResetMPINSuccessful", {formData});
     } else {
+
+      const status = await fetch('http://192.168.1.19:3000/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type' : 'application/json'
+        },
+        body: JSON.stringify({...formData, MPIN: state.mpin})
+      }).then();
+
+      const body = await status.json();
+
+      if(status.status !== 201) alert(body.message);
+
+      console.log(body.data);
+
       navigator.navigate("Dashboard", {formData});
     }
     

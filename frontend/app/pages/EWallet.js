@@ -46,7 +46,7 @@ const EWallet = ({ route, navigation }) => {
     <View style={styles.container}>
       
       <ScrollView>
-      <View style={styles.header}>
+        <View style={styles.header}>
           <Text className='text-primary font-semibold text-xl pt-8'>Currently Linked</Text>
         </View>
 

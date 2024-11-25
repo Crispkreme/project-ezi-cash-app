@@ -2014,10 +2014,10 @@
     invariant "^2.2.4"
     nullthrows "^1.1.1"
 
-"@react-navigation/core@^7.0.3":
-  version "7.0.3"
-  resolved "https://registry.npmjs.org/@react-navigation/core/-/core-7.0.3.tgz"
-  integrity sha512-BYfsHuPT/Z50CWw1chTPBzlIG+y/sTQEYXPAN+WvHkS2UbCFvJ3zN/wYfb08RFcyX8+5cYdiZAfC4Ui8hJjJ/A==
+"@react-navigation/core@^7.0.4":
+  version "7.0.4"
+  resolved "https://registry.npmjs.org/@react-navigation/core/-/core-7.0.4.tgz"
+  integrity sha512-Olz6Y1Kf7SslTMcir4j3oo9GlFAZBUo5DAks/CsMAQHFJN+BYDQJTX5H8kEfPoKThIbKOLZozVMLQlC866u9HA==
   dependencies:
     "@react-navigation/routers" "^7.0.0"
     escape-string-regexp "^4.0.0"
@@ -2027,19 +2027,29 @@
     use-latest-callback "^0.2.1"
     use-sync-external-store "^1.2.2"
 
-"@react-navigation/elements@^2.0.3":
-  version "2.0.3"
-  resolved "https://registry.npmjs.org/@react-navigation/elements/-/elements-2.0.3.tgz"
-  integrity sha512-vrfEmXnYNv1qTUTEAup5ycsd2rQirvZx/5620qeWHMSykqblo0imtk0LoLNsuimrUfDSsrjCckux3/atX2jAMg==
+"@react-navigation/drawer@^7.0.7":
+  version "7.0.7"
+  resolved "https://registry.npmjs.org/@react-navigation/drawer/-/drawer-7.0.7.tgz"
+  integrity sha512-tfPZcd3TYBt9fT2+VzLPjWEpMZmgt7kZabch0zq1RNUAwm+uMaOluu+VhcTewDhfXX+1o7rU52MMXDVNUoPm2Q==
+  dependencies:
+    "@react-navigation/elements" "^2.1.1"
+    color "^4.2.3"
+    react-native-drawer-layout "^4.0.2"
+    use-latest-callback "^0.2.1"
+
+"@react-navigation/elements@^2.0.3", "@react-navigation/elements@^2.1.1":
+  version "2.1.1"
+  resolved "https://registry.npmjs.org/@react-navigation/elements/-/elements-2.1.1.tgz"
+  integrity sha512-5ENc4tFpSpSDECaIq0j4+TT8BDjF6Wc3qvLrWxsY+UCG8veFY+SunDQG5HmHZ91CFXXsj7zBUQ8Q14b1J7tOIA==
   dependencies:
     color "^4.2.3"
 
-"@react-navigation/native@^7.0.3":
-  version "7.0.3"
-  resolved "https://registry.npmjs.org/@react-navigation/native/-/native-7.0.3.tgz"
-  integrity sha512-GzHvM8HgCjLW+314+gFv2ElN6di4q4KUI7TxQ62lpZc2moi9p8Z78/mTHJ7DZeYjit0Z5ISF9Le+kFhH68avMw==
+"@react-navigation/native@^7.0.3", "@react-navigation/native@^7.0.4":
+  version "7.0.4"
+  resolved "https://registry.npmjs.org/@react-navigation/native/-/native-7.0.4.tgz"
+  integrity sha512-0K9AqV+qWjAzcielVClMltFr5e8bYppxM9f7GmG6R8+yUv9l60k/VEQFH5eKIyyld7u2PkWCLRKE3ghlUjMt/w==
   dependencies:
-    "@react-navigation/core" "^7.0.3"
+    "@react-navigation/core" "^7.0.4"
     escape-string-regexp "^4.0.0"
     fast-deep-equal "^3.1.3"
     nanoid "3.3.7"
@@ -5761,6 +5771,13 @@ react-native-css-interop@0.1.22:
     lightningcss "^1.27.0"
     semver "^7.6.3"
 
+react-native-drawer-layout@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.npmjs.org/react-native-drawer-layout/-/react-native-drawer-layout-4.0.2.tgz"
+  integrity sha512-VkDpOquZQ+R2JkC9dRIO0NZrJSqRl3h/ryG+S23m3G2EenXVAXho/JuAhuM1LgO9sQuiu0hmgnOfa48ghufsfg==
+  dependencies:
+    use-latest-callback "^0.2.1"
+
 react-native-element-dropdown@^2.12.2:
   version "2.12.2"
   resolved "https://registry.npmjs.org/react-native-element-dropdown/-/react-native-element-dropdown-2.12.2.tgz"
@@ -5768,10 +5785,10 @@ react-native-element-dropdown@^2.12.2:
   dependencies:
     lodash "^4.17.21"
 
-react-native-gesture-handler@^2.21.0, "react-native-gesture-handler@>= 2.0.0":
-  version "2.21.0"
-  resolved "https://registry.npmjs.org/react-native-gesture-handler/-/react-native-gesture-handler-2.21.0.tgz"
-  integrity sha512-8fR1a8EX1aP+TFGiF8pP3UJks2CcfEu7WZzctkJg1yu2DtbVu+uJB/kAPS1XuZxFBKn7pyJcwuQhzuhilzK4DA==
+"react-native-gesture-handler@>= 2.0.0", react-native-gesture-handler@~2.20.2:
+  version "2.20.2"
+  resolved "https://registry.npmjs.org/react-native-gesture-handler/-/react-native-gesture-handler-2.20.2.tgz"
+  integrity sha512-HqzFpFczV4qCnwKlvSAvpzEXisL+Z9fsR08YV5LfJDkzuArMhBu2sOoSPUF/K62PCoAb+ObGlTC83TKHfUd0vg==
   dependencies:
     "@egjs/hammerjs" "^2.0.17"
     hoist-non-react-statics "^3.3.0"
@@ -5794,7 +5811,7 @@ react-native-ratings@^8.1.0:
   dependencies:
     lodash "^4.17.15"
 
-react-native-reanimated@>=3.6.2, react-native-reanimated@~3.16.1:
+"react-native-reanimated@>= 2.0.0", react-native-reanimated@>=3.6.2, react-native-reanimated@~3.16.1:
   version "3.16.1"
   resolved "https://registry.npmjs.org/react-native-reanimated/-/react-native-reanimated-3.16.1.tgz"
   integrity sha512-Wnbo7toHZ6kPLAD8JWKoKCTfNoqYOMW5vUEP76Rr4RBmJCrdXj6oauYP0aZnZq8NCbiP5bwwu7+RECcWtoetnQ==
