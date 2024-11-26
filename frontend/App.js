@@ -34,6 +34,7 @@ import LinkMPIN from './app/pages/auth/LinkMPIN';
 import SuccessfulLink from './app/pages/confirmation/SuccessfulLink';
 import SuccessfulLinkHeader from './app/components/SuccessfulLinkHeader';
 import Profile from './app/pages/Profile';
+import EziCashPartnerApplication from './app/pages/ezicash/EziCashPartnerApplication';
 
 const Stack = createStackNavigator({
   screens: {
@@ -64,6 +65,12 @@ const Stack = createStackNavigator({
     },
     RegisterAccount: {
       screen: RegisterAccount
+    },
+    EziCashPartnerApplication: {
+      screen: EziCashPartnerApplication,
+      options: {
+        header: () => null
+      }
     },
     ConfirmAccount: {
       screen: ConfirmAccount

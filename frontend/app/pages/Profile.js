@@ -22,6 +22,10 @@ const Profile = ({ route, navigation }) => {
     navigator.navigate("Dashboard", {formData});
   }
 
+  const applyEziCash = () => {
+    navigator.navigate("EziCashPartnerApplication", {formData});
+  }
+
   return (
     <View style={styles.container}>
       
@@ -129,7 +133,7 @@ const Profile = ({ route, navigation }) => {
         </View>
 
         <View>
-          <View className='flex-row justify-between items-center p-2 px-8'>
+          <TouchableOpacity onPress={applyEziCash} className='flex-row justify-between items-center p-2 px-8'>
             <View>
               <Text className='text-base text-primary'>
                   Be an eZiCash Partner
@@ -141,7 +145,7 @@ const Profile = ({ route, navigation }) => {
               className='text-primary'
               style={styles.buttonIcon}
             />
-          </View>
+          </TouchableOpacity>
         </View>
 
         <View className='px-4'>
