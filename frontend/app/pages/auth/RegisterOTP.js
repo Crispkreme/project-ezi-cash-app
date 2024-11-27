@@ -1,17 +1,16 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
-    View,
-    Text,
-    ScrollView,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-const RegisterOTP = ({route}) => {
-
-  const {mobileNumber, isLogin, setMPIN} = route.params || {};
+const RegisterOTP = ({ route }) => {
+  const { mobileNumber, otp: backendOtp, isLogin, setMPIN } = route.params || {};
   const [otp, setOtp] = useState(Array(6).fill(""));
   const inputs = useRef([]);
   const navigation = useNavigation();
@@ -27,69 +26,78 @@ const RegisterOTP = ({route}) => {
   };
 
   const textInputOnKeyPress = (nativeEvent, index) => {
-    inputs.current[index].value = '';
-    if(nativeEvent.key === 'Backspace' && index > 0) {
-      inputs.current[index - 1].focus();
+    if (nativeEvent.key === "Backspace" && index > 0) {
+      inputs.current[index].clear(); 
+      inputs.current[index - 1].focus(); 
     }
-  }
+  };
 
   const handleResend = () => {
     alert("Resend Code clicked!");
   };
 
   const handleNext = () => {
-    const enteredOtp = otp.join("");
+    const enteredOtp = otp.join(""); 
 
-    if(enteredOtp.length === 6 && isLogin) {
-      // Retrieve dat aand pass into formData
-      navigation.navigate("Dashboard", {formData: {
-        first_name: "John",
-        middle_name: "Sample",
-        last_name: "Doe",
-        birthdate: new Date(), // Default to the current date
-        email: "johndoe@gmail.com",
-        nationality: "Nationality",
-        main_source: "Main Source of Funds",
-        province: "Province",
-        city: "City/Municipality",
-        barangay: "Barangay",
-        zipcode: "ZipCode",
-        HasNoMiddleName: false,
-      }});
-    }else if (enteredOtp.length === 6) {
-      navigation.navigate("OpenAccount", {mobileNumber});
-    } else {
+    if (enteredOtp.length !== 6) {
       alert("Please enter the complete 6-digit OTP.");
+      return;
+    }
+
+    if (enteredOtp === backendOtp.toString()) {
+      if (isLogin) {
+        navigation.navigate("Dashboard", {
+          formData: {
+            first_name: "John",
+            middle_name: "Sample",
+            last_name: "Doe",
+            birthdate: new Date(),
+            email: "johndoe@gmail.com",
+            nationality: "Nationality",
+            main_source: "Main Source of Funds",
+            province: "Province",
+            city: "City/Municipality",
+            barangay: "Barangay",
+            zipcode: "ZipCode",
+            HasNoMiddleName: false,
+          },
+        });
+      } else {
+        navigation.navigate("OpenAccount", { mobileNumber });
+      }
+    } else {
+      alert("Invalid OTP. Please try again.");
     }
   };
 
   return (
-    <View style={styles.container} className=''>
-
-      <ScrollView className='' style={styles.scrollContainer}>
-        <View style={styles.otpContainer} className='px-4'>
+    <View style={styles.container}>
+      <ScrollView style={styles.scrollContainer}>
+        <View style={styles.otpContainer} className="px-4">
           {otp.map((value, index) => (
-            <TouchableOpacity className='rounded-md' key={index} style={styles.shadow}>
+            <TouchableOpacity key={index} className="rounded-md" style={styles.shadow}>
               <TextInput
-                className='border border-primary h-14 w-12 p-4 text-lg rounded-md'
+                className="border border-primary h-14 w-12 p-4 text-lg rounded-md"
                 value={value}
-                onKeyPress={({nativeEvent}) => textInputOnKeyPress(nativeEvent, index)}
+                onKeyPress={({ nativeEvent }) => textInputOnKeyPress(nativeEvent, index)}
                 onChangeText={(text) => handleChange(text, index)}
                 keyboardType="number-pad"
                 maxLength={1}
-                ref={(el) => (inputs.current[index] = el)} 
+                ref={(el) => (inputs.current[index] = el)}
               />
             </TouchableOpacity>
           ))}
         </View>
         <TouchableOpacity onPress={handleResend}>
-          <Text className='text-sm text-center text-primary'>Didn't get the code? <Text className='font-bold'>Resend Code</Text> </Text>
+          <Text className="text-sm text-center text-primary">
+            Didn't get the code? <Text className="font-bold">Resend Code</Text>
+          </Text>
         </TouchableOpacity>
       </ScrollView>
 
-      <View className='px-12'>
-        <TouchableOpacity className='w-full bg-primary p-4 rounded-xl' onPress={handleNext}>
-          <Text className='text-center text-white font-bold text-lg'>Next</Text>
+      <View className="px-12">
+        <TouchableOpacity className="w-full bg-primary p-4 rounded-xl" onPress={handleNext}>
+          <Text className="text-center text-white font-bold text-lg">Next</Text>
         </TouchableOpacity>
       </View>
     </View>

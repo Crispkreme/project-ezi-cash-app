@@ -7,8 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  Pressable,
-  Image
+  Pressable
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Logo from "../../public/svg/logo.jsx";
@@ -18,17 +17,42 @@ const Main = () => {
   const [mobileNumber, setMobileNumber] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (mobileNumber.length !== 10) {
       alert("Please enter a valid 10-digit mobile number.");
       return;
     }
-    setIsModalVisible(true);
+  
+    try {
+      const response = await fetch(
+        `http://10.0.120.55:3000/otp?mobile=${mobileNumber}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+  
+      if (response.ok) {
+        const data = await response.json();
+        alert("Details saved successfully!");
+        handleConfirm(data.otp);
+      } else {
+        alert("Error saving details. Please try again.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error connecting to server. Please check your network.");
+    }
   };
-
-  const handleConfirm = () => {
+  
+  const handleConfirm = (otp) => {
     setIsModalVisible(false);
-    navigation.navigate("RegisterOTP", { mobileNumber, isLogin: false, setMPIN: false});
+    navigation.navigate("RegisterOTP", {
+      mobileNumber,
+      otp,
+      isLogin: false,
+      setMPIN: false,
+    });
   };
 
   return (

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image } from "react-native";
 import { __gstyles__ } from "../../globalStylesheet";
 import { useNavigation } from "@react-navigation/native";
 import { ImageBackground } from "react-native";
@@ -37,7 +37,7 @@ const SetMPIN = ({ route, navigation }) => {
       navigator.navigate("ResetMPINSuccessful", {formData});
     } else {
 
-      const status = await fetch('http://192.168.1.19:3000/register', {
+      const status = await fetch('http://10.0.120.55:3000/register', {
         method: 'POST',
         headers: {
           'Content-Type' : 'application/json'

@@ -157,6 +157,26 @@ app.post('/register', async (req, res) => {
   }
 });
 
+app.get('/otp', (req, res) => {
+  const mobileNumber = req.query.mobile;
+
+  if (!mobileNumber) {
+    return res.status(400).json({ error: 'Mobile number is required' });
+  }
+
+  if (mobileNumber.length !== 10) {
+    return res.status(400).json({ error: 'Invalid mobile number format' });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  console.log(`OTP for ${mobileNumber}: ${otp}`);
+
+  res.status(200).json({
+    message: 'OTP sent successfully',
+    otp,
+  });
+});
+
 // Start the server
 const PORT = 3000;
 app.listen(PORT, () => {
