@@ -3,6 +3,7 @@ const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const axios = require("axios");
 const cookieParser = require('cookie-parser');
 const app = express();
 
@@ -157,9 +158,31 @@ app.post('/register', async (req, res) => {
   }
 });
 
-app.get('/otp', (req, res) => {
-  const mobileNumber = req.query.mobile;
+// app.get('/otp', (req, res) => {
+//   const mobileNumber = req.query.mobile;
 
+//   if (!mobileNumber) {
+//     return res.status(400).json({ error: 'Mobile number is required' });
+//   }
+
+//   if (mobileNumber.length !== 10) {
+//     return res.status(400).json({ error: 'Invalid mobile number format' });
+//   }
+
+//   const otp = Math.floor(100000 + Math.random() * 900000);
+//   console.log(`OTP for ${mobileNumber}: ${otp}`);
+
+//   res.status(200).json({
+//     message: 'OTP sent successfully',
+//     otp,
+//   });
+// });
+
+const otps = new Map();
+
+app.post('/otp', (req, res) => {
+  const { mobileNumber } = req.body;
+  console.log(mobileNumber);
   if (!mobileNumber) {
     return res.status(400).json({ error: 'Mobile number is required' });
   }
@@ -169,12 +192,45 @@ app.get('/otp', (req, res) => {
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000);
+  const expiry = Date.now() + 5 * 60 * 1000;
+
+  otps.set(mobileNumber, { otp, expiry });
+
   console.log(`OTP for ${mobileNumber}: ${otp}`);
 
   res.status(200).json({
     message: 'OTP sent successfully',
     otp,
   });
+});
+
+// Verify OTP
+app.post('/verify-otp', (req, res) => {
+  const { mobileNumber, otp } = req.body;
+
+  if (!mobileNumber || !otp) {
+    return res.status(400).json({ error: 'Mobile number and OTP are required' });
+  }
+
+  const storedData = otps.get(mobileNumber);
+
+  if (!storedData) {
+    return res.status(400).json({ error: 'No OTP found for this mobile number' });
+  }
+
+  const { otp: storedOtp, expiry } = storedData;
+
+  if (Date.now() > expiry) {
+    otps.delete(mobileNumber);
+    return res.status(400).json({ error: 'OTP has expired' });
+  }
+
+  if (otp !== storedOtp.toString()) {
+    return res.status(400).json({ error: 'Invalid OTP' });
+  }
+
+  otps.delete(mobileNumber);
+  res.status(200).json({ message: 'OTP verified successfully' });
 });
 
 // Start the server

@@ -17,54 +17,55 @@ const Main = () => {
   const [mobileNumber, setMobileNumber] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const handleNext = async () => {
+  const handleNext = () => {
     if (mobileNumber.length !== 10) {
       alert("Please enter a valid 10-digit mobile number.");
       return;
     }
-  
+    setIsModalVisible(true);
+  };
+
+  const handleConfirm = async () => {
     try {
-      const response = await fetch(
-        `http://10.0.120.55:3000/otp?mobile=${mobileNumber}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-  
+      const response = await fetch("http://10.0.120.55:3000/otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mobileNumber: mobileNumber }),
+      });
+
       if (response.ok) {
         const data = await response.json();
-        alert("Details saved successfully!");
-        handleConfirm(data.otp);
+        const otp = data.otp;
+        alert("OTP sent successfully!");
+
+        navigation.navigate("RegisterOTP", {
+          mobileNumber,
+          otp,
+          isLogin: false,
+          setMPIN: false,
+        });
       } else {
-        alert("Error saving details. Please try again.");
+        alert("Failed to send OTP. Please try again.");
       }
     } catch (error) {
       console.error(error);
-      alert("Error connecting to server. Please check your network.");
+      alert("Error connecting to the server. Please check your network.");
     }
-  };
-  
-  const handleConfirm = (otp) => {
     setIsModalVisible(false);
-    navigation.navigate("RegisterOTP", {
-      mobileNumber,
-      otp,
-      isLogin: false,
-      setMPIN: false,
-    });
   };
 
   return (
-    <ScrollView contentContainerStyle={{flex: 1}} className='flex flex-col gap-4 h-full w-full p-4 bg-primary-bg' >
+    <ScrollView contentContainerStyle={{ flex: 1 }} className="flex flex-col gap-4 h-full w-full p-4 bg-primary-bg">
       <View style={styles.header}>
-        <Logo></Logo>
+        <Logo />
         <Text style={styles.subHeaderText}>Enter mobile number to get started</Text>
       </View>
 
-      <View style={styles.scrollContainer} className='px-8 '>
+      <View style={styles.scrollContainer} className="px-8">
         <TextInput
-          className=' p-4 border-b border-black mb-4 text-lg'
+          className="p-4 border-b border-black mb-4 text-lg"
           placeholder="Enter your mobile number"
           value={mobileNumber}
           onChangeText={(text) => setMobileNumber(text)}
@@ -73,14 +74,14 @@ const Main = () => {
         />
       </View>
 
-      <View style={styles.footer} className='px-12'>
-        <TouchableOpacity className='w-full py-4 mb-4 bg-primary rounded-xl' onPress={handleNext}>
-          <Text className='text-white font-semibold text-2xl text-center content-center' >Next</Text>
+      <View style={styles.footer} className="px-12">
+        <TouchableOpacity className="w-full py-4 mb-4 bg-primary rounded-xl" onPress={handleNext}>
+          <Text className="text-white font-semibold text-2xl text-center content-center">Next</Text>
         </TouchableOpacity>
       </View>
 
-      <View className='px-8'>
-        <Text className='text-sm text-center'>
+      <View className="px-8">
+        <Text className="text-sm text-center">
           By tapping next, we will send you a One-Time Password (OTP) to your entered mobile number.
         </Text>
       </View>
@@ -92,29 +93,31 @@ const Main = () => {
         statusBarTranslucent={true}
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View style={styles.modalOverlay} className='px-4'>
-          <View className='w-full bg-white p-4 rounded-md items-center gap-4'>
-            <Text className='font-bold text-base'>Do you want to link this device to your account?</Text>
-            <Text  className='text-sm p-2'>We need to do 2 step authentication before linking this account to your device. We will send to you mobile number a 6-digit code.</Text>
+        <View style={styles.modalOverlay} className="px-4">
+          <View className="w-full bg-white p-4 rounded-md items-center gap-4">
+            <Text className="font-bold text-base">Do you want to link this device to your account?</Text>
+            <Text className="text-sm p-2">
+              We need to perform a two-step authentication before linking this account to your device. We will send a
+              6-digit code to your mobile number.
+            </Text>
 
-            <View className='gap-4 px-4 mb-4'>
+            <View className="gap-4 px-4 mb-4">
+              <Pressable className="w-full bg-primary rounded-lg" onPress={handleConfirm}>
+                <Text className="p-4 text-center text-white font-bold">Send</Text>
+              </Pressable>
               <Pressable
-                className='w-full bg-primary rounded-lg '
-                onPress={handleConfirm}
+                className="w-full p-4 border border-primary bg-white rounded-lg"
+                onPress={() => setIsModalVisible(false)}
               >
-                <Text className='p-4 text-center text-white font-bold'>Send</Text>
+                <Text className="text-primary font-bold text-center">Cancel</Text>
               </Pressable>
-              <Pressable className='w-full p-4 border border-primary bg-white rounded-lg' onPress={() => setIsModalVisible(false)}>
-                <Text className='text-primary font-bold text-center'>Cancel</Text>
-              </Pressable>
-              
             </View>
           </View>
         </View>
       </Modal>
     </ScrollView>
   );
-};
+}
 
 export default Main;
 

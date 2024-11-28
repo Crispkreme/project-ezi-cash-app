@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,20 +15,24 @@ const RegisterOTP = ({ route }) => {
   const inputs = useRef([]);
   const navigation = useNavigation();
 
+  useEffect(() => {
+    console.log("Received params:", { mobileNumber, backendOtp });
+  }, [mobileNumber, backendOtp]);
+
   const handleChange = (text, index) => {
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
 
     if (text && index < 5) {
-      inputs.current[index + 1].focus();
+      inputs.current[index + 1]?.focus();
     }
   };
 
   const textInputOnKeyPress = (nativeEvent, index) => {
     if (nativeEvent.key === "Backspace" && index > 0) {
-      inputs.current[index].clear(); 
-      inputs.current[index - 1].focus(); 
+      inputs.current[index].clear();
+      inputs.current[index - 1]?.focus();
     }
   };
 
@@ -37,7 +41,10 @@ const RegisterOTP = ({ route }) => {
   };
 
   const handleNext = () => {
-    const enteredOtp = otp.join(""); 
+    const enteredOtp = otp.join("");
+
+    console.log("Entered OTP:", enteredOtp);
+    console.log("Backend OTP:", backendOtp);
 
     if (enteredOtp.length !== 6) {
       alert("Please enter the complete 6-digit OTP.");
