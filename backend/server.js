@@ -3,6 +3,7 @@ const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const axios = require("axios");
 const cookieParser = require('cookie-parser');
 const app = express();
 
@@ -155,6 +156,42 @@ app.post('/register', async (req, res) => {
     console.error('Unexpected Error:', err);
     res.status(500).json({ message: 'An unexpected error occurred.' });
   }
+});
+
+const otps = new Map();
+
+app.post('/otp', (req, res) => {
+  const { mobileNumber } = req.body;
+  console.log(mobileNumber);
+  if (!mobileNumber) {
+    return res.status(400).json({ error: 'Mobile number is required' });
+  }
+
+  if (mobileNumber.length !== 10) {
+    return res.status(400).json({ error: 'Invalid mobile number format' });
+  }
+
+  const currentTime = Date.now();
+  const otpData = otps.get(mobileNumber);
+
+  if (otpData && currentTime < otpData.expiry) {
+    return res.status(200).json({
+      message: 'OTP is still valid, resent.',
+      otp: otpData.otp,
+    });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  const expiry = Date.now() + 5 * 60 * 1000;
+
+  otps.set(mobileNumber, { otp, expiry });
+
+  console.log(`OTP for ${mobileNumber}: ${otp}, expires at: ${new Date(expiry)}`);
+
+  res.status(200).json({
+    message: 'OTP sent successfully',
+    otp,
+  });
 });
 
 // Start the server
