@@ -13,11 +13,13 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { __gstyles__ } from "../globalStylesheet";
 
-const Login = () => {
+const Login = ({route}) => {
+
+  const {mobileNumber} = route.params || {};
   const navigation = useNavigation();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [state, setState] = useState({
-    loggedNumber: "09671234567",
+    loggedNumber: mobileNumber ? mobileNumber : "9671234567",
     pin: Array(4).fill("")
   });
 
@@ -25,7 +27,20 @@ const Login = () => {
 
   const inputs = useRef([]);
 
-  const handleChange = (text, index) => {
+  const getPin = async (phone, pin) => {
+    const check = await fetch("http://192.168.1.5:3000/login", {
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({phone:phone ,pin: pin})
+    });
+    const body = await check.json();
+    
+    return body.data;
+  }
+
+  const handleChange = async (text, index) => {
     const newPin = [...state.pin];
     newPin[index] = text;
     setState(prev => ({...prev, pin: newPin}));
@@ -34,10 +49,44 @@ const Login = () => {
       inputs.current[index + 1].focus();
     } else if(text && index === state.pin.length - 1) {
       const final = state.pin.join("") + text;
-      if(final !== tempPin) {
+      
+      const res = await getPin(state.loggedNumber, final);
+      if(res === -1) {
         setIsModalVisible(true);
       } else {
-        navigation.navigate("RegisterOTP", { mobileNumber: state.loggedNumber, isLogin: true, setMPIN: false });
+
+        try {
+          const response = await fetch("http://192.168.1.5:3000/otp", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ mobileNumber: mobileNumber }),
+          });
+    
+          if (response.ok) {
+            const data = await response.json();
+            const otp = data.otp;
+    
+            alert("OTP sent successfully!");
+    
+            navigation.navigate("RegisterOTP", {
+              mobileNumber: state.loggedNumber,
+              otp,
+              isLogin: true,
+              setMPIN: false,
+              formData: res
+            });
+            
+          } else {
+            alert("Failed to send OTP. Please try again.");
+          }
+        } catch (error) {
+          console.error(error);
+          alert("Error connecting to the server. Please check your network.");
+        }
+
+        
       }
     }
 
@@ -66,7 +115,7 @@ const Login = () => {
       <View>
         <TouchableOpacity onPress={changeNumber}>
           <Text className='px-4 py-2 bg-white text-primary rounded-full'>
-            {"+63" + String(state.loggedNumber).substring(1, state.loggedNumber.length - 1)}
+            {"+63" + String(state.loggedNumber).substring(0, state.loggedNumber.length)}
           </Text>
         </TouchableOpacity>
       </View>

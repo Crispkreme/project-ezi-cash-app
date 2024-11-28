@@ -11,7 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 
 const RegisterOTP = ({ route }) => {
-  const { mobileNumber, otp: backendOtp, isLogin, setMPIN } = route.params || {};
+  const { mobileNumber, otp: backendOtp, isLogin, setMPIN, formData } = route.params || {};
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [timeRemaining, setTimeRemaining] = useState(2 * 60);
   const [isOtpExpired, setIsOtpExpired] = useState(false);
@@ -53,7 +53,7 @@ const RegisterOTP = ({ route }) => {
 
   const handleResend = async () => {
     if (isOtpExpired) {
-      const response = await fetch("http://10.0.120.55:3000/otp", {
+      const response = await fetch("http://192.168.1.5:3000/otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -97,7 +97,7 @@ const RegisterOTP = ({ route }) => {
 
     if (enteredOtp === backendOtpState.toString()) {
       if (isLogin) {
-        navigation.navigate("Dashboard");
+        navigation.navigate("Dashboard", {formData});
       } else {
         navigation.navigate("OpenAccount", { mobileNumber });
       }

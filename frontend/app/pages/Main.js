@@ -27,7 +27,22 @@ const Main = () => {
 
   const handleConfirm = async () => {
     try {
-      const response = await fetch("http://10.0.120.55:3000/otp", {
+      const check = await fetch("http://192.168.1.5:3000/check-phone?phone=" + mobileNumber);
+      
+      if(check.status === 200) {
+        const body = await check.json();
+        if(body.data !== -1) {
+          navigation.navigate("Login",{mobileNumber: body.data});
+          return;
+        }
+      }
+    } catch(e) {
+      console.error(e);
+      alert(e);
+    }
+
+    try {
+      const response = await fetch("http://192.168.1.5:3000/otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

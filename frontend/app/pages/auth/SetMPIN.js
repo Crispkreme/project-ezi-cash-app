@@ -37,7 +37,7 @@ const SetMPIN = ({ route, navigation }) => {
       navigator.navigate("ResetMPINSuccessful", {formData});
     } else {
 
-      const status = await fetch('http://10.0.120.55:3000/register', {
+      const status = await fetch('http://192.168.1.5:3000/register', {
         method: 'POST',
         headers: {
           'Content-Type' : 'application/json'

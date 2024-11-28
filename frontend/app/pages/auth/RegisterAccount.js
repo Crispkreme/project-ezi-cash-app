@@ -27,7 +27,7 @@ const RegisterAccount = ({route}) => {
     province: "Province",
     city: "City/Municipality",
     barangay: "Barangay",
-    zipcode: "ZipCode",
+    zipcode: "",
     HasNoMiddleName: false,
   });
 
@@ -186,6 +186,15 @@ const RegisterAccount = ({route}) => {
         <View className='mb-4'>
           <DropdownComponent setState={setFormData} data={data} placeholder={"Barangay"}/>
         </View>
+
+        <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
+          <TextInput
+            className='border border-gray-300 rounded-md p-4 bg-white'
+            placeholder="Zipcode"
+            value={formData.zipcode}
+            onChangeText={(value) => handleInputChange("zipcode", value)}
+          />
+        </TouchableOpacity>
       </ScrollView>
 
       <View style={styles.footer}>
