@@ -5,7 +5,7 @@ export default function Header() {
 
   const route = useRoute();
   const navigation = useNavigation();
-  const { mobileNumber } = route.params || {}; // Retrieve the OTP from params
+  const { mobileNumber } = route.params || {};
 
 
   const handleBack = () => {

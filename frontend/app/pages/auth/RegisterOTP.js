@@ -5,19 +5,34 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  StyleSheet
+  StyleSheet,
+  Alert
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 const RegisterOTP = ({ route }) => {
   const { mobileNumber, otp: backendOtp, isLogin, setMPIN } = route.params || {};
   const [otp, setOtp] = useState(Array(6).fill(""));
+  const [timeRemaining, setTimeRemaining] = useState(2 * 60);
+  const [isOtpExpired, setIsOtpExpired] = useState(false);
+  const [backendOtpState, setBackendOtp] = useState(backendOtp);
   const inputs = useRef([]);
   const navigation = useNavigation();
 
   useEffect(() => {
-    console.log("Received params:", { mobileNumber, backendOtp });
-  }, [mobileNumber, backendOtp]);
+    const timer = setInterval(() => {
+      setTimeRemaining((prevTime) => {
+        if (prevTime <= 1) {
+          clearInterval(timer);
+          setIsOtpExpired(true);
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleChange = (text, index) => {
     const newOtp = [...otp];
@@ -36,45 +51,65 @@ const RegisterOTP = ({ route }) => {
     }
   };
 
-  const handleResend = () => {
-    alert("Resend Code clicked!");
+  const handleResend = async () => {
+    if (isOtpExpired) {
+      const response = await fetch("http://10.0.120.55:3000/otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mobileNumber }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBackendOtp(data.otp);
+        setOtp(Array(6).fill(""));
+        setTimeRemaining(2 * 60); 
+        setIsOtpExpired(false); 
+
+        Alert.alert(
+          "New OTP Generated",
+          `Your new OTP is: ${data.otp}`,
+          [
+            {
+              text: "OK",
+              onPress: () => console.log("New OTP generated successfully."),
+            },
+          ],
+          { cancelable: false }
+        );
+
+        console.log("New OTP generated:", data.otp);
+      } else {
+        alert("Failed to resend OTP. Please try again.");
+      }
+    }
   };
 
   const handleNext = () => {
     const enteredOtp = otp.join("");
-
-    console.log("Entered OTP:", enteredOtp);
-    console.log("Backend OTP:", backendOtp);
 
     if (enteredOtp.length !== 6) {
       alert("Please enter the complete 6-digit OTP.");
       return;
     }
 
-    if (enteredOtp === backendOtp.toString()) {
+    if (enteredOtp === backendOtpState.toString()) {
       if (isLogin) {
-        navigation.navigate("Dashboard", {
-          formData: {
-            first_name: "John",
-            middle_name: "Sample",
-            last_name: "Doe",
-            birthdate: new Date(),
-            email: "johndoe@gmail.com",
-            nationality: "Nationality",
-            main_source: "Main Source of Funds",
-            province: "Province",
-            city: "City/Municipality",
-            barangay: "Barangay",
-            zipcode: "ZipCode",
-            HasNoMiddleName: false,
-          },
-        });
+        navigation.navigate("Dashboard");
       } else {
         navigation.navigate("OpenAccount", { mobileNumber });
       }
     } else {
       alert("Invalid OTP. Please try again.");
     }
+  };
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   };
 
   return (
@@ -95,9 +130,22 @@ const RegisterOTP = ({ route }) => {
             </TouchableOpacity>
           ))}
         </View>
-        <TouchableOpacity onPress={handleResend}>
+
+        {/* Timer */}
+        <View style={styles.timerContainer}>
+          <Text className="text-sm text-center">
+            {isOtpExpired ? "OTP has expired." : `OTP valid for: ${formatTime(timeRemaining)}`}
+          </Text>
+        </View>
+
+        {/* Resend OTP Button */}
+        <TouchableOpacity 
+          onPress={handleResend}
+          style={[styles.resendButton, isOtpExpired ? styles.resendButtonActive : styles.resendButtonInactive]}
+          disabled={!isOtpExpired} 
+        >
           <Text className="text-sm text-center text-primary">
-            Didn't get the code? <Text className="font-bold">Resend Code</Text>
+            {isOtpExpired ? "OTP Expired. Request a new one." : "Didn't get the code? Resend Code"}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -110,8 +158,6 @@ const RegisterOTP = ({ route }) => {
     </View>
   );
 };
-
-export default RegisterOTP;
 
 const styles = StyleSheet.create({
   shadow: {
@@ -127,22 +173,6 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f9f9f9",
   },
-  header: {
-    marginBottom: 20,
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  subHeaderText: {
-    fontSize: 16,
-    color: "#555",
-  },
-  blueText: {
-    color: "#007BFF",
-    fontWeight: "bold",
-  },
   scrollContainer: {
     flex: 1,
   },
@@ -151,37 +181,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 20,
   },
-  otpInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 5,
-    textAlign: "center",
-    fontSize: 18,
-    width: 50,
-    height: 50,
-  },
-  resendText: {
-    fontSize: 16,
-    color: "#007BFF",
-    textAlign: "center",
+  resendButton: {
     marginTop: 20,
-    textDecorationLine: "underline",
+    textAlign: "center",
   },
-  footer: {
-    marginTop: 20,
-    alignItems: "center",
+  resendButtonInactive: {
+    opacity: 0.5,
   },
-  button: {
-    backgroundColor: "#6200ea",
-    padding: 15,
-    borderRadius: 5,
-    width: "100%",
-    alignItems: "center",
+  resendButtonActive: {
+    opacity: 1,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+  timerContainer: {
+    marginTop: 10,
   },
 });
+
+export default RegisterOTP;

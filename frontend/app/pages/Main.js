@@ -38,6 +38,7 @@ const Main = () => {
       if (response.ok) {
         const data = await response.json();
         const otp = data.otp;
+
         alert("OTP sent successfully!");
 
         navigation.navigate("RegisterOTP", {
@@ -46,6 +47,7 @@ const Main = () => {
           isLogin: false,
           setMPIN: false,
         });
+        
       } else {
         alert("Failed to send OTP. Please try again.");
       }
