@@ -11,20 +11,6 @@ const Dashboard = ({ route, navigation }) => {
   const navigator = useNavigation();
 
   const handleConfirm = async () => {
-    // try {
-    //     const response = await fetch('http://192.168.1.33:3000/register', {
-    //         method: 'POST',
-    //         credentials: 'include',
-    //     }, formData);
-
-    //   alert("Details saved successfully!");
-    //   navigation.navigate("Home");
-
-    // } catch (error) {
-
-    //   console.error(error);
-    //   alert("Error saving details. Please try again.");
-    // }
     navigator.navigate("SetMPIN");
   };
   

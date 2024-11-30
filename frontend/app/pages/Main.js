@@ -27,7 +27,7 @@ const Main = () => {
 
   const handleConfirm = async () => {
     try {
-      const check = await fetch("http://192.168.1.5:3000/check-phone?phone=" + mobileNumber);
+      const check = await fetch(process.env.base_url + "/check-phone?phone=" + mobileNumber);
       
       if(check.status === 200) {
         const body = await check.json();
@@ -42,7 +42,7 @@ const Main = () => {
     }
 
     try {
-      const response = await fetch("http://192.168.1.5:3000/otp", {
+      const response = await fetch(process.env.base_url + "/otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

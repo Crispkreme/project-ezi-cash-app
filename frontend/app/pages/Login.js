@@ -28,7 +28,7 @@ const Login = ({route}) => {
   const inputs = useRef([]);
 
   const getPin = async (phone, pin) => {
-    const check = await fetch("http://192.168.1.5:3000/login", {
+    const check = await fetch(process.env.base_url + "/login", {
       method: 'POST',
       headers: {
         "Content-Type": "application/json",
@@ -56,7 +56,7 @@ const Login = ({route}) => {
       } else {
 
         try {
-          const response = await fetch("http://192.168.1.5:3000/otp", {
+          const response = await fetch(process.env.base_url + "/otp", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

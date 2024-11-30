@@ -2,7 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
+import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import { __gstyles__ } from "../globalStylesheet";
 
 const SearchPartner = ({ route, navigation }) => {
@@ -47,11 +47,56 @@ const SearchPartner = ({ route, navigation }) => {
     navigator.navigate("Partner", { formData,  partner: {name: "Nicole Ayessa Alcover", address: "79 Cabreros St Cebu City, Cebu", type: "Individual"}});
   };
 
+  const onRegionChange = (region) => {
+    setMap(region);
+  }
+
+  const [map, setMap] = useState({
+    latitude: 10.31423656557551,
+    longitude: 123.90543601653494,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  })
+
+  useEffect(() => {
+    setMap({
+      latitude: 10.31423656557551,
+      longitude: 123.90543601653494,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    });
+    
+    console.log("Google Maps API Key:", process.env.google_maps_api_key);
+  },[]);
+
   return (
     <View style={styles.container}>
       
       <ScrollView>
-        <Image source={require("../../public/image/sample-google-maps.png")}/>
+        {/* <Image source={require("../../public/image/sample-google-maps.png")}/> */}
+        <View style={{flex: 1}}>
+          <MapView
+            style={{ flex: 1, height: 450, width:500 }}
+            initialRegion={{
+              latitude: 10.31423656557551,
+              longitude: 123.90543601653494,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }}
+            onRegionChange={onRegionChange}
+            provider={PROVIDER_GOOGLE}
+          >
+            <Marker 
+              pinColor="red" 
+              coordinate={{
+                longitude: 10.31423656557551, 
+                latitude: 123.90543601653494
+              }}
+              title="asdasd"
+              description="asdasd"
+            />
+          </MapView>
+        </View>
         <View style={styles.header}>
           <Text className='text-primary font-semibold text-xl pt-8'>eZiCash Partners Nearby</Text>
         </View>
