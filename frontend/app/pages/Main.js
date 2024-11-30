@@ -27,8 +27,9 @@ const Main = () => {
 
   const handleConfirm = async () => {
     try {
+      console.log(process.env.base_url + "/check-phone?phone=" + mobileNumber);
       const check = await fetch(process.env.base_url + "/check-phone?phone=" + mobileNumber);
-      
+      console.log("after");
       if(check.status === 200) {
         const body = await check.json();
         if(body.data !== -1) {

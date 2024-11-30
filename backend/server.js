@@ -206,7 +206,7 @@ app.post('/otp', (req, res) => {
 });
 
 app.get("/check-phone", async (req, res) => {
-
+  console.log("here");
   const {phone} = req.query || {};
   
   db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", phone, 

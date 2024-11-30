@@ -90,7 +90,9 @@ const SearchPartner = ({ route, navigation }) => {
               pinColor="red" 
               coordinate={{
                 longitude: 10.31423656557551, 
-                latitude: 123.90543601653494
+                latitude: 123.90543601653494,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
               }}
               title="asdasd"
               description="asdasd"
