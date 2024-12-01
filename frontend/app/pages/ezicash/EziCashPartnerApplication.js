@@ -9,7 +9,7 @@ import {
   Platform,
   ImageBackground,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import * as DocumentPicker from 'expo-document-picker';
 import { useNavigation } from "@react-navigation/native";
 import DropdownComponent from "../../components/DropdownComponent";
 
@@ -77,9 +77,6 @@ const EziCashPartnerApplication = ({route}) => {
     
   ]
 
-  // State for date picker visibility
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
   // Handle input changes
   const handleInputChange = (field, value) => {
     setApplyData({ ...applyData, [field]: value });
@@ -96,6 +93,20 @@ const EziCashPartnerApplication = ({route}) => {
       same_business_address: !prev.same_business_address,
     }));
   };
+
+  const [files, setFiles] = useState({
+    business: 'No file selected',
+    id: 'No file selected',
+    proof: 'No file selected'
+  })
+  const openDocument = async (key) => {
+    const file = await DocumentPicker.getDocumentAsync();
+    console.log(file);
+    setFiles(prev => ({
+      ...prev,
+      [key]: file.assets[0].name
+    }))
+  }
 
   return (
     <ImageBackground source={require("../../../public/image/bg.png")} style={styles.container}>
@@ -249,11 +260,90 @@ const EziCashPartnerApplication = ({route}) => {
             />
           </View>
 
-          
+          <Text className='text-sm text-gray-400 mb-2'>Business Registration Permit</Text>
+          <Text className='mb-2'>
+            <TouchableOpacity className='w-full bg-white rounded-lg' onPress={() => openDocument("business")}>
+              <Text className='relative text-primary font-semibold text-lg text-left p-4 flex-row text items-start justify-start'>
+                <Text className='text-xs p-2 '>Upload File</Text>
+                <Text className='text-xs ml-4'>{files.business}</Text>
+              </Text>
+            </TouchableOpacity>
+          </Text>
+
+          <Text className='text-sm text-gray-400 mb-2'>Gevernment ID</Text>
+          <Text className='mb-2'>
+            <TouchableOpacity className='w-full bg-white rounded-lg' onPress={() => openDocument("id")}>
+              <Text className='relative text-primary font-semibold text-lg text-left p-4 flex-row text items-start justify-start'>
+                <Text className='text-xs p-2 '>Upload File</Text>
+                <Text className='text-xs ml-4'>{files.id}</Text>
+              </Text>
+            </TouchableOpacity>
+          </Text>
+
+          <Text className='text-sm text-gray-400 mb-2'>Proof of Address</Text>
+          <Text className='mb-2'>
+            <TouchableOpacity className='w-full bg-white rounded-lg' onPress={() => openDocument("proof")}>
+              <Text className='relative text-primary font-semibold text-lg text-left p-4 flex-row text items-start justify-start'>
+                <Text className='text-xs p-2 '>Upload File</Text>
+                <Text className='text-xs ml-4'>{files.proof}</Text>
+              </Text>
+            </TouchableOpacity>
+          </Text>
+
+          <View className='p-4'>
+            <View
+              className='m-4 border-gray-500'
+              style={{
+                borderBottomWidth: StyleSheet.hairlineWidth,
+              }}
+            />
+          </View>
+
+          <Text className='text-base text-gray-800 mb-8 text-center'>Banking Information</Text>
+
+          <Text className='text-sm text-gray-400 mb-2'>Bank</Text>
+          <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
+            <TextInput
+              className='border border-gray-300 rounded-md p-4 bg-white'
+              placeholder="Banking Information"
+              value={applyData.bank}
+              onChangeText={(value) => handleInputChange("bank", value)}
+            />
+          </TouchableOpacity>
+
+          <Text className='text-sm text-gray-400 mb-2'>Account ID</Text>
+          <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
+            <TextInput
+              className='border border-gray-300 rounded-md p-4 bg-white'
+              placeholder="Account ID"
+              value={applyData.account_id}
+              onChangeText={(value) => handleInputChange("account_id", value)}
+            />
+          </TouchableOpacity>
+
+          <Text className='text-sm text-gray-400 mb-2'>Card Number</Text>
+          <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
+            <TextInput
+              className='border border-gray-300 rounded-md p-4 bg-white'
+              placeholder="Card Number"
+              value={applyData.card_no}
+              onChangeText={(value) => handleInputChange("card_no", value)}
+            />
+          </TouchableOpacity>
+
+          <Text className='text-sm text-gray-400 mb-2'>Card Holder</Text>
+          <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
+            <TextInput
+              className='border border-gray-300 rounded-md p-4 bg-white'
+              placeholder="Card Holder"
+              value={applyData.card_holder}
+              onChangeText={(value) => handleInputChange("card_holder", value)}
+            />
+          </TouchableOpacity>
         </ScrollView>
 
         <View style={styles.footer}>
-          <TouchableOpacity className='w-full p-4 bg-primary rounded-lg' onPress={handleNext}>
+          <TouchableOpacity className='w-full p-4 mb-16 bg-primary rounded-lg' onPress={handleNext}>
             <Text className='text-white font-semibold text-lg text-center'>Next</Text>
           </TouchableOpacity>
         </View>
