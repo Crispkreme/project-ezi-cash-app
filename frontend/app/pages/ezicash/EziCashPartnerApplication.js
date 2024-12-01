@@ -41,6 +41,7 @@ const EziCashPartnerApplication = ({route}) => {
     city: "",
     state: "",
     zip: "",
+    same_business_address: false,
     business_location: "",
     business_city: "",
     business_state: "",
@@ -89,6 +90,13 @@ const EziCashPartnerApplication = ({route}) => {
     navigation.navigate("ConfirmAccount", { formData: {...formData, birthdate: formData.birthdate.toLocaleDateString()} });
   };
 
+  const toggleBusinessAddress = () => {
+    setApplyData((prev) => ({
+      ...prev,
+      same_business_address: !prev.same_business_address,
+    }));
+  };
+
   return (
     <ImageBackground source={require("../../../public/image/bg.png")} style={styles.container}>
       <ScrollView style={{padding: 20}} className='bg-primary-bg rounded-t-2xl'>
@@ -98,74 +106,150 @@ const EziCashPartnerApplication = ({route}) => {
         </View>
 
         <ScrollView className='text-primary'>
-          <Text className='text-lg font-semibold mb-4'>PERSONAL INFORMATION</Text>
+          <Text className='text-base text-gray-400 mb-2'>Legal Name</Text>
           <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
             <TextInput
               className='border border-gray-300 rounded-md p-4 bg-white'
-              placeholder="First Name"
-              value={formData.first_name}
-              onChangeText={(value) => handleInputChange("first_name", value)}
+              placeholder="Legal Name"
+              value={applyData.legal_name}
+              onChangeText={(value) => handleInputChange("legal_name", value)}
             />
           </TouchableOpacity>
-          <Text className='text-sm text-gray-400 mb-2'>Don't use business or nicknames.</Text>
 
-          {!formData.HasNoMiddleName && (
-            <>
-            <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
-              <TextInput
-                className='border border-gray-300 rounded-md p-4 bg-white'
-                placeholder="Middle Name"
-                value={formData.middle_name}
-                onChangeText={(value) => handleInputChange("middle_name", value)}
-              />
-            </TouchableOpacity>
-            <Text className='text-sm text-gray-400 mb-2'>Don't use business or nicknames.</Text>
-            </>
-          )}
+          <Text className='text-base text-gray-400 mb-2'>Partnership Type</Text>
+          <View className='mb-4'>
+            <DropdownComponent setState={(value) => handleInputChange("partnership_type", value)} data={
+              [
+                {label: "Individual", value: "Individual"},
+                {label: "Store", value: "Store"}
+              ]
+            } placeholder={"Individual / Store"}/>
+          </View>
+          
+          <Text className='text-sm text-gray-400 mb-2'>Phone Number</Text>
+          <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
+            <TextInput
+              className='border border-gray-300 rounded-md p-4 bg-white'
+              placeholder="Phone Number"
+              value={applyData.phone_no}
+              onChangeText={(value) => handleInputChange("phone_no", value)}
+            />
+          </TouchableOpacity>
+          
 
+          <Text className='text-sm text-gray-400 mb-2'>Email Address</Text>
           <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
             <TextInput
               className='border border-gray-300 rounded-md p-4 bg-white'
               placeholder="Last Name"
-              value={formData.last_name}
-              onChangeText={(value) => handleInputChange("last_name", value)}
-            />
-          </TouchableOpacity>
-          <Text className='text-sm text-gray-400 mb-2'>Don't use business or nicknames.</Text>
-
-          <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
-            <TextInput
-              className='border border-gray-300 rounded-md p-4 bg-white'
-              placeholder="Email"
-              value={formData.email}
+              value={applyData.email}
               onChangeText={(value) => handleInputChange("email", value)}
             />
           </TouchableOpacity>
-          <Text className='text-sm text-gray-400 mb-2'>Don't use business or nicknames.</Text>
-
-          <View className='mb-4'>
-            <DropdownComponent setState={setFormData} data={nationality} placeholder={"Nationality"}/>
-          </View>
-
-          <View className='mb-4'>
-            <DropdownComponent setState={setFormData} data={fundSource} placeholder={"Main Source of Funds"}/>
-          </View>
-
-          <View>
-            <Text className='text-lg font-semibold mb-4'>CURRENT ADDRESS</Text>
-          </View>
           
-          <View className='mb-4'>
-            <DropdownComponent setState={setFormData} data={data} placeholder={"Province"}/>
+
+          <Text className='text-sm text-gray-400 mb-2'>Legal Address</Text>
+          <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
+            <TextInput
+              className='border border-gray-300 rounded-md p-4 bg-white'
+              placeholder="Legal Address"
+              value={applyData.legal_address}
+              onChangeText={(value) => handleInputChange("legal_address", value)}
+            />
+          </TouchableOpacity>
+          
+          <View className='flex-row justify-between'>
+            <View>
+              <Text className='text-sm text-gray-400 mb-2'>City</Text>
+              <TouchableOpacity style={[styles.shadow, {width: 165}]} className='rounded-md mb-2'>
+                <TextInput
+                  className='border border-gray-300 rounded-md p-4 bg-white'
+                  placeholder="City"
+                  value={applyData.city}
+                  onChangeText={(value) => handleInputChange("city", value)}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View>
+              <Text className='text-sm text-gray-400 mb-2'>State / Province</Text>
+              <TouchableOpacity style={[styles.shadow, {width: 165}]} className='rounded-md mb-2'>
+                <TextInput
+                  className='border border-gray-300 rounded-md p-4 bg-white'
+                  placeholder="Province"
+                  value={applyData.province}
+                  onChangeText={(value) => handleInputChange("province", value)}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={{width: 165}} className='mb-4'>
+            <Text className='text-sm text-gray-400 mb-2'>Postal / Zip Code</Text>
+            <TextInput
+              className='border border-gray-300 rounded-md p-4 bg-white'
+              placeholder="Zip Code"
+              value={applyData.zipcode}
+              onChangeText={(value) => handleInputChange("zipcode", value)}
+            />
           </View>
 
           <View className='mb-4'>
-            <DropdownComponent setState={setFormData} data={data} placeholder={"City/Municipality"}/>
+            <Text className='flex-row justify-between mb-2'>
+              <Text className='text-sm text-gray-400 mb-2 w-full'>Business Location</Text>
+              <View className='flex-row gap-2 pl-4'>
+                <TouchableOpacity
+                  style={[styles.checkbox, applyData.same_business_address && styles.checked]}
+                  onPress={toggleBusinessAddress}
+                >
+                  {applyData.same_business_address && <Text style={styles.checkmark}>✔</Text>}
+                </TouchableOpacity>
+                <Text className='text-xs text-gray-400 mb-2'>Mark check if same with your address</Text>
+              </View>
+            </Text>
+            <TextInput
+              className='border border-gray-300 rounded-md p-4 bg-white'
+              placeholder="Business Location"
+              value={applyData.business_location}
+              onChangeText={(value) => handleInputChange("business_location", value)}
+            />
           </View>
 
-          <View className='mb-4'>
-            <DropdownComponent setState={setFormData} data={data} placeholder={"Barangay"}/>
+          <View className='flex-row justify-between'>
+            <View>
+              <Text className='text-sm text-gray-400 mb-2'>City</Text>
+              <TouchableOpacity style={[styles.shadow, {width: 165}]} className='rounded-md mb-2'>
+                <TextInput
+                  className='border border-gray-300 rounded-md p-4 bg-white'
+                  placeholder="City"
+                  value={applyData.city}
+                  onChangeText={(value) => handleInputChange("city", value)}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View>
+              <Text className='text-sm text-gray-400 mb-2'>State / Province</Text>
+              <TouchableOpacity style={[styles.shadow, {width: 165}]} className='rounded-md mb-2'>
+                <TextInput
+                  className='border border-gray-300 rounded-md p-4 bg-white'
+                  placeholder="Province"
+                  value={applyData.province}
+                  onChangeText={(value) => handleInputChange("province", value)}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
+          <View style={{width: 165}} className='mb-4'>
+            <Text className='text-sm text-gray-400 mb-2'>Postal / Zip Code</Text>
+            <TextInput
+              className='border border-gray-300 rounded-md p-4 bg-white'
+              placeholder="Zip Code"
+              value={applyData.zipcode}
+              onChangeText={(value) => handleInputChange("zipcode", value)}
+            />
+          </View>
+
+          
         </ScrollView>
 
         <View style={styles.footer}>
@@ -252,5 +336,13 @@ const styles = StyleSheet.create({
   footer: {
     marginTop: 20,
     alignItems: "center",
+  },
+  checked: {
+    backgroundColor: "#6200ea",
+    borderColor: "#6200ea",
+  },
+  checkmark: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });

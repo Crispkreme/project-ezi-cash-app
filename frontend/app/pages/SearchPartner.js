@@ -1,9 +1,10 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
+import React, { memo, useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
+import MapView, {Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 import { __gstyles__ } from "../globalStylesheet";
+import * as Location from 'expo-location';
 
 const SearchPartner = ({ route, navigation }) => {
   const { formData, search, key } = route.params;
@@ -26,22 +27,73 @@ const SearchPartner = ({ route, navigation }) => {
   },[key]);
 
   const handleConfirm = async () => {
-    // try {
-    //     const response = await fetch('http://192.168.1.33:3000/register', {
-    //         method: 'POST',
-    //         credentials: 'include',
-    //     }, formData);
-
-    //   alert("Details saved successfully!");
-    //   navigation.navigate("Home");
-
-    // } catch (error) {
-
-    //   console.error(error);
-    //   alert("Error saving details. Please try again.");
-    // }
     navigator.navigate("SetMPIN", { formData });
   };
+
+  const getLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+
+    if(status != 'granted') {
+      return;
+    }
+
+    const location = await Location.getCurrentPositionAsync({});
+    setCurMarker({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude
+    })
+    
+  }
+
+  const decodePolyline = (encoded) => {
+    let points = [];
+    let index = 0;
+    let len = encoded.length;
+    let lat = 0;
+    let lng = 0;
+
+    while (index < len) {
+      let b, shift = 0, result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      let dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      let dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
+      lng += dlng;
+
+      points.push({ latitude: lat / 1E5, longitude: lng / 1E5 });
+    }
+
+    return points;
+  };
+
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+
+  const getDirection = async () => {
+    if(curMarker.latitude === 0) getLocation();
+
+    const start = {lat: curMarker.latitude, lng: curMarker.longitude}
+    const end = {lat: 10.31423656557551, lng: 123.90543601653494}
+    const directionsApiUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&key=${process.env.google_maps_api_key}`;
+
+    const res = await fetch(directionsApiUrl);
+    const data = await res.json();
+
+    const route = data.routes[0];
+    const points = decodePolyline(route.overview_polyline.points);
+    setRouteCoordinates(points);
+  }
 
   const handleNext = () => {
     navigator.navigate("Partner", { formData,  partner: {name: "Nicole Ayessa Alcover", address: "79 Cabreros St Cebu City, Cebu", type: "Individual"}});
@@ -51,22 +103,27 @@ const SearchPartner = ({ route, navigation }) => {
     setMap(region);
   }
 
+  const [init, setInit] = useState(false);
   const [map, setMap] = useState({
     latitude: 10.31423656557551,
     longitude: 123.90543601653494,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
-  })
+  });
+  const [curMarker, setCurMarker] = useState({
+    latitude: 0, 
+    longitude: 0,
+  });
 
   useEffect(() => {
+    console.log("init");
     setMap({
       latitude: 10.31423656557551,
       longitude: 123.90543601653494,
       latitudeDelta: 0.0922,
       longitudeDelta: 0.0421,
     });
-    
-    console.log("Google Maps API Key:", process.env.google_maps_api_key);
+    setInit(true);
   },[]);
 
   return (
@@ -75,27 +132,48 @@ const SearchPartner = ({ route, navigation }) => {
       <ScrollView>
         {/* <Image source={require("../../public/image/sample-google-maps.png")}/> */}
         <View style={{flex: 1}}>
-          <MapView
-            style={{ flex: 1, height: 450, width:500 }}
-            initialRegion={{
-              latitude: 10.31423656557551,
-              longitude: 123.90543601653494,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
-            onRegionChange={onRegionChange}
-            provider={PROVIDER_GOOGLE}
-          >
-            <Marker 
-              pinColor="red" 
-              coordinate={{
-                longitude: 10.31423656557551, 
-                latitude: 123.90543601653494
-              }}
-              title="asdasd"
-              description="asdasd"
-            />
-          </MapView>
+          {
+            init ? (
+              <MapView
+                onMapReady={() => {
+                  console.log("Map is ready!");
+                  
+                }}
+                  style={{ flex: 1, height: 450, width:500 }}
+                  region={map}
+                  provider={PROVIDER_GOOGLE}
+                >
+                  <Marker 
+                    pinColor="red" 
+                    coordinate={{
+                      latitude: 10.31423656557551, 
+                      longitude: 123.90543601653494
+                    }}
+                    title="asdasd"
+                    description="asdasd"
+                  >
+                  </Marker>
+
+                  {
+                    curMarker.latitude !== 0 ? (
+                      <Marker 
+                        pinColor="red" 
+                        coordinate={curMarker}
+                        title="asdasd"
+                        description="asdasd"
+                      >
+                      </Marker>
+                    ) : (
+                      null
+                    )
+                  }
+
+                  <Polyline coordinates={routeCoordinates} strokeColor="#0000FF" strokeWidth={6} />
+                </MapView>
+            ) : (
+              <Text> Loading ... </Text>
+            )
+          }
         </View>
         <View style={styles.header}>
           <Text className='text-primary font-semibold text-xl pt-8'>eZiCash Partners Nearby</Text>
@@ -133,7 +211,7 @@ const SearchPartner = ({ route, navigation }) => {
           }}
         />
 
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={handleNext}>
+        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={getDirection}>
           <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
             <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
               <View style={styles.leftSection}>

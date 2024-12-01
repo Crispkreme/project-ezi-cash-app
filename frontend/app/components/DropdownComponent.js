@@ -32,6 +32,7 @@ import { __gstyles__ } from '../globalStylesheet';
           onChange={item => {
             setValue(item.value);
             setIsFocus(false);
+            setState(item.value);
           }}
           renderLeftIcon={() => (
             <AntDesign
