@@ -52,6 +52,9 @@ const Stack = createStackNavigator({
     },
     Main: {
       screen: Main,
+      options: {
+        header: () => null
+      }
       
     },
     RegisterOTP: {

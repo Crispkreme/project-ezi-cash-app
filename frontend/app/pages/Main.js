@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  Pressable
+  Pressable,
+  ImageBackground
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Logo from "../../public/svg/logo.jsx";
@@ -74,65 +75,67 @@ const Main = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ flex: 1 }} className="flex flex-col gap-4 h-full w-full p-4 bg-primary-bg">
-      <View style={styles.header}>
-        <Logo />
-        <Text style={styles.subHeaderText}>Enter mobile number to get started</Text>
-      </View>
+    <ImageBackground source={require("../../public/image/background.png")}>
+      <View style={{marginVertical: 200, height: 620, borderTopLeftRadius: 150}} contentContainerStyle={{ flex: 1 }} className="flex flex-col justify-between items-center gap-4 h-full w-full p-4 bg-primary-bg">
+        <View style={styles.head} className='justify-center mt-16 items-center'>
+          <Logo />
+          <Text style={styles.subHeaderText}>Enter mobile number to get started</Text>
+        </View>
 
-      <View style={styles.scrollContainer} className="px-8">
-        <TextInput
-          className="p-4 border-b border-black mb-4 text-lg"
-          placeholder="Enter your mobile number"
-          value={mobileNumber}
-          onChangeText={(text) => setMobileNumber(text)}
-          keyboardType="phone-pad"
-          maxLength={10}
-        />
-      </View>
+        <View style={styles.scrollContainer} className="px-8 pt-24">
+          <TextInput
+            className="p-4 border-b border-black mb-4 text-lg"
+            placeholder="Enter your mobile number"
+            value={mobileNumber}
+            onChangeText={(text) => setMobileNumber(text)}
+            keyboardType="phone-pad"
+            maxLength={10}
+          />
+        </View>
 
-      <View style={styles.footer} className="px-12">
-        <TouchableOpacity className="w-full py-4 mb-4 bg-primary rounded-xl" onPress={handleNext}>
-          <Text className="text-white font-semibold text-2xl text-center content-center">Next</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.footer} className="px-12">
+          <TouchableOpacity className="w-full py-4 mb-4 bg-primary rounded-xl" onPress={handleNext}>
+            <Text className="text-white font-semibold text-2xl text-center content-center">Next</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View className="px-8">
-        <Text className="text-sm text-center">
-          By tapping next, we will send you a One-Time Password (OTP) to your entered mobile number.
-        </Text>
-      </View>
+        <View className="px-8">
+          <Text className="text-sm text-center">
+            By tapping next, we will send you a One-Time Password (OTP) to your entered mobile number.
+          </Text>
+        </View>
 
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="fade"
-        statusBarTranslucent={true}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay} className="px-4">
-          <View className="w-full bg-white p-4 rounded-md items-center gap-4">
-            <Text className="font-bold text-base">Do you want to link this device to your account?</Text>
-            <Text className="text-sm p-2">
-              We need to perform a two-step authentication before linking this account to your device. We will send a
-              6-digit code to your mobile number.
-            </Text>
+        <Modal
+          visible={isModalVisible}
+          transparent={true}
+          animationType="fade"
+          statusBarTranslucent={true}
+          onRequestClose={() => setIsModalVisible(false)}
+        >
+          <View style={styles.modalOverlay} className="px-4">
+            <View className="w-full bg-white p-4 rounded-md items-center gap-4">
+              <Text className="font-bold text-base">Do you want to link this device to your account?</Text>
+              <Text className="text-sm p-2">
+                We need to perform a two-step authentication before linking this account to your device. We will send a
+                6-digit code to your mobile number.
+              </Text>
 
-            <View className="gap-4 px-4 mb-4">
-              <Pressable className="w-full bg-primary rounded-lg" onPress={handleConfirm}>
-                <Text className="p-4 text-center text-white font-bold">Send</Text>
-              </Pressable>
-              <Pressable
-                className="w-full p-4 border border-primary bg-white rounded-lg"
-                onPress={() => setIsModalVisible(false)}
-              >
-                <Text className="text-primary font-bold text-center">Cancel</Text>
-              </Pressable>
+              <View className="gap-4 px-4 mb-4">
+                <Pressable className="w-full bg-primary rounded-lg" onPress={handleConfirm}>
+                  <Text className="p-4 text-center text-white font-bold">Send</Text>
+                </Pressable>
+                <Pressable
+                  className="w-full p-4 border border-primary bg-white rounded-lg"
+                  onPress={() => setIsModalVisible(false)}
+                >
+                  <Text className="text-primary font-bold text-center">Cancel</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-    </ScrollView>
+        </Modal>
+      </View>
+    </ImageBackground>
   );
 }
 
