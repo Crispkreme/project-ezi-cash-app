@@ -1,8 +1,8 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput, Touchable } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
+import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import { __gstyles__ } from "../globalStylesheet";
 
 const GoToStore = ({ route }) => {
@@ -17,20 +17,6 @@ const GoToStore = ({ route }) => {
   });
 
   const handleConfirm = async () => {
-    // try {
-    //     const response = await fetch('http://192.168.1.33:3000/register', {
-    //         method: 'POST',
-    //         credentials: 'include',
-    //     }, formData);
-
-    //   alert("Details saved successfully!");
-    //   navigation.navigate("Home");
-
-    // } catch (error) {
-
-    //   console.error(error);
-    //   alert("Error saving details. Please try again.");
-    // }
     navigator.navigate("FinishTransaction", { formData, partner, payment });
   };
 
@@ -38,11 +24,64 @@ const GoToStore = ({ route }) => {
     alert(5);
   };
 
+  const onRegionChange = (region) => {
+    setMap(region);
+  }
+
+  const [init, setInit] = useState(false);
+  const [map, setMap] = useState({
+    latitude: 10.31423656557551,
+    longitude: 123.90543601653494,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  })
+
+  useEffect(() => {
+    console.log("init");
+    setMap({
+      latitude: 10.31423656557551,
+      longitude: 123.90543601653494,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    });
+    setInit(true);
+  },[]);
+
   return (
     <View style={styles.container}>
       
       <ScrollView>
-        <Image alt="cash in" source={require("../../public/image/go-to-store.png")}></Image>
+        <View style={{flex: 1}}>
+          {
+            init ? (
+              <MapView
+                onMapReady={() => {
+                  console.log("Map is ready!");
+                  
+                }}
+                  style={{ flex: 1, height: 450, width:500 }}
+                  region={map}
+                  provider={PROVIDER_GOOGLE}
+                >
+                  <Marker 
+                    pinColor="red" 
+                    coordinate={{
+                      latitude: 10.31423656557551, 
+                      longitude: 123.90543601653494
+                    }}
+                    title="asdasd"
+                    description="asdasd"
+                  >
+                    <View style={{flex: 1, height: 50, width: 50}}>
+                      <Image source={require("../../public/icn/pointer.png")}></Image>
+                    </View>
+                  </Marker>
+                </MapView>
+            ) : (
+              <Text>Loading...</Text>
+            )
+          }
+        </View>
 
         <View style={styles.header}>
           <Text className='text-primary text-left font-semibold text-xl pt-8'>Chat</Text>

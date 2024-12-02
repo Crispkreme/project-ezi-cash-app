@@ -53,7 +53,7 @@ const RegisterOTP = ({ route }) => {
 
   const handleResend = async () => {
     if (isOtpExpired) {
-      const response = await fetch("http://192.168.1.5:3000/otp", {
+      const response = await fetch(process.env.base_url + "/otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
