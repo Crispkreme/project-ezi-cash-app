@@ -35,6 +35,12 @@ import SuccessfulLink from './app/pages/confirmation/SuccessfulLink';
 import SuccessfulLinkHeader from './app/components/SuccessfulLinkHeader';
 import Profile from './app/pages/Profile';
 import EziCashPartnerApplication from './app/pages/ezicash/EziCashPartnerApplication';
+import PartnerDashboard from './app/pages/PartnerDashboard';
+import PartnerDashboardHeader from './app/components/PartnerDashboardHeader';
+import PartnerRequests from './app/pages/PartnerRequests';
+import PartnerTransactions from './app/pages/PartnerTransactions';
+import PartnerCommissionFeeStatements from './app/pages/PartnerCommissionFeeStatements';
+import PartnerSettledCommissions from './app/pages/PartnerSettledCommissions';
 
 const Stack = createStackNavigator({
   screens: {
@@ -124,6 +130,36 @@ const Stack = createStackNavigator({
       screen: Dashboard,
       options: {
         header: () => <DashboardHeader />
+      }
+    },
+    PartnerDashboard: {
+      screen: PartnerDashboard,
+      options: {
+        header: () => null
+      }
+    },
+    PartnerRequests: {
+      screen: PartnerRequests,
+      options: {
+        header: () => null
+      }
+    },
+    PartnerTransactions: {
+      screen: PartnerTransactions,
+      options: {
+        header: () => null
+      }
+    },
+    PartnerCommissionFeeStatements: {
+      screen: PartnerCommissionFeeStatements,
+      options: {
+        header: () => null
+      }
+    },
+    PartnerSettledCommissions: {
+      screen: PartnerSettledCommissions,
+      options: {
+        header: () => null
       }
     },
     Profile: {

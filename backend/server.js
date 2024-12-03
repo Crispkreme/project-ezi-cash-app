@@ -235,7 +235,7 @@ app.post("/login", async (req, res) => {
     
     if(result.length > 0) {
       const data = await getUserData(result[0].user_id);
-      return res.status(200).json({ message: 'Proceed to login', data: data });
+      return res.status(200).json({ message: 'Proceed to login', data: {...data, ...result[0]} });
     } else {
       return res.status(500).json({ message: 'MPIN is incorrect', data: -1 });
     }
