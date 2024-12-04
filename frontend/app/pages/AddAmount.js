@@ -16,9 +16,34 @@ const AddAmount = ({ route, navigation }) => {
   });
 
   const handleConfirm = async () => {
-    navigator.navigate("SearchPartner", { formData });
-  };
+    try {
+      const response = await fetch(`${process.env.base_url}/get-partners`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        const errorBody = await response.json();
+        alert(errorBody.message);
+        return;
+      }
+  
+      const body = await response.json();
 
+      navigator.navigate("SearchPartner", {
+        formData,
+        amount: state.amount,
+        store: body.data,
+      });
+
+    } catch (error) {
+      console.error("Error during handleConfirm:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
+  
   const handleNext = () => {
     alert(5);
   };

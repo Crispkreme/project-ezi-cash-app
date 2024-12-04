@@ -6,13 +6,12 @@ import AntDesign from "react-native-vector-icons/AntDesign";
 import { __gstyles__ } from "../globalStylesheet";
 
 const EWallet = ({ route, navigation }) => {
-  const { formData } = route.params;
-
+  const { formData } = route.params || {};
   const wLabels = {...formData};
   const navigator = useNavigation();
 
   const [state, setState] = useState({
-    linkedWallet: formData.user_phone_no,
+    linkedWallet: formData?.user_phone_no || "",
   });
 
   const handleConfirm = async () => {

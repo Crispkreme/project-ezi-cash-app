@@ -170,7 +170,6 @@ const getUserData = async (userId) => {
 }
 
 const otps = new Map();
-
 app.post('/otp', (req, res) => {
   const { mobileNumber } = req.body;
 
@@ -241,6 +240,38 @@ app.post("/login", async (req, res) => {
     }
   });
 })
+
+// get all partners
+app.get("/get-partners", async (req, res) => {
+  const query = `
+    SELECT 
+      CONCAT(ud.first_name, ' ', ud.middle_name, ' ', ud.last_name) AS store_name,
+      ud.city,
+      ud.barangay,
+      ud.province
+    FROM 
+      users_table AS ut
+    JOIN 
+      user_details AS ud
+    ON 
+      ut.user_id = ud.user_id
+    WHERE 
+      ut.partner_type = ?;
+    `;
+  const values = ["Store"];
+  
+  db.query(query, values, (err, result) => {
+    if (err) {
+      console.error("Database Error:", err);
+      return res.status(500).json({ message: "Error fetching partners." });
+    }
+    console.log("Result:", result);
+    res.status(200).json({ 
+      message: "Partners retrieved successfully", 
+      data: result 
+    });
+  });
+});
 
 // Start the server
 const PORT = 3000;
