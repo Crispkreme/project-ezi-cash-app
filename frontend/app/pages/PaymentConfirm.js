@@ -1,11 +1,8 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
 import { __gstyles__, colors } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
-import { AirbnbRating, Rating } from "react-native-ratings";
 
 const PaymentConfirm = ({ route, navigation }) => {
   const { formData, partner, payment, key } = route.params;
@@ -60,9 +57,9 @@ const PaymentConfirm = ({ route, navigation }) => {
             <View style={{justifyContent:'flex-end', alignItems: 'flex-end'}}>
               <View className='flex-row items-center gap-2'>
                 <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
-                <Text className='text-primary text-base text-primary'>{payment.bank}</Text>
+                <Text className=' text-base text-primary'>{payment.bank}</Text>
               </View>
-              <Text className='text-primary text-base text-primary'>{parseInt(payment.balance).toFixed(2)}</Text>
+              <Text className=' text-base text-primary'>{parseInt(payment.balance).toFixed(2)}</Text>
             </View>
           </View>
           

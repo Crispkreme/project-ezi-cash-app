@@ -6,7 +6,7 @@ import { __gstyles__ } from '../globalStylesheet';
 
   
 
-  const DropdownComponent = ({data, placeholder ,setState}) => {
+  const DropdownComponent = ({data, placeholder ,setState, formKey}) => {
     const [value, setValue] = useState(null);
     const [isFocus, setIsFocus] = useState(false);
 
@@ -30,9 +30,9 @@ import { __gstyles__ } from '../globalStylesheet';
           onFocus={() => setIsFocus(true)}
           onBlur={() => setIsFocus(false)}
           onChange={item => {
-            setValue(item.value);
+            setValue(item.value ? item.value : item.label);
             setIsFocus(false);
-            setState(item.value);
+            setState(prev => ({...prev, [formKey]: item.value ? item.value : item.label}))
           }}
           renderLeftIcon={() => (
             <AntDesign
