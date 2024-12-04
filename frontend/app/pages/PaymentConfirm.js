@@ -47,7 +47,7 @@ const PaymentConfirm = ({ route, navigation }) => {
       <View style={styles.container}>
         <View style={[__gstyles__.shadow, styles.card]} className='absolute w-full bg-primary-bg px-4 py-2 rounded-lg mb-4 border border-gray-300'>
           <View style={styles.header} className=' gap-2 w-full py-8 items-center justify-center self-center'>
-            <Text className='text-primary inline font-semibold text-xl'>{partner.name}</Text>
+            <Text className='text-primary inline font-semibold text-xl'>{partner.legal_name}</Text>
             <Text className='text-primary inline text-sm'>{partner.address}</Text>
           </View>
 

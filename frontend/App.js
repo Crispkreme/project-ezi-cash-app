@@ -41,6 +41,8 @@ import PartnerRequests from './app/pages/PartnerRequests';
 import PartnerTransactions from './app/pages/PartnerTransactions';
 import PartnerCommissionFeeStatements from './app/pages/PartnerCommissionFeeStatements';
 import PartnerSettledCommissions from './app/pages/PartnerSettledCommissions';
+import PartnerLocate from './app/pages/PartnerLocate';
+import PartnerServiceManagement from './app/pages/PartnerServiceManagement';
 
 const Stack = createStackNavigator({
   screens: {
@@ -158,6 +160,18 @@ const Stack = createStackNavigator({
     },
     PartnerSettledCommissions: {
       screen: PartnerSettledCommissions,
+      options: {
+        header: () => null
+      }
+    },
+    PartnerLocate: {
+      screen: PartnerLocate,
+      options: {
+        header: () => <HighHeader title="Locate" position={"high"}/>
+      }
+    },
+    PartnerServiceManagement: {
+      screen: PartnerServiceManagement,
       options: {
         header: () => null
       }

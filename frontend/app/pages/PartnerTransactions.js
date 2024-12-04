@@ -18,16 +18,24 @@ const PartnerTransactions = ({ route, navigation }) => {
     navigator.navigate("EWallet", {formData});
   };
 
-  const viewDashboard = () => {
-    navigator.navigate("PartnerDashboard", {formData});
-  }
-
   const viewProfile = () => {
     navigator.navigate("Profile", {formData});
   }
 
+  const viewDashboard = () => {
+    navigator.navigate("PartnerDashboard", {formData});
+  }
+
   const viewRequests = () => {
     navigator.navigate("PartnerRequests", {formData});
+  }
+
+  const viewTransactions = () => {
+    navigator.navigate("PartnerTransactions", {formData});
+  }
+  
+  const viewServiceManagement = () => {
+    navigator.navigate("PartnerServiceManagement", {formData});
   }
 
   return (
@@ -49,7 +57,7 @@ const PartnerTransactions = ({ route, navigation }) => {
         </View>
         
         <View className={`flex-row items-start gap-4 p-8`}>
-          <TouchableOpacity style={{maxWidth: 70}} >
+          <TouchableOpacity onPress={viewServiceManagement} style={{maxWidth: 70}} >
             <View style={{width: 70, height: 70}} className='bg-white p-2 rounded-xl justify-center items-center'>
               <Image source={require("../../public/icn/service-management-icn.png")}/>
             </View>
@@ -153,7 +161,7 @@ const PartnerTransactions = ({ route, navigation }) => {
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
           </TouchableOpacity>
 
-          <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
+          <View style={styles.footerBtnContainer} className='flex-start'  onPress={viewTransactions}>
             <Image alt="cash out" source={require("../../public/icn/transactions-icn.png")}></Image>
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Transactions</Text>
           </View>

@@ -22,6 +22,18 @@ const PartnerSettledCommissions = ({ route, navigation }) => {
     navigator.navigate("Profile", {formData});
   }
 
+  const viewDashboard = () => {
+    navigator.navigate("PartnerDashboard", {formData});
+  }
+
+  const viewRequests = () => {
+    navigator.navigate("PartnerRequests", {formData});
+  }
+
+  const viewTransactions = () => {
+    navigator.navigate("PartnerTransactions", {formData});
+  }
+
   return (
     <ImageBackground style={{flex: 1}} source={require("../../public/image/background.png")}>
       <View>
@@ -154,17 +166,17 @@ const PartnerSettledCommissions = ({ route, navigation }) => {
         </ScrollView>
         <View style={styles.footer} className='py-2 flex-row gap-4'>
           
-          <View style={styles.footerBtnContainer} className='relative' onPress={handleConfirm}>
+          <View style={styles.footerBtnContainer} className='relative' onPress={viewDashboard}>
             <Image className='' alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
           </View>
 
-          <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
+          <View style={styles.footerBtnContainer} className='flex-start'  onPress={viewTransactions}>
             <Image alt="cash out" source={require("../../public/icn/transactions-icn.png")}></Image>
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Transactions</Text>
           </View>
 
-          <View style={styles.footerBtnContainer} onPress={handleConfirm}>
+          <View style={styles.footerBtnContainer} onPress={viewRequests}>
             <Image alt="cash out" source={require("../../public/icn/settings-icn.png")}></Image>
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Requests</Text>
           </View>

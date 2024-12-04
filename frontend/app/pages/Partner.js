@@ -50,7 +50,7 @@ const Partner = ({ route, navigation }) => {
           <View>
             <Image alt="cash in"  source={require("../../public/icn/available-icn.png")}></Image>
           </View>
-          <Text className='text-primary inline font-semibold text-xl'>{partner.name}</Text>
+          <Text className='text-primary inline font-semibold text-xl'>{partner.legal_name}</Text>
         </View>
 
         <View style={[__gstyles__.shadow]} className='bg-primary-bg px-4 py-2 rounded-lg mb-4 border border-gray-300'>
@@ -82,7 +82,7 @@ const Partner = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Name</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>{partner.name}</Text>
+            <Text className='text-gray-400 text-base text-primary'>{partner.legal_name}</Text>
           </View>
         </View>
 
