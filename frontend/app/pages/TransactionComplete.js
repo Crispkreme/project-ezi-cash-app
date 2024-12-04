@@ -20,9 +20,11 @@ const TransactionComplete = ({ route, navigation }) => {
     accepted: false
   });
 
-  setTimeout(() => {
-    navigator.navigate("RatePartner", {formData, partner, payment});
-  },3000);
+  if(formData.partner_type === "") {
+    setTimeout(() => {
+      navigator.navigate("RatePartner", {formData, partner, payment});
+    },3000);
+  }
 
   return (
     <View style={{flex: 1}}>
@@ -43,7 +45,7 @@ const TransactionComplete = ({ route, navigation }) => {
               </View>
             </View>
             <View style={{justifyContent:'flex-end', alignItems: 'flex-end'}}>
-              <Text className='text-sm'>{partner.name}</Text>
+              <Text className='text-sm'>{partner.legal_name}</Text>
             </View>
           </View>
           

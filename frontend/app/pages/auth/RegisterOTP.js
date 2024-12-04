@@ -96,8 +96,10 @@ const RegisterOTP = ({ route }) => {
     }
 
     if (enteredOtp === backendOtpState.toString()) {
-      if (isLogin) {
+      if (isLogin && formData.partner_type === "") {
         navigation.navigate("Dashboard", {formData});
+      } else if(isLogin && formData.partner_type !== "") {
+        navigation.navigate("PartnerDashboard", {formData});
       } else {
         navigation.navigate("OpenAccount", { mobileNumber });
       }

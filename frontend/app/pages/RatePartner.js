@@ -27,15 +27,7 @@ const RatePartner = ({ route, navigation }) => {
 
     }
   },[key]);
-
-  const handleConfirm = async () => {
-    navigator.navigate("PaymentConfirm", { formData, partner, payment: {type: "E-wallet", balance: 0, service: "Cash In", amount: 500, bank: "Paypal"} });
-  };
-
-  const handleNext = () => {
-    navigator.navigate("Partner", { formData,  partner});
-  };
-
+  
   return (
     <View style={{flex: 1}}>
       <View className='items-center'>
@@ -53,7 +45,7 @@ const RatePartner = ({ route, navigation }) => {
             </View>
           </View>
           <View style={{justifyContent:'flex-end', alignItems: 'flex-end'}}>
-            <Text className='text-sm'>{partner.name}</Text>
+            <Text className='text-sm'>{partner.legal_name}</Text>
           </View>
         </View>
 
