@@ -6,7 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Platform,
+  Platform
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
@@ -15,13 +15,16 @@ import DropdownComponent from "../../components/DropdownComponent";
 const RegisterAccount = ({route}) => {
   const navigation = useNavigation();
   const {mobileNumber} = route.params || {};
+
+  const [filteredCities, setFilteredCities] = useState([]);
+  const [filteredBarangays, setFilteredBarangays] = useState([]);
   const [formData, setFormData] = useState({
     user_phone_no: mobileNumber,
-    first_name: "John",
-    middle_name: "Sample",
-    last_name: "Doe",
-    birthdate: new Date(), // Default to the current date
-    email: "johndoe@gmail.com",
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    birthdate: new Date(),
+    email: "",
     nationality: "Nationality",
     main_source: "Main Source of Funds",
     province: "Province",
@@ -31,15 +34,36 @@ const RegisterAccount = ({route}) => {
     HasNoMiddleName: false,
   });
 
-  const data = [
-    { label: 'Item 1', value: '1' },
-    { label: 'Item 2', value: '2' },
-    { label: 'Item 3', value: '3' },
-    { label: 'Item 4', value: '4' },
-    { label: 'Item 5', value: '5' },
-    { label: 'Item 6', value: '6' },
-    { label: 'Item 7', value: '7' },
-    { label: 'Item 8', value: '8' },
+  const provinces = [
+    {
+      province: "Cebu",
+      city: [
+        {
+          city: "Cebu City (Capital)",
+          barangay: [
+            { barangay: "Adlawon", zipcode: 6000 },
+            { barangay: "Agsungot", zipcode: 6000 },
+            { barangay: "Apas", zipcode: 6000 },
+          ],
+        },
+        {
+          city: "Lapu-Lapu City",
+          barangay: [
+            { barangay: "Pajo", zipcode: 6015 },
+            { barangay: "Marigondon", zipcode: 6015 },
+            { barangay: "Gun-ob", zipcode: 6015 },
+          ],
+        },
+        {
+          city: "Mandaue City",
+          barangay: [
+            { barangay: "Bakilid", zipcode: 6014 },
+            { barangay: "Banilad", zipcode: 6014 },
+            { barangay: "Basak", zipcode: 6014 },
+          ],
+        },
+      ],
+    },
   ];
 
   const nationality = [
@@ -70,16 +94,64 @@ const RegisterAccount = ({route}) => {
   };
 
   // Handle Date Picker Change
+  const handleNationalityChange = (value) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      nationality: value,
+    }));
+  };
+  const handleFundSourceChange = (value) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      main_source: value,
+    }));
+  };
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
       setFormData({ ...formData, birthdate: selectedDate });
     }
   };
+  const handleProvinceChange = (value) => {
+    const selectedProvince = provinces.find((prov) => prov.province === value);
+    setFormData({
+      ...formData,
+      province: value,
+      city: "City/Municipality",
+      barangay: "Barangay",
+      zipcode: "",
+    });
+    setFilteredCities(selectedProvince ? selectedProvince.city : []);
+    setFilteredBarangays([]);
+  };
+  const handleCityChange = (value) => {
+    const selectedCity = filteredCities.find((city) => city.city === value);
+    setFormData({
+      ...formData,
+      city: value,
+      barangay: "Barangay",
+      zipcode: "",
+    });
+    setFilteredBarangays(selectedCity ? selectedCity.barangay : []);
+  };
+  const handleBarangayChange = (value) => {
+    const selectedBarangay = filteredBarangays.find(
+      (brgy) => brgy.barangay === value
+    );
+    setFormData({
+      ...formData,
+      barangay: value,
+      zipcode: selectedBarangay ? selectedBarangay.zipcode.toString() : "",
+    });
+  };
 
   // Navigate to ConfirmAccount
   const handleNext = () => {
     navigation.navigate("ConfirmAccount", { formData: {...formData, birthdate: formData.birthdate.toLocaleDateString()} });
+  };
+
+  const handleDropdownFocus = () => {
+    setShowDatePicker(false);
   };
 
   return (
@@ -135,10 +207,9 @@ const RegisterAccount = ({route}) => {
           />
         </TouchableOpacity>
         <Text className='text-sm text-gray-400 mb-2'>Don't use business or nicknames.</Text>
-
-        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.shadow} className='rounded-md mb-2'>
-          <Text className='border border-gray-300 rounded-md p-4 bg-white'>
-          {formData.birthdate
+        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.shadow} className="rounded-md mb-2">
+          <Text className="border border-gray-300 rounded-md p-4 bg-white">
+            {formData.birthdate
               ? formData.birthdate.toDateString()
               : "Select Birthdate"}
           </Text>
@@ -163,12 +234,21 @@ const RegisterAccount = ({route}) => {
         </TouchableOpacity>
         <Text className='text-sm text-gray-400 mb-2'>Don't use business or nicknames.</Text>
 
-        <View className='mb-4'>
-          <DropdownComponent setState={setFormData} data={nationality} placeholder={"Nationality"}/>
+        <View className="mb-4">
+          <DropdownComponent
+            setState={handleNationalityChange}
+            data={nationality}
+            placeholder="Nationality"
+          />
         </View>
 
-        <View className='mb-4'>
-          <DropdownComponent setState={setFormData} data={fundSource} placeholder={"Main Source of Funds"}/>
+        <View className="mb-4">
+          <DropdownComponent
+            setState={handleFundSourceChange}
+            data={fundSource}
+            placeholder="Main Source of Funds"
+            onFocus={() => setShowDatePicker(false)}
+          />
         </View>
 
         <View>
@@ -176,15 +256,38 @@ const RegisterAccount = ({route}) => {
         </View>
         
         <View className='mb-4'>
-          <DropdownComponent setState={setFormData} data={data} placeholder={"Province"}/>
+          <DropdownComponent
+            setState={(value) => handleProvinceChange(value)}
+            data={provinces.map((prov) => ({
+              value: prov.province,
+              label: prov.province,
+            }))}
+            placeholder={"Select Province"}
+          />
         </View>
 
         <View className='mb-4'>
-          <DropdownComponent setState={setFormData} data={data} placeholder={"City/Municipality"}/>
+          <DropdownComponent
+            setState={(value) => handleCityChange(value)}
+            data={filteredCities.map((city) => ({
+              value: city.city,
+              label: city.city,
+            }))}
+            placeholder={"Select City/Municipality"}
+            disabled={filteredCities.length === 0}
+          />
         </View>
 
         <View className='mb-4'>
-          <DropdownComponent setState={setFormData} data={data} placeholder={"Barangay"}/>
+          <DropdownComponent
+            setState={(value) => handleBarangayChange(value)}
+            data={filteredBarangays.map((brgy) => ({
+              value: brgy.barangay,
+              label: brgy.barangay,
+            }))}
+            placeholder={"Select Barangay"}
+            disabled={filteredBarangays.length === 0}
+          />
         </View>
 
         <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
@@ -192,6 +295,7 @@ const RegisterAccount = ({route}) => {
             className='border border-gray-300 rounded-md p-4 bg-white'
             placeholder="Zipcode"
             value={formData.zipcode}
+            editable={false}
             onChangeText={(value) => handleInputChange("zipcode", value)}
           />
         </TouchableOpacity>
