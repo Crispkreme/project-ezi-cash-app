@@ -27,9 +27,9 @@ const RegisterAccount = ({route}) => {
     email: "",
     nationality: "Nationality",
     main_source: "Main Source of Funds",
-    province: "Province",
+    province: "",
     city: "City/Municipality",
-    barangay: "Barangay",
+    barangay: "",
     zipcode: "",
     HasNoMiddleName: false,
   });
@@ -73,7 +73,6 @@ const RegisterAccount = ({route}) => {
   const fundSource = [
     { label: 'Job', value: 'Job' },
     { label: 'Allowance', value: 'Allowance' },
-    
   ]
 
   // State for date picker visibility
