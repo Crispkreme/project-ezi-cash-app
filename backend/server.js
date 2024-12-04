@@ -173,7 +173,7 @@ const otps = new Map();
 
 app.post('/otp', (req, res) => {
   const { mobileNumber } = req.body;
-  console.log(mobileNumber);
+
   if (!mobileNumber) {
     return res.status(400).json({ error: 'Mobile number is required' });
   }
@@ -247,5 +247,3 @@ const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-

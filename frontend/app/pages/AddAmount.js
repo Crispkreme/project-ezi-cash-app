@@ -2,7 +2,6 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
 import { __gstyles__ } from "../globalStylesheet";
 
 const AddAmount = ({ route, navigation }) => {
@@ -12,7 +11,7 @@ const AddAmount = ({ route, navigation }) => {
   const navigator = useNavigation();
 
   const [state, setState] = useState({
-    linkedWallet: '09222222',
+    linkedWallet: formData.user_phone_no,
     amount: 0
   });
 
@@ -39,7 +38,7 @@ const AddAmount = ({ route, navigation }) => {
               <View style={styles.leftSection}>
                 <Text className='font-semibold text-lg text-primary'>Home</Text>
                 <Text className='text-sm text-primary'>
-                    32-5H Cabreros St.,  Basak San Nicolas
+                  32-5H Cabreros St., {formData.barangay}, {formData.city},
                 </Text>
               </View>
             </View>
