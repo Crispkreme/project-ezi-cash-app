@@ -1,11 +1,8 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
 import { __gstyles__, colors } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
-import { AirbnbRating, Rating } from "react-native-ratings";
 
 const PaymentConfirm = ({ route, navigation }) => {
   const { formData, partner, payment, key } = route.params;
@@ -47,7 +44,7 @@ const PaymentConfirm = ({ route, navigation }) => {
       <View style={styles.container}>
         <View style={[__gstyles__.shadow, styles.card]} className='absolute w-full bg-primary-bg px-4 py-2 rounded-lg mb-4 border border-gray-300'>
           <View style={styles.header} className=' gap-2 w-full py-8 items-center justify-center self-center'>
-            <Text className='text-primary inline font-semibold text-xl'>{partner.name}</Text>
+            <Text className='text-primary inline font-semibold text-xl'>{partner.legal_name}</Text>
             <Text className='text-primary inline text-sm'>{partner.address}</Text>
           </View>
 
@@ -60,9 +57,9 @@ const PaymentConfirm = ({ route, navigation }) => {
             <View style={{justifyContent:'flex-end', alignItems: 'flex-end'}}>
               <View className='flex-row items-center gap-2'>
                 <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
-                <Text className='text-primary text-base text-primary'>{payment.bank}</Text>
+                <Text className=' text-base text-primary'>{payment.bank}</Text>
               </View>
-              <Text className='text-primary text-base text-primary'>{parseInt(payment.balance).toFixed(2)}</Text>
+              <Text className=' text-base text-primary'>{parseInt(payment.balance).toFixed(2)}</Text>
             </View>
           </View>
           

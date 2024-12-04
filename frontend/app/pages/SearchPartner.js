@@ -96,7 +96,7 @@ const SearchPartner = ({ route, navigation }) => {
   }
 
   const handleNext = () => {
-    navigator.navigate("Partner", { formData,  partner: {name: "Nicole Ayessa Alcover", address: "79 Cabreros St Cebu City, Cebu", type: "Individual"}});
+    navigator.navigate("Partner", { formData,  partner: {legal_name: "Nicole Ayessa Alcover", address: "79 Cabreros St Cebu City, Cebu", type: "Individual"}});
   };
 
   const onRegionChange = (region) => {
