@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
@@ -5,7 +6,15 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const axios = require("axios");
 const cookieParser = require('cookie-parser');
+const paypal = require('paypal-rest-sdk');
+
 const app = express();
+
+paypal.configure({
+  'mode': process.env.PAYPAL_MODE,
+  'client_id': process.env.PAYPAL_SANDBOX_CLIENT_ID,
+  'client_secret': process.env.PAYPAL_SANDBOX_CLIENT_SECRET,
+});
 
 // Middleware
 app.use(bodyParser.json());
@@ -205,7 +214,7 @@ app.post('/otp', (req, res) => {
 });
 
 app.get("/check-phone", async (req, res) => {
-
+  console.log('here');
   const {phone} = req.query || {};
   
   db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", phone, 
@@ -248,7 +257,8 @@ app.get("/get-partners", async (req, res) => {
       CONCAT(ud.first_name, ' ', ud.middle_name, ' ', ud.last_name) AS store_name,
       ud.city,
       ud.barangay,
-      ud.province
+      ud.province,
+      ut.partner_type
     FROM 
       users_table AS ut
     JOIN 
@@ -272,6 +282,9 @@ app.get("/get-partners", async (req, res) => {
     });
   });
 });
+
+// paypal functionality
+
 
 // Start the server
 const PORT = 3000;

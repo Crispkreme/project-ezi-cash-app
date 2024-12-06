@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
-import { __gstyles__, colors } from "../globalStylesheet";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { __gstyles__ } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
 
 const PaymentConfirm = ({ route, navigation }) => {
@@ -78,7 +78,7 @@ const PaymentConfirm = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Amount</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>{parseInt(payment.amount).toFixed(2)}</Text>
+            <Text className='text-gray-400 text-base text-primary'>{parseFloat(payment.amount).toFixed(2)}</Text>
           </View>
 
           <View style={{justifyContent: 'space-between'}} className='flex-row items-center py-2 px-4'>
@@ -105,7 +105,9 @@ const PaymentConfirm = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Total Amount to Pay</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>15.00</Text>
+            <Text className='text-gray-400 text-base text-primary'>{(
+              parseFloat(payment.amount) + parseFloat(15.0)).toFixed(2)}
+            </Text>
           </View>
         </View>
         <View className='w-full absolute bottom-0'>

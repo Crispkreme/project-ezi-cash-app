@@ -99,8 +99,16 @@ const SearchPartner = ({ route, navigation }) => {
     setRouteCoordinates(points);
   }
 
-  const handleNext = () => {
-    navigator.navigate("Partner", { formData,  partner: {legal_name: "Nicole Ayessa Alcover", address: "79 Cabreros St Cebu City, Cebu", type: "Individual"}});
+  const handlePress = (item) => {
+    navigator.navigate("Partner", {
+      formData,
+      partner: {
+        amount,
+        legal_name: item.store_name,
+        address: `79 Cabreros St ${item.barangay}, ${item.city}`,
+        type: item.partner_type,
+      },
+    });
   };
 
   const onRegionChange = (region) => {
@@ -189,7 +197,7 @@ const SearchPartner = ({ route, navigation }) => {
               <TouchableOpacity
                 style={[__gstyles__.shadow]}
                 className="bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300"
-                onPress={() => handlePress(item.store_name)}
+                onPress={() => handlePress(item)}
               >
                 <View
                   style={{ justifyContent: "space-between" }}

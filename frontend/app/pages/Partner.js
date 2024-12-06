@@ -1,11 +1,9 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
-import { __gstyles__, colors } from "../globalStylesheet";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { __gstyles__ } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
-import { AirbnbRating, Rating } from "react-native-ratings";
+import { Rating } from "react-native-ratings";
 
 const Partner = ({ route, navigation }) => {
   const { formData, search, key, partner } = route.params;
@@ -29,7 +27,17 @@ const Partner = ({ route, navigation }) => {
   },[key]);
 
   const handleConfirm = async () => {
-    navigator.navigate("PaymentConfirm", { formData, partner, payment: {type: "E-wallet", balance: 0, service: "Cash In", amount: 500, bank: "Paypal"} });
+    navigator.navigate("PaymentConfirm", {
+      formData,
+      partner,
+      payment: {
+        type: "E-wallet",
+        balance: 0,
+        service: "Cash In",
+        amount: partner.amount,
+        bank: "Paypal",
+      },
+    });
   };
 
   const handleNext = () => {

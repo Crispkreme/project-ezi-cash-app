@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import {
   View,
-  Text,
-  ScrollView,
-  TextInput,
+  Text, TextInput,
   TouchableOpacity,
   StyleSheet,
   Modal,
