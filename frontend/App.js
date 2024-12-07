@@ -1,5 +1,5 @@
 import React from 'react';
-import { createStaticNavigation, Link, NavigationContainer } from '@react-navigation/native';
+import { createStaticNavigation } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Main from './app/pages/Main';
 import RegisterOTP from './app/pages/auth/RegisterOTP';
@@ -18,6 +18,7 @@ import SearchPartner from './app/pages/SearchPartner';
 import SearchHeader from './app/components/SearchHeader';
 import Partner from './app/pages/Partner';
 import PaymentConfirm from './app/pages/PaymentConfirm';
+import PayPalWebView from './app/pages/PayPalWebView';
 import WaitingApproval from './app/pages/confirmation/WaitingApproval';
 import PaymentConfirmationHeader from './app/components/PaymentConfirmationHeader';
 import Approved from './app/pages/confirmation/Approved';
@@ -36,7 +37,6 @@ import SuccessfulLinkHeader from './app/components/SuccessfulLinkHeader';
 import Profile from './app/pages/Profile';
 import EziCashPartnerApplication from './app/pages/ezicash/EziCashPartnerApplication';
 import PartnerDashboard from './app/pages/PartnerDashboard';
-import PartnerDashboardHeader from './app/components/PartnerDashboardHeader';
 import PartnerRequests from './app/pages/PartnerRequests';
 import PartnerTransactions from './app/pages/PartnerTransactions';
 import PartnerCommissionFeeStatements from './app/pages/PartnerCommissionFeeStatements';
@@ -208,6 +208,12 @@ const Stack = createStackNavigator({
     },
     PaymentConfirm: {
       screen: PaymentConfirm,
+      options: {
+        header: () => null
+      }
+    },
+    PayPalWebView: {
+      screen: PayPalWebView,
       options: {
         header: () => null
       }
