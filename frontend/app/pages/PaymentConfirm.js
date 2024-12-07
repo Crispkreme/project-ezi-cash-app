@@ -27,9 +27,48 @@ const PaymentConfirm = ({ route, navigation }) => {
   },[key]);
 
   const handleConfirm = async () => {
-    navigator.navigate("WaitingApproval", { formData, partner, payment });
-  };
+    try {
+      const payload = {
+        ...formData,
+        payment: {
+          type: "E-wallet",
+          balance: 0,
+          service: "Cash In",
+          amount: partner.amount,
+          total_amount: partner.amount + 15,
+          bank: "Paypal",
+        },
+      };
+  
+      const response = await fetch(`${process.env.base_url}/paypal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      const body = await response.json();
+  
+      if (!response.ok) {
+        alert(body.message || "Failed to process payment.");
+        return;
+      }
+  
+      const { approvalUrl } = body;
+  
+      if (approvalUrl) {
+        navigator.navigate("PayPalWebView", { uri: approvalUrl });
+      } else {
+        alert("Approval URL not found in the server response.");
+      }
 
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
+    
   const handleNext = () => {
     navigator.navigate("Partner", { formData,  partner: {name: "Nicole Ayessa Alcover"}});
   };
@@ -130,7 +169,6 @@ const PaymentConfirm = ({ route, navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
-
       </View>
     </View>
   );

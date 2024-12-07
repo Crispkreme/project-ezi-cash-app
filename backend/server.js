@@ -1,25 +1,25 @@
-require('dotenv').config();
+// require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const axios = require("axios");
 const cookieParser = require('cookie-parser');
 const paypal = require('paypal-rest-sdk');
 
 const app = express();
 
 paypal.configure({
-  'mode': process.env.PAYPAL_MODE,
-  'client_id': process.env.PAYPAL_SANDBOX_CLIENT_ID,
-  'client_secret': process.env.PAYPAL_SANDBOX_CLIENT_SECRET,
+  'mode': 'sandbox',
+  'client_id': 'AVTKCXUCj4hRObJfEaJr2nt4n_s6ouEAXsNqTZZnQbcfuTIirbm9ob4465jHqqSE1cIfVmG8LSilOwqn',
+  'client_secret': 'EE34NfgcLZ4f6SEdo7fCz4AuFIDNLA32IKulXzAY8wR-U4KMIgxQuXzqtgXA3W9GmrlJTTfp0mw8DauW',
 });
 
 // Middleware
 app.use(bodyParser.json());
 app.use(cors({ origin: '*' }));
 app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Set up MySQL connection
 const db = mysql.createConnection({
@@ -214,7 +214,6 @@ app.post('/otp', (req, res) => {
 });
 
 app.get("/check-phone", async (req, res) => {
-  console.log('here');
   const {phone} = req.query || {};
   
   db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", phone, 
@@ -284,7 +283,87 @@ app.get("/get-partners", async (req, res) => {
 });
 
 // paypal functionality
+app.post('/paypal', (req, res) => {
+  const create_payment_json = {
+    intent: 'sale',
+    payer: {
+      payment_method: 'paypal',
+    },
+    redirect_urls: {
+      return_url: 'http://192.168.1.24:3000/success',
+      cancel_url: 'http://192.168.1.24:3000/cancel',
+    },
+    transactions: [
+      {
+        item_list: {
+          items: [
+            {
+              name: 'Red Hat',
+              sku: '001',
+              price: '100.00',
+              currency: 'USD',
+              quantity: 1,
+            },
+          ],
+        },
+        amount: {
+          currency: 'USD',
+          total: '100.00',
+        },
+        description: 'Hat for the best team ever',
+      },
+    ],
+  };
 
+  paypal.payment.create(create_payment_json, (error, payment) => {
+
+    if (error) {
+      console.error('PayPal API Error:', error.response || error);
+      return res.status(500).send('Error creating PayPal payment.');
+    }
+
+    const approvalUrl = payment.links.find(link => link.rel === 'approval_url');
+    if (approvalUrl) {
+      // console.log('PayPal Approve URL:', approvalUrl.href);
+      // res.redirect(approvalUrl.href);
+      res.json({ approvalUrl: approvalUrl.href });
+    } else {
+      res.status(500).send('Approval URL not found.');
+    }
+  });
+});
+app.post('/success', (req, res) => {
+  
+  const payerId = req.query.PayerID;
+  const paymentId = req.query.paymentId;
+
+  if (!payerId || !paymentId) {
+    return res.status(400).send('Payment information is missing.');
+  }
+
+  const execute_payment_json = {
+    payer_id: payerId,
+    transactions: [
+      {
+        amount: {
+          currency: 'USD',
+          total: '100.00',
+        },
+      },
+    ],
+  };
+
+  paypal.payment.execute(paymentId, execute_payment_json, (error, payment) => {
+    if (error) {
+      console.error('PayPal Execution Error:', error.response || error);
+      return res.status(500).send('Error executing PayPal payment.');
+    }
+    console.log('Payment executed successfully:', payment);
+    res.sendFile(path.join(__dirname, 'success.html'));
+  });
+  
+});
+app.get('/cancel', (req, res) => res.send('Payment was cancelled.'));
 
 // Start the server
 const PORT = 3000;
