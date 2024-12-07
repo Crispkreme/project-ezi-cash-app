@@ -11,8 +11,8 @@ const app = express();
 
 paypal.configure({
   'mode': 'sandbox',
-  'client_id': 'AVTKCXUCj4hRObJfEaJr2nt4n_s6ouEAXsNqTZZnQbcfuTIirbm9ob4465jHqqSE1cIfVmG8LSilOwqn',
-  'client_secret': 'EE34NfgcLZ4f6SEdo7fCz4AuFIDNLA32IKulXzAY8wR-U4KMIgxQuXzqtgXA3W9GmrlJTTfp0mw8DauW',
+  'client_id': 'AWRQNwYAQWpS59fjvbtupQcCKxvLIfvywjgKWpI3e_J-cvQg9yIOGW7-1DPOzIqxBsAUi-zU0r0L12B7',
+  'client_secret': 'EG5czQetmcA7JlD2n04wivNvuX7xLxoEO2AYcbPfJfQWiZmQilfBvaCOCgbVkngxh8F309q4ht_o3oiO',
 });
 
 // Middleware
@@ -321,11 +321,9 @@ app.post('/paypal', (req, res) => {
       console.error('PayPal API Error:', error.response || error);
       return res.status(500).send('Error creating PayPal payment.');
     }
-
+    console.log("payment", payment);
     const approvalUrl = payment.links.find(link => link.rel === 'approval_url');
     if (approvalUrl) {
-      // console.log('PayPal Approve URL:', approvalUrl.href);
-      // res.redirect(approvalUrl.href);
       res.json({ approvalUrl: approvalUrl.href });
     } else {
       res.status(500).send('Approval URL not found.');
@@ -333,16 +331,16 @@ app.post('/paypal', (req, res) => {
   });
 });
 app.post('/success', (req, res) => {
-  
-  const payerId = req.query.PayerID;
-  const paymentId = req.query.paymentId;
+  const { PayerID, paymentId } = req.query;
+  console.log("Incoming request - PayerID:", PayerID, "PaymentID:", paymentId);
 
-  if (!payerId || !paymentId) {
-    return res.status(400).send('Payment information is missing.');
+  if (!PayerID || !paymentId) {
+    console.error("Missing payment information");
+    return res.status(400).json({ message: 'Payment information is missing.' });
   }
 
   const execute_payment_json = {
-    payer_id: payerId,
+    payer_id: PayerID,
     transactions: [
       {
         amount: {
@@ -356,13 +354,17 @@ app.post('/success', (req, res) => {
   paypal.payment.execute(paymentId, execute_payment_json, (error, payment) => {
     if (error) {
       console.error('PayPal Execution Error:', error.response || error);
-      return res.status(500).send('Error executing PayPal payment.');
+      return res.status(500).json({ message: 'Error executing PayPal payment.', error: error.response || error });
     }
+
     console.log('Payment executed successfully:', payment);
-    res.sendFile(path.join(__dirname, 'success.html'));
+    res.json({
+      message: 'Payment executed successfully.',
+      payment,
+    });
   });
-  
 });
+
 app.get('/cancel', (req, res) => res.send('Payment was cancelled.'));
 
 // Start the server
