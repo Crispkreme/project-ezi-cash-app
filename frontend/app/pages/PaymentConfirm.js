@@ -34,21 +34,22 @@ const PaymentConfirm = ({ route, navigation }) => {
           type: "E-wallet",
           balance: 0,
           service: "Cash In",
-          amount: partner.amount,
-          total_amount: partner.amount + 15,
+          amount: parseFloat(partner.amount).toFixed(2),
+          total_amount: (parseFloat(partner.amount) + 15).toFixed(2),
           bank: "Paypal",
+          store_id: partner.store_id,
+          legal_name: partner.legal_name,
         },
       };
   
       const response = await fetch(`${process.env.base_url}/paypal`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
   
       const body = await response.json();
+      console.log('Server Response:', body);
   
       if (!response.ok) {
         alert(body.message || "Failed to process payment.");
@@ -58,17 +59,16 @@ const PaymentConfirm = ({ route, navigation }) => {
       const { approvalUrl } = body;
   
       if (approvalUrl) {
-        navigator.navigate("PayPalWebView", { uri: approvalUrl });
+        navigator.navigate("PayPalWebView", { uri: approvalUrl, data: body });
       } else {
         alert("Approval URL not found in the server response.");
       }
-
     } catch (error) {
       console.error("Error:", error);
       alert("An error occurred. Please try again.");
     }
   };
-    
+  
   const handleNext = () => {
     navigator.navigate("Partner", { formData,  partner: {name: "Nicole Ayessa Alcover"}});
   };

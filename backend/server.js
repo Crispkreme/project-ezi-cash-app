@@ -116,7 +116,6 @@ app.post('/register', async (req, res) => {
               INSERT INTO user_details 
               (first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, user_id, created_at, updated_at) 
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-
             `;
 
             // Execute query
@@ -257,7 +256,8 @@ app.get("/get-partners", async (req, res) => {
       ud.city,
       ud.barangay,
       ud.province,
-      ut.partner_type
+      ut.partner_type,
+      ut.user_id AS store_id
     FROM 
       users_table AS ut
     JOIN 
@@ -284,6 +284,8 @@ app.get("/get-partners", async (req, res) => {
 
 // paypal functionality
 app.post('/paypal', (req, res) => {
+  const { first_name, middle_name, last_name, payment: { service, total_amount }} = req.body;
+
   const create_payment_json = {
     intent: 'sale',
     payer: {
@@ -298,9 +300,9 @@ app.post('/paypal', (req, res) => {
         item_list: {
           items: [
             {
-              name: 'Red Hat',
+              name: service,
               sku: '001',
-              price: '100.00',
+              price: parseFloat(total_amount).toFixed(2),
               currency: 'USD',
               quantity: 1,
             },
@@ -308,35 +310,44 @@ app.post('/paypal', (req, res) => {
         },
         amount: {
           currency: 'USD',
-          total: '100.00',
+          total: parseFloat(total_amount).toFixed(2),
         },
-        description: 'Hat for the best team ever',
+        description: `${first_name} ${middle_name} ${last_name} has ${service} with a total amount of $${parseFloat(total_amount).toFixed(2)}`,
       },
     ],
   };
 
   paypal.payment.create(create_payment_json, (error, payment) => {
-
     if (error) {
       console.error('PayPal API Error:', error.response || error);
       return res.status(500).send('Error creating PayPal payment.');
     }
-    console.log("payment", payment);
-    const approvalUrl = payment.links.find(link => link.rel === 'approval_url');
+
+    const approvalUrl = payment.links.find((link) => link.rel === 'approval_url');
     if (approvalUrl) {
-      res.json({ approvalUrl: approvalUrl.href });
+      res.json({
+        approvalUrl: approvalUrl.href,
+        body: req.body,
+      });
     } else {
       res.status(500).send('Approval URL not found.');
     }
   });
 });
+
 app.post('/success', (req, res) => {
-  const { PayerID, paymentId } = req.query;
-  console.log("Incoming request - PayerID:", PayerID, "PaymentID:", paymentId);
+  const { PayerID, paymentId, data } = req.body;
 
   if (!PayerID || !paymentId) {
     console.error("Missing payment information");
     return res.status(400).json({ message: 'Payment information is missing.' });
+  }
+
+  const payment = data?.body?.payment;
+
+  if (!payment || typeof payment.total_amount === 'undefined') {
+    console.error("Invalid data or payment structure:", data);
+    return res.status(400).json({ message: 'Payment data is missing or malformed.' });
   }
 
   const execute_payment_json = {
@@ -345,22 +356,61 @@ app.post('/success', (req, res) => {
       {
         amount: {
           currency: 'USD',
-          total: '100.00',
+          total: payment.total_amount,
         },
       },
     ],
   };
 
-  paypal.payment.execute(paymentId, execute_payment_json, (error, payment) => {
+  paypal.payment.execute(paymentId, execute_payment_json, (error, paymentResult) => {
     if (error) {
       console.error('PayPal Execution Error:', error.response || error);
       return res.status(500).json({ message: 'Error executing PayPal payment.', error: error.response || error });
     }
 
-    console.log('Payment executed successfully:', payment);
-    res.json({
-      message: 'Payment executed successfully.',
-      payment,
+    const { store_id, type, bank, service, amount, total_amount, balance } = payment;
+    const individual_id = data.body.user_id;
+    const createdAt = new Date().toISOString();
+    const updatedAt = createdAt;
+
+    const query1 = `
+      INSERT INTO transactions 
+      (store_id, individual_id, type, bank, service, amount, total_amount, balance, payer_id, payment_id, updated_at, created_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values1 = [ store_id, individual_id, type, bank, service, amount, total_amount, balance, PayerID, paymentId, updatedAt, createdAt ];
+
+    db.query(query1, values1, (dbError1, dbResult1) => {
+      if (dbError1) {
+        console.error('Database Error (Transactions):', dbError1);
+        return res.status(500).json({ message: 'Database error occurred while saving transaction.', error: dbError1 });
+      }
+
+      console.log('Transaction saved successfully:', dbResult1);
+
+      const notification = `has ${service} with the total amount of ${total_amount} with a transactionId of ${paymentId} on ${createdAt}`;
+      const query2 = `
+        INSERT INTO notifications 
+        (store_id, individual_id, notification, updated_at, created_at) 
+        VALUES (?, ?, ?, ?, ?)
+      `;
+      const values2 = [store_id, individual_id, notification, updatedAt, createdAt];
+
+      db.query(query2, values2, (dbError2, dbResult2) => {
+        if (dbError2) {
+          console.error('Database Error (Notifications):', dbError2);
+          return res.status(500).json({ message: 'Database error occurred while saving notification.', error: dbError2 });
+        }
+
+        console.log('Notification saved successfully:', dbResult2);
+
+        res.json({
+          message: 'Payment executed, transaction, and notification saved successfully.',
+          payment: paymentResult,
+          transactionId: dbResult1.insertId,
+        });
+      });
     });
   });
 });

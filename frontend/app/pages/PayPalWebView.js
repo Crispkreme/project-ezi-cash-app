@@ -6,7 +6,10 @@ import { View, Text } from 'react-native';
 const PayPalWebView = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { uri } = route.params;
+  const { uri, data } = route.params;
+  
+  console.log("PayPalWebView uri", uri);
+  console.log("PayPalWebView data", data);
 
   if (!uri) {
     return (
@@ -25,12 +28,12 @@ const PayPalWebView = () => {
       const payerId = urlParams.get('PayerID');
 
       if (paymentId && payerId) {
-        navigation.navigate('WaitingApproval', { paymentId, payerId });
+        navigation.navigate('WaitingApproval', { paymentId, payerId, data });
       }
     }
 
     if (url.includes('cancel')) {
-      navigation.navigate('PaymentCancelled');
+      navigation.navigate('Cancelled', { data });
     }
   };
 

@@ -22,6 +22,7 @@ import PayPalWebView from './app/pages/PayPalWebView';
 import WaitingApproval from './app/pages/confirmation/WaitingApproval';
 import PaymentConfirmationHeader from './app/components/PaymentConfirmationHeader';
 import Approved from './app/pages/confirmation/Approved';
+import Cancelled from './app/pages/confirmation/Cancelled';
 import GoToStore from './app/pages/GoToStore';
 import FinishTransaction from './app/pages/FinishTransaction';
 import TransactionComplete from './app/pages/TransactionComplete';
@@ -228,6 +229,12 @@ const Stack = createStackNavigator({
       screen: Approved,
       options: {
         header: () => <PaymentConfirmationHeader title="Approved" />
+      }
+    },
+    Cancelled: {
+      screen: Cancelled,
+      options: {
+        header: () => <PaymentConfirmationHeader title="Cancelled" />
       }
     },
     GoToStore: {
