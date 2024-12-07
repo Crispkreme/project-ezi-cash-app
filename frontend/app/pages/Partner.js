@@ -36,6 +36,8 @@ const Partner = ({ route, navigation }) => {
         service: "Cash In",
         amount: partner.amount,
         bank: "Paypal",
+        store_id: partner.store_id,
+        legal_name: partner.legal_name,
       },
     });
   };
