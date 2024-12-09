@@ -1,12 +1,10 @@
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ImageBackground } from "react-native";
-import { Rating } from "react-native-ratings";
 import { __gstyles__ } from "../globalStylesheet";
 
 const PartnerTransactions = ({ route, navigation }) => {
   const { formData } = route.params;
-
   const wLabels = {...formData};
   const navigator = useNavigation();
 
@@ -77,7 +75,6 @@ const PartnerTransactions = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
-
 
       <View style={[styles.container, {borderTopStartRadius: 20, borderTopEndRadius: 20}]}>
         <ScrollView>

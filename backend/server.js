@@ -37,48 +37,19 @@ db.connect((err) => {
 
 // Register a user
 app.post('/register', async (req, res) => {
-  const { 
-    user_phone_no,
-    first_name,
-    middle_name,
-    last_name,
-    birthdate,
-    email,
-    nationality,
-    main_source,
-    province,
-    city,
-    barangay,
-    zipcode,
-    HasNoMiddleName,
-    MPIN
-  } = req.body;
+  const { user_phone_no, first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, HasNoMiddleName, MPIN } = req.body;
 
   console.log(req.body)
 
   // Validate required fields
-  if (
-    !user_phone_no ||
-    !first_name ||
-    (!HasNoMiddleName && !middle_name) || // Validate MiddleName only if not marked as "No Middle Name"
-    !last_name,
-    !birthdate,
-    !email,
-    !nationality,
-    !main_source,
-    !province,
-    !city,
-    !barangay,
-    !zipcode,
-    !HasNoMiddleName,
-    !MPIN
-  ) {
+  if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name, !birthdate, !email, !nationality, !main_source, !province, !city, !barangay, !zipcode, !HasNoMiddleName, !MPIN ) {
     return res.status(400).json({ message: 'Please provide all required fields.' });
   }
 
   try {
 
     db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", user_phone_no, 
+
       (err, result) => {
         if (err) {
           console.error('Database Error:', err);
@@ -121,22 +92,7 @@ app.post('/register', async (req, res) => {
             // Execute query
             db.query(
               query,
-              [
-                first_name,
-                middle_name || '', // Pass null if MiddleName is not provided
-                last_name,
-                new Date(), // TODO, since birthdate cannot be passed here
-                email,
-                nationality,
-                main_source,
-                province,
-                city,
-                barangay,
-                zipcode,
-                userId,
-                new Date(),
-                new Date()
-              ],
+              [ first_name, middle_name || '', last_name, new Date(), email, nationality, main_source, province, city, barangay, zipcode, userId, new Date(), new Date() ],
               async (err, result) => {
                 if (err) {
                   console.error('Database Error:', err);
@@ -214,7 +170,7 @@ app.post('/otp', (req, res) => {
 
 app.get("/check-phone", async (req, res) => {
   const {phone} = req.query || {};
-  
+  console.log("phone: ", phone);
   db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", phone, 
   (err, result) => {
     if (err) {
@@ -228,6 +184,87 @@ app.get("/check-phone", async (req, res) => {
       return res.status(200).json({ message: 'Proceed to login', data: -1 });
     }
   });
+});
+
+app.post("/payment-transaction", async (req, res) => {
+  try {
+    const {
+      user_detail_id: user_id,
+      partner_type: type,
+      service,
+      amount,
+    } = req.body;
+
+    const bank = "";
+    const total_amount = 0;
+    const balance = 0;
+    const transaction_status = "Pending";
+    const payer_id = null;
+    const partner_id = null;
+    const payment_id = null;
+    const created_at = new Date();
+    const updated_at = new Date();
+
+    const checkPendingQuery = `
+      SELECT COUNT(*) AS pendingCount 
+      FROM transactions 
+      WHERE user_id = ? AND transaction_status = 'Pending'
+    `;
+
+    db.query(checkPendingQuery, [user_id], (err, result) => {
+      if (err) {
+        console.error("Database Error (Check Pending):", err);
+        return res.status(500).json({
+          message: "Error while checking pending transactions.",
+          error: err.message,
+        });
+      }
+
+      const pendingCount = result[0]?.pendingCount || 0;
+
+      if (pendingCount > 0) {
+        return res.status(400).json({
+          message: "User already has a pending transaction.",
+        });
+      }
+
+      const insertQuery = `
+        INSERT INTO transactions 
+        (user_id, partner_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      const queryParams = [ user_id, partner_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at ];
+
+      db.query(insertQuery, queryParams, (err, result) => {
+        if (err) {
+          console.error("Database Error (Insert Transaction):", err);
+          return res.status(500).json({
+            message: "Error while saving transaction details.",
+            error: err.message,
+          });
+        }
+
+        if (result.affectedRows > 0) {
+          return res.status(200).json({
+            message: "Transaction saved successfully",
+            data: { id: result.insertId, ...req.body },
+          });
+        } else {
+          return res.status(500).json({
+            message: "Transaction failed to save!",
+            data: undefined,
+          });
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Server Error:", error);
+    return res.status(500).json({
+      message: "An unexpected error occurred.",
+      error: error.message,
+    });
+  }
 });
 
 app.post("/login", async (req, res) => {

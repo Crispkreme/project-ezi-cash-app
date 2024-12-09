@@ -7,6 +7,7 @@ import { __gstyles__ } from "../globalStylesheet";
 
 const EWallet = ({ route, navigation }) => {
   const { formData } = route.params || {};
+
   const wLabels = {...formData};
   const navigator = useNavigation();
 
