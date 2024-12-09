@@ -369,6 +369,39 @@ app.get("/get-transaction", async (req, res) => {
     });
   });
 });
+app.get("/get-wallet/:user_detail_id", async (req, res) => {
+  const { user_detail_id } = req.params;
+
+  const query = `
+    SELECT 
+      wallets.id,
+      wallets.balance,
+      user_details.user_detail_id
+    FROM wallets
+    INNER JOIN user_details ON wallets.user_detail_id = user_details.user_detail_id
+    WHERE user_details.user_detail_id = ? 
+    ORDER BY wallets.id DESC;
+  `;
+
+  db.query(query, [user_detail_id], (err, results) => {
+    if (err) {
+      console.error("Database Error:", err);
+      return res.status(500).json({ message: "Error while fetching wallets." });
+    }
+
+    if (!results || results.length === 0) {
+      return res.status(200).json({
+        message: "No wallets found.",
+        data: [],
+      });
+    }
+    console.log("results", results);
+    return res.status(200).json({
+      message: "Wallets retrieved successfully.",
+      data: results,
+    });
+  });
+});
 
 // paypal functionality
 app.post('/paypal', (req, res) => {

@@ -35,9 +35,9 @@ const PartnerTransactions = ({ route, navigation }) => {
     navigator.navigate("PartnerTransactions", {formData});
   }
   
-  const viewServiceManagement = () => {
-    navigator.navigate("PartnerServiceManagement", {formData});
-  }
+  const viewServiceManagement = (transaction) => {
+    navigator.navigate("PartnerServiceManagement", { formData, transaction });
+  };
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -51,7 +51,6 @@ const PartnerTransactions = ({ route, navigation }) => {
 
         if (!response.ok) {
           const responseText = await response.text();
-          console.error("Error Response:", responseText);
           alert("Error", `Server returned: ${responseText}`);
           return;
         }
@@ -78,7 +77,6 @@ const PartnerTransactions = ({ route, navigation }) => {
 
     transactions.forEach((transaction) => {
       const transactionDate = new Date(transaction.date).toDateString();
-
       const groupKey = transactionDate === today ? "Today" : transactionDate;
 
       if (!grouped[groupKey]) {
@@ -175,39 +173,45 @@ const PartnerTransactions = ({ route, navigation }) => {
               {transactionGroups.map((group) => (
                 <View key={group.date} style={{ flexDirection: "column" }} className="gap-2 mb-8">
                   {group.transactions.map((transaction) => {
-                    console.log("Transaction:", transaction);
+
+                    const transactionIcon =
+                    transaction.service === "Cash In"
+                      ? require("../../public/icn/cashin.png")
+                      : require("../../public/icn/cashout.png");
+
                     return(
                       <TouchableOpacity
-                      key={transaction.id}
-                      style={[
-                        __gstyles__.shadow,
-                        { justifyContent: "space-between", width: "100%" },
-                      ]}
-                      className="flex-row p-2 rounded-full py-4 px-4"
-                    >
-                      <View className="flex-row items-center">
-                        <Image source={require("../../public/icn/cashin.png")} />
-                        <Text>
-                          <Text className="text-base">
-                            {transaction.name} {"\n"}
+                        key={transaction.id}
+                        style={[
+                          __gstyles__.shadow,
+                          { justifyContent: "space-between", width: "100%" },
+                        ]}
+                        className="flex-row p-2 rounded-full py-4 px-4"
+                        onPress={() => viewServiceManagement(transaction)}
+                      >
+                        <View className="flex-row items-center">
+                          <Image source={transactionIcon} />
+                          <Text>
+                            <Text className="text-base">
+                              {transaction.name} {"\n"}
+                            </Text>
+                            <Text className="text-xs">{transaction.service}</Text>
                           </Text>
-                          <Text className="text-xs">{transaction.service}</Text>
-                        </Text>
-                      </View>
-                      <View style={{ flexDirection: "row" }}>
-                        <Text>
-                          <Text className="text-lg font-bold text-right">
-                            {transaction.amount} {"\n"}
+                        </View>
+                        <View style={{ flexDirection: "row" }}>
+                          <Text>
+                            <Text className="text-lg font-bold text-right">
+                              {transaction.amount} {"\n"}
+                            </Text>
+                            <Text className="text-xs">
+                              {transaction.bank || "Unknown Bank"} {"\n"}
+                            </Text>
+                            <Text className="text-xs">
+                              {new Date(transaction.date).toLocaleString()} {"\n"}
+                            </Text>
                           </Text>
-                          <Text className="text-xs">
-                            {transaction.bank || "Unknown Bank"} {"\n"}
-                          </Text>
-                          <Text className="text-xs">
-                            {new Date(transaction.date).toLocaleString()} {"\n"}
-                          </Text>
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
+                        </View>
+                      </TouchableOpacity>
                     )
                   })}
                 </View>
