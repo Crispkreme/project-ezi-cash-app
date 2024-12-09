@@ -318,6 +318,57 @@ app.get("/get-partners", async (req, res) => {
     });
   });
 });
+app.get("/get-transaction", async (req, res) => {
+  const query = `
+    SELECT 
+      CONCAT(user_details.first_name, ' ', IFNULL(user_details.middle_name, ''), ' ', user_details.last_name) AS name,
+      transactions.created_at AS date,
+      transactions.service,
+      transactions.id,
+      transactions.amount,
+      transactions.bank,
+      transactions.transaction_status AS status,
+      user_details.user_id
+    FROM transactions
+    INNER JOIN user_details ON transactions.user_id = user_details.user_detail_id
+    ORDER BY transactions.created_at DESC;
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Database Error:", err);
+      return res.status(500).json({ message: "Error while fetching transactions." });
+    }
+
+    if (!results || results.length === 0) {
+      return res.status(200).json({
+        message: "No transactions found.",
+        data: [],
+      });
+    }
+
+    // Group transactions by raw date (ISO format)
+    const groupedTransactions = results.reduce((groups, transaction) => {
+      const dateKey = new Date(transaction.date).toISOString().split("T")[0];
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(transaction);
+      return groups;
+    }, {});
+
+    // Format grouped data into an array of groups
+    const formattedResults = Object.entries(groupedTransactions).map(([date, transactions]) => ({
+      date,
+      transactions,
+    }));
+
+    return res.status(200).json({
+      message: "Transactions retrieved successfully.",
+      data: formattedResults,
+    });
+  });
+});
 
 // paypal functionality
 app.post('/paypal', (req, res) => {
