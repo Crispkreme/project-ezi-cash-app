@@ -64,7 +64,7 @@ const AddAmount = ({ route, navigation }) => {
               <View style={styles.leftSection}>
                 <Text className='font-semibold text-lg text-primary'>Home</Text>
                 <Text className='text-sm text-primary'>
-                  32-5H Cabreros St., {formData.barangay}, {formData.city},
+                  {formData.address},
                 </Text>
               </View>
             </View>

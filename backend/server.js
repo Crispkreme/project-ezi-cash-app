@@ -122,16 +122,34 @@ app.post('/register', async (req, res) => {
 
 const getUserData = async (userId) => {
   return new Promise((resolve, reject) => {
-    db.query("SELECT * FROM user_details WHERE user_id = ? ", userId, (err, row) => {
-      if(err) {
+    const query = `
+      SELECT 
+        ud.user_detail_id,
+        CONCAT(ud.first_name, ' ', IFNULL(ud.middle_name, ''), ' ', ud.last_name) AS name,
+        ut.partner_type,
+        w.balance,
+        ut.user_phone_no AS phone,
+        CONCAT(ud.barangay, ', ', ud.city, ', ', ud.province, ', ', ud.zipcode) AS address
+      FROM 
+        user_details ud
+      JOIN 
+        users_table ut ON ud.user_id = ut.user_id
+      LEFT JOIN 
+        wallets w ON ud.user_detail_id = w.user_detail_id
+      WHERE 
+        ud.user_id = ?;
+    `;
+
+    db.query(query, [userId], (err, rows) => {
+      if (err) {
         console.error('Database Error:', err);
-        reject(undefined);
+        return reject(undefined);
       }
-      
-      resolve(row[0]) ;
+
+      resolve(rows[0]);
     });
-  })
-}
+  });
+};
 
 const otps = new Map();
 app.post('/otp', (req, res) => {
@@ -266,24 +284,41 @@ app.post("/payment-transaction", async (req, res) => {
     });
   }
 });
-
 app.post("/login", async (req, res) => {
-  const {phone, pin} = req.body;
-  db.query("SELECT * FROM users_table WHERE user_phone_no= ? AND user_mpin= ?",[phone, pin],
-  async (err, result) => {
+  
+  const { phone, pin } = req.body;
+
+  db.query("SELECT * FROM users_table WHERE user_phone_no= ? AND user_mpin= ?", [phone, pin], async (err, result) => {
     if (err) {
       console.error('Database Error:', err);
       return res.status(500).json({ message: 'Error while checking user credentials.' });
     }
-    
-    if(result.length > 0) {
-      const data = await getUserData(result[0].user_id);
-      return res.status(200).json({ message: 'Proceed to login', data: {...data, ...result[0]} });
+
+    if (result.length > 0) {
+
+      try {
+
+        const userData = await getUserData(result[0].user_id);
+        console.log("userData", userData);
+
+        if (!userData) {
+        return res.status(404).json({ message: 'User details not found.' });
+        }
+
+        return res.status(200).json({ 
+          message: 'Proceed to login', 
+          data: userData 
+        });
+        
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        return res.status(500).json({ message: 'Error while fetching user data.' });
+      }
     } else {
-      return res.status(500).json({ message: 'MPIN is incorrect', data: -1 });
+      return res.status(400).json({ message: 'MPIN is incorrect', data: -1 });
     }
   });
-})
+});
 
 // get all partners
 app.get("/get-partners", async (req, res) => {
@@ -403,7 +438,7 @@ app.get("/get-wallet/:user_detail_id", async (req, res) => {
   });
 });
 app.post('/save-business-hours', (req, res) => {
-  
+
   const { schedule } = req.body;
 
   const createdAt = new Date().toISOString();

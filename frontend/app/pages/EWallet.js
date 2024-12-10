@@ -12,7 +12,7 @@ const EWallet = ({ route, navigation }) => {
   const navigator = useNavigation();
 
   const [state, setState] = useState({
-    linkedWallet: formData?.user_phone_no || "",
+    linkedWallet: formData?.phone || "",
   });
 
   const handleConfirm = async () => {

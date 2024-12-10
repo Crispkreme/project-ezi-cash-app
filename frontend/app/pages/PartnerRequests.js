@@ -4,8 +4,8 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ImageBackg
 import { __gstyles__ } from "../globalStylesheet";
 
 const PartnerRequests = ({ route, navigation }) => {
+  
   const { formData } = route.params;
-
   const wLabels = {...formData};
   const navigator = useNavigation();
 
