@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 const paypal = require('paypal-rest-sdk');
 
 const app = express();
+const nodemailer = require('nodemailer');
 
 paypal.configure({
   'mode': 'sandbox',
@@ -602,7 +603,103 @@ app.post('/success', (req, res) => {
     });
   });
 });
+
 app.get('/cancel', (req, res) => res.send('Payment was cancelled.'));
+
+app.post("/web-login", async(req, res) => {
+  try {
+    const {email, password} = req.body;
+    db.query("SELECT user_email, user_pass FROM users_table WHERE user_email = ?", [email], async (err, result) => {
+      if(err) {
+        return res.status(500).json({message: err, data:{}});
+      }
+      const x = await bcrypt.compare(password, result[0].user_pass);
+      console.log(x);
+      console.log(result[0].user_pass);
+      return res.status(200).json({message: '', data: result[0]})
+    });
+
+  } catch(e) {
+    console.log(e);
+    // return res.status(500).json({message: e, data: {}});
+  }
+});
+
+app.post('/web-verification-code', async (req, res) => {
+  try {
+    const {email} = req.body;
+    const pin = Math.floor(1000 + Math.random() * 9000);
+
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port:465,
+      secure: true,
+      auth: {
+        user: "cjvicro@gmail.com",
+        pass: "ztbepsrmnypjjvyt"
+      }
+    });
+
+    const mailOptions = {
+      to: email,
+      subject: 'Sending Email using Node JS!',
+      text: "Welcome! Your verification code is " + pin
+    }
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if(error) {
+        return res.status(500).json({message: error, data: info.response});
+      } else {
+        return res.status(200).json({message: 'Success!', data: pin});
+      }
+    });
+
+    
+
+  } catch(e) {
+    return res.status(500).json({message:e.message, data: undefined});
+  }
+});
+
+app.post("/web-signup", async (req, res) => {
+  try {
+
+    const {name, email, password} = req.body;
+
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+
+    db.query("INSERT INTO users_table (user_phone_no, user_mpin, user_email, user_pass, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?)",[
+      '',
+      '',
+      email,
+      hash,
+      new Date(),
+      new Date()
+    ], (err, result) => {
+      if(err) throw new Error(err);
+      
+      const ut = result.insertId;
+      db.query("INSERT INTO admin_details (admin_name, admin_type, user_id, updated_at, created_at) VALUES (?, ?, ?, ?, ?)", 
+        [name, 'Admin', ut, new Date(), new Date()]
+      , (err, result) => {
+        if(err) throw new Error("There was an error inserting into admin details");
+        
+        db.query("SELECT admin_name, admin_type, user_id FROM admin_details WHERE user_id = ?",[ut], (err, result) => {
+          if(err) throw new Error("There was an error looking for the admin details");
+
+          return res.status(200).json({message:'Successfully registered!', data: result[0]});
+        })
+
+      })
+      
+    });
+
+    
+  } catch(e) {
+    return res.status(500).json({message: e.message, data: undefined});
+  }
+});
 
 // Start the server
 const PORT = 3000;
