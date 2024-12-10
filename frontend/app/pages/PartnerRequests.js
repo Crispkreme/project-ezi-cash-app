@@ -1,56 +1,96 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ImageBackground, Modal, Pressable } from "react-native";
 import { __gstyles__ } from "../globalStylesheet";
 
 const PartnerRequests = ({ route, navigation }) => {
+  
   const { formData } = route.params;
-
   const wLabels = {...formData};
   const navigator = useNavigation();
+  const [transactions, setTransactions] = useState([]);
+  const [todayTransactions, setTodayTransactions] = useState([]);
+  const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
 
   const handleConfirm = async (service, payment) => {
     navigator.navigate("PartnerLocate", {formData,payment: payment, partner: {...formData, legal_name: `${formData.first_name} ${formData.middle_name} ${formData.last_name}`}});
   };
-
   const viewProfile = () => {
     navigator.navigate("Profile", {formData});
   }
-
   const viewDashboard = () => {
     navigator.navigate("PartnerDashboard", {formData});
   }
-
   const viewRequests = () => {
     navigator.navigate("PartnerRequests", {formData});
   }
-
   const viewTransactions = () => {
     navigator.navigate("PartnerTransactions", {formData});
   }
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-
   const acceptRequest = () => setIsModalVisible(prev => !prev);
 
+  useEffect(() => {
+    const fetchTransaction = async () => {
+      try {
+        const response = await fetch(`${process.env.base_url}/get-transaction`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const responseText = await response.text();
+          alert("Error", `Server returned: ${responseText}`);
+          return;
+        }
+
+        const parsedResponse = await response.json();
+
+        if (parsedResponse.data && parsedResponse.data.length > 0) {
+          setTransactions(parsedResponse.data);
+        } else {
+          alert('No transactions found.');
+        }
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+        alert('Error', 'An error occurred while fetching transactions.');
+      }
+    };
+  
+    fetchTransaction();
+  }, []);
+  const groupTransactionsByDate = (transactions) => {
+    const grouped = {};
+    const today = new Date().toDateString();
+
+    transactions.forEach((transaction) => {
+      const transactionDate = new Date(transaction.date).toDateString();
+      const groupKey = transactionDate === today ? "Today" : transactionDate;
+
+      if (!grouped[groupKey]) {
+        grouped[groupKey] = [];
+      }
+      grouped[groupKey].push(transaction);
+    });
+    return grouped;
+  };
+  const groupedTransactions = groupTransactionsByDate(transactions);
 
   return (
     <ImageBackground style={{flex: 1}} source={require("../../public/image/background.png")}>
       <View>
         <View style={[styles.header]} className={`flex-row items-center justify-between p-8`}>
-            
           <Text className='self-start mt-24'>
             <Text style={styles.text} className='z-50 text-white font-bold'>
               <Text style={{fontSize: 26}}>Requests{"\n"}</Text>
             </Text>
           </Text>
-
-          
           <Image source={require("../../public/icn/notification-icn.png")}/>
         </View>
-        
       </View>
-
 
       <View style={[styles.container, {borderTopStartRadius: 20, borderTopEndRadius: 20}]}>
         <ScrollView>
@@ -59,32 +99,98 @@ const PartnerRequests = ({ route, navigation }) => {
             <Text style={{maxWidth: 300}} className=' text-gray-600 font-semibold text-xl'>Cash Out</Text>
           </View>
 
-          <View style={{flexDirection: 'row'}} className='gap-8 mb-8'>
-            <TouchableOpacity style={[__gstyles__.shadow,{justifyContent: 'space-between', width: '100%'}]} className='flex-row p-2 rounded-full py-4 px-4'>
-              <View className='flex-row'>
-                <Image source={require("../../public/icn/cashin.png")}/>
-                <Text>
-                  <Text className='text-base'>Honey Recla {"\n"}</Text>
-                  <Text className='text-xs'>Cash In</Text>
-                </Text>
-              </View>
-              <View style={{flexDirection: 'row'}}>
-                <Text>
-                  <Text className='text-lg font-bold'>530.00 {"\n"}</Text>
-                  <Text className='text-xs '>       Paypal</Text>
-                </Text>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                  <TouchableOpacity onPress={acceptRequest} style={__gstyles__.shadow} className='p-2 rounded-full'>
-                    <Image source={require("../../public/icn/accept.png")}/>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={__gstyles__.shadow} className='p-2 rounded-full'>
-                    <Image source={require("../../public/icn/reject.png")}/>
-                  </TouchableOpacity>
+          <View style={{ flexDirection: "row" }} className="gap-8 mb-8">
+            {Object.entries(groupedTransactions).map(([groupKey, transactionGroups]) => (
+              <View key={groupKey}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                  }}
+                >
+                  <Text
+                    style={{ maxWidth: 300 }}
+                    className="text-gray-400 font-semibold text-xl"
+                  >
+                    {groupKey}
+                  </Text>
                 </View>
-              </View>
-            </TouchableOpacity>
-          </View>
+                {transactionGroups.map((group) => (
+                  <View
+                    key={group.date}
+                    style={{ flexDirection: "column" }}
+                    className="gap-2 mb-8"
+                  >
+                    {group.transactions.map((transaction) => {
+                    const transactionIcon =
+                      transaction.service === "Cash In"
+                        ? require("../../public/icn/cashin.png")
+                        : require("../../public/icn/cashout.png");
 
+                      return (
+                        <TouchableOpacity
+                          key={transaction.id}
+                          style={[
+                            __gstyles__.shadow,
+                            { justifyContent: "space-between", width: "100%" },
+                          ]}
+                          className="flex-row p-2 rounded-full py-4 px-4"
+                          // onPress={() => viewServiceManagement(transaction)}
+                        >
+                          <View className="flex-row items-center">
+                            <Image source={transactionIcon} />
+                            <Text>
+                              <Text className="text-base">{transaction.name} {"\n"}</Text>
+                              <Text className="text-xs">{transaction.service}</Text>
+                            </Text>
+                          </View>
+
+                          <View style={{ flexDirection: "row" }}>
+                            <Text>
+                              <Text className="text-lg font-bold text-right">
+                                {transaction.amount} {"\n"}
+                              </Text>
+                              <Text className="text-xs">
+                                {transaction.bank || "Unknown Bank"} {"\n"}
+                              </Text>
+                              <Text className="text-xs">
+                                {new Date(transaction.date).toLocaleString()} {"\n"}
+                              </Text>
+                            </Text>
+
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                gap: 6,
+                              }}
+                            >
+                              <TouchableOpacity
+                                onPress={() => acceptRequest(transaction)}
+                                style={__gstyles__.shadow}
+                                className="p-2 rounded-full"
+                              >
+                                <Image source={require("../../public/icn/accept.png")} />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                onPress={() => rejectRequest(transaction)}
+                                style={__gstyles__.shadow}
+                                className="p-2 rounded-full"
+                              >
+                                <Image source={require("../../public/icn/reject.png")} />
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
         </ScrollView>
         <View style={styles.footer} className='py-2 flex-row gap-4'>
           

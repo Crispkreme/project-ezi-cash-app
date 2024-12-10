@@ -1,7 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { __gstyles__ } from "../globalStylesheet";
 
 const Dashboard = ({ route, navigation }) => {
@@ -14,8 +13,9 @@ const Dashboard = ({ route, navigation }) => {
     navigator.navigate("SetMPIN");
   };
   
-  const handleNext = () => {
-    navigator.navigate("EWallet", {formData});
+  const handleNext = (service) => {
+    console.log("service", service);
+    navigator.navigate("EWallet", { formData: { ...formData, service: service } });
   };
 
   const viewProfile = () => {
@@ -29,17 +29,23 @@ const Dashboard = ({ route, navigation }) => {
         <View style={styles.header}>
           <Text className='text-primary font-semibold text-xl pt-8'>Services</Text>
         </View>
-        {/* Display form data */}
-        <TouchableOpacity style={__gstyles__.shadow} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={handleNext}>
-          <View className=' flex-row justify-center items-center p-2 px-4 gap-4 w-full'>
+        <TouchableOpacity
+          style={__gstyles__.shadow}
+          className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300'
+          onPress={() => handleNext("Cash In")}
+        >
+          <View className='flex-row justify-center items-center p-2 px-4 gap-4 w-full'>
             <Image alt="cash in" source={require("../../public/icn/cash-in-icn.png")}></Image>
             <View>
               <Text className='font-semibold text-lg text-primary'>Cash In</Text>
             </View>
           </View>
         </TouchableOpacity>
-
-        <TouchableOpacity style={__gstyles__.shadow} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={handleNext}>
+        <TouchableOpacity
+          style={__gstyles__.shadow}
+          className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300'
+          onPress={() => handleNext("Cash Out")}
+        >
           <View className='flex-row justify-center items-center p-2 px-4 gap-4 w-full'>
             <Image alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
             <View>
@@ -48,13 +54,12 @@ const Dashboard = ({ route, navigation }) => {
           </View>
         </TouchableOpacity>
       </ScrollView>
+
       <View style={styles.footer} className='py-2 flex-row gap-4'>
-        
         <View style={styles.footerBtnContainer} className='relative' onPress={handleConfirm}>
           <Image className='' alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
           <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
         </View>
-
         <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
           <Image alt="cash out" source={require("../../public/icn/transactions-icn.png")}></Image>
           <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Transactions</Text>

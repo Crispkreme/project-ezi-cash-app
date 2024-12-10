@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
-import { __gstyles__, colors } from "../globalStylesheet";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { __gstyles__ } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
 
 const PaymentConfirm = ({ route, navigation }) => {
@@ -27,9 +27,48 @@ const PaymentConfirm = ({ route, navigation }) => {
   },[key]);
 
   const handleConfirm = async () => {
-    navigator.navigate("WaitingApproval", { formData, partner, payment });
+    try {
+      const payload = {
+        ...formData,
+        payment: {
+          type: "E-wallet",
+          balance: 0,
+          service: "Cash In",
+          amount: parseFloat(partner.amount).toFixed(2),
+          total_amount: (parseFloat(partner.amount) + 15).toFixed(2),
+          bank: "Paypal",
+          store_id: partner.store_id,
+          legal_name: partner.legal_name,
+        },
+      };
+  
+      const response = await fetch(`${process.env.base_url}/paypal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+  
+      const body = await response.json();
+      console.log('Server Response:', body);
+  
+      if (!response.ok) {
+        alert(body.message || "Failed to process payment.");
+        return;
+      }
+  
+      const { approvalUrl } = body;
+  
+      if (approvalUrl) {
+        navigator.navigate("PayPalWebView", { uri: approvalUrl, data: body });
+      } else {
+        alert("Approval URL not found in the server response.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred. Please try again.");
+    }
   };
-
+  
   const handleNext = () => {
     navigator.navigate("Partner", { formData,  partner: {name: "Nicole Ayessa Alcover"}});
   };
@@ -78,7 +117,7 @@ const PaymentConfirm = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Amount</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>{parseInt(payment.amount).toFixed(2)}</Text>
+            <Text className='text-gray-400 text-base text-primary'>{parseFloat(payment.amount).toFixed(2)}</Text>
           </View>
 
           <View style={{justifyContent: 'space-between'}} className='flex-row items-center py-2 px-4'>
@@ -105,7 +144,9 @@ const PaymentConfirm = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Total Amount to Pay</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>15.00</Text>
+            <Text className='text-gray-400 text-base text-primary'>{(
+              parseFloat(payment.amount) + parseFloat(15.0)).toFixed(2)}
+            </Text>
           </View>
         </View>
         <View className='w-full absolute bottom-0'>
@@ -128,7 +169,6 @@ const PaymentConfirm = ({ route, navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
-
       </View>
     </View>
   );

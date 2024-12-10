@@ -1,48 +1,91 @@
 import { useNavigation } from "@react-navigation/native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ImageBackground } from "react-native";
-import { Rating } from "react-native-ratings";
 import { __gstyles__ } from "../globalStylesheet";
 
 const PartnerTransactions = ({ route, navigation }) => {
   const { formData } = route.params;
-
+  
   const wLabels = {...formData};
   const navigator = useNavigation();
+  const [transactions, setTransactions] = useState([]);
+  const [todayTransactions, setTodayTransactions] = useState([]);
+  const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
 
   const handleConfirm = async () => {
     navigator.navigate("SetMPIN");
   };
-  
   const handleNext = () => {
     navigator.navigate("EWallet", {formData});
   };
-
   const viewProfile = () => {
     navigator.navigate("Profile", {formData});
   }
-
   const viewDashboard = () => {
     navigator.navigate("PartnerDashboard", {formData});
   }
-
   const viewRequests = () => {
     navigator.navigate("PartnerRequests", {formData});
   }
-
   const viewTransactions = () => {
     navigator.navigate("PartnerTransactions", {formData});
   }
+  const viewServiceManagement = (transaction) => {
+    navigator.navigate("PartnerServiceManagement", { formData, transaction });
+  };
+
+  useEffect(() => {
+    const fetchTransaction = async () => {
+      try {
+        const response = await fetch(`${process.env.base_url}/get-transaction`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const responseText = await response.text();
+          alert("Error", `Server returned: ${responseText}`);
+          return;
+        }
+
+        const parsedResponse = await response.json();
+
+        if (parsedResponse.data && parsedResponse.data.length > 0) {
+          setTransactions(parsedResponse.data);
+        } else {
+          alert('No transactions found.');
+        }
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+        alert('Error', 'An error occurred while fetching transactions.');
+      }
+    };
   
-  const viewServiceManagement = () => {
-    navigator.navigate("PartnerServiceManagement", {formData});
-  }
+    fetchTransaction();
+  }, []);
+  const groupTransactionsByDate = (transactions) => {
+    const grouped = {};
+    const today = new Date().toDateString();
+
+    transactions.forEach((transaction) => {
+      const transactionDate = new Date(transaction.date).toDateString();
+      const groupKey = transactionDate === today ? "Today" : transactionDate;
+
+      if (!grouped[groupKey]) {
+        grouped[groupKey] = [];
+      }
+      grouped[groupKey].push(transaction);
+    });
+    return grouped;
+  };
+  const groupedTransactions = groupTransactionsByDate(transactions);
 
   return (
     <ImageBackground style={{flex: 1}} source={require("../../public/image/background.png")}>
       <View>
         <View style={[styles.header]} className={`flex-row items-center justify-between p-8`}>
-            
           <Text className='self-start mt-24'>
             <Text style={styles.text} className='z-50 text-white font-bold'>
               <Text style={{fontSize: 26}}>Hi eZiCash Partner,{"\n"}</Text>
@@ -51,8 +94,6 @@ const PartnerTransactions = ({ route, navigation }) => {
               {formData.first_name} {formData.middle_name} {formData.last_name}
             </Text>
           </Text>
-
-          
           <Image source={require("../../public/icn/notification-icn.png")}/>
         </View>
         
@@ -78,82 +119,101 @@ const PartnerTransactions = ({ route, navigation }) => {
         </View>
       </View>
 
-
       <View style={[styles.container, {borderTopStartRadius: 20, borderTopEndRadius: 20}]}>
+
         <ScrollView>
-          <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
-            <Text style={{maxWidth: 300}} className=' text-primary font-semibold text-xl'>Recent Transactions</Text>
+          <View
+            style={[
+              styles.header,
+              {
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
+              },
+            ]}
+          >
+            <Text
+              style={{ maxWidth: 300 }}
+              className="text-primary font-semibold text-xl"
+            >
+              Recent Transactions
+            </Text>
             <TouchableOpacity>
-              <Text style={{maxWidth: 300}} className='  text-primary font-semibold text-sm px-6 py-2'>See All</Text>
+              <Text
+                style={{ maxWidth: 300 }}
+                className="text-primary font-semibold text-sm px-6 py-2"
+              >
+                See All
+              </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Today Transactions */}
-          <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
-            <Text style={{maxWidth: 300}} className=' text-gray-400 font-semibold text-xl'>Today</Text>
-          </View>
+          {Object.entries(groupedTransactions).map(([groupKey, transactionGroups]) => (
+            <View key={groupKey}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                }}
+              >
+                <Text style={{ maxWidth: 300 }} className="text-gray-400 font-semibold text-xl">
+                  {groupKey}
+                </Text>
+              </View>
 
-          <View style={{flexDirection: 'column'}} className='gap-2 mb-8'>
-            <TouchableOpacity style={[__gstyles__.shadow,{justifyContent: 'space-between', width: '100%'}]} className='flex-row p-2 rounded-full py-4 px-4'>
-              <View className='flex-row items-center'>
-                <Image source={require("../../public/icn/cashin.png")}/>
-                <Text>
-                  <Text className='text-base'>Honey Recla {"\n"}</Text>
-                  <Text className='text-xs'>Cash In</Text>
-                </Text>
-              </View>
-              <View style={{flexDirection: 'row'}}>
-                <Text>
-                  <Text className='text-lg font-bold text-right'>530.00 {"\n"}</Text>
-                  <Text className='text-xs '>       Paypal  {"\n"}</Text>
-                  <Text className='text-xs'>{new Date().toDateString()}  </Text>
-                </Text>
-              </View>
-            </TouchableOpacity>
+              {transactionGroups.map((group) => (
+                <View key={group.date} style={{ flexDirection: "column" }} className="gap-2 mb-8">
+                  {group.transactions.map((transaction) => {
 
-            <TouchableOpacity style={[__gstyles__.shadow,{justifyContent: 'space-between', width: '100%'}]} className='flex-row p-2 rounded-full py-4 px-4'>
-              <View className='flex-row items-center'>
-                <Image source={require("../../public/icn/cashout.png")}/>
-                <Text>
-                  <Text className='text-base'>Honey Recla {"\n"}</Text>
-                  <Text className='text-xs'>Cash Out</Text>
-                </Text>
-              </View>
-              <View style={{flexDirection: 'row'}}>
-                <Text>
-                  <Text className='text-lg font-bold text-right'>1000.00 {"\n"}</Text>
-                  <Text className='text-xs '>       Paypal  {"\n"}</Text>
-                  <Text className='text-xs'>{new Date().toDateString()}  </Text>
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+                    const transactionIcon =
+                    transaction.service === "Cash In"
+                      ? require("../../public/icn/cashin.png")
+                      : require("../../public/icn/cashout.png");
 
-          {/* Yesterday Transactions */}
-          <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
-            <Text style={{maxWidth: 300}} className=' text-gray-400 font-semibold text-xl'>Yesterday</Text>
-          </View>
-
-          <View style={{flexDirection: 'column'}} className='gap-2 mb-8'>
-            <TouchableOpacity style={[__gstyles__.shadow,{justifyContent: 'space-between', width: '100%'}]} className='flex-row p-2 rounded-full py-4 px-4'>
-              <View className='flex-row items-center'>
-                <Image source={require("../../public/icn/cashin.png")}/>
-                <Text>
-                  <Text className='text-base'>Honey Recla {"\n"}</Text>
-                  <Text className='text-xs'>Cash In</Text>
-                </Text>
-              </View>
-              <View style={{flexDirection: 'row'}}>
-                <Text>
-                  <Text className='text-lg font-bold text-right'>530.00 {"\n"}</Text>
-                  <Text className='text-xs '>       Paypal  {"\n"}</Text>
-                  <Text className='text-xs'>{new Date().toDateString()}  </Text>
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
+                    return(
+                      <TouchableOpacity
+                        key={transaction.id}
+                        style={[
+                          __gstyles__.shadow,
+                          { justifyContent: "space-between", width: "100%" },
+                        ]}
+                        className="flex-row p-2 rounded-full py-4 px-4"
+                        onPress={() => viewServiceManagement(transaction)}
+                      >
+                        <View className="flex-row items-center">
+                          <Image source={transactionIcon} />
+                          <Text>
+                            <Text className="text-base">
+                              {transaction.name} {"\n"}
+                            </Text>
+                            <Text className="text-xs">{transaction.service}</Text>
+                          </Text>
+                        </View>
+                        <View style={{ flexDirection: "row" }}>
+                          <Text>
+                            <Text className="text-lg font-bold text-right">
+                              {transaction.amount} {"\n"}
+                            </Text>
+                            <Text className="text-xs">
+                              {transaction.bank || "Unknown Bank"} {"\n"}
+                            </Text>
+                            <Text className="text-xs">
+                              {new Date(transaction.date).toLocaleString()} {"\n"}
+                            </Text>
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </View>
+              ))}
+            </View>
+          ))}
         </ScrollView>
+
         <View style={styles.footer} className='py-2 flex-row gap-4'>
           
           <TouchableOpacity style={styles.footerBtnContainer} className='relative' onPress={viewDashboard}>

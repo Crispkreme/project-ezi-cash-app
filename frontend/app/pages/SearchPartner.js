@@ -1,13 +1,17 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { memo, useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import MapView, {Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 import { __gstyles__ } from "../globalStylesheet";
 import * as Location from 'expo-location';
 
 const SearchPartner = ({ route, navigation }) => {
-  const { formData, search, key } = route.params;
+  const { formData, amount, store, search, key } = route.params;
+
+  console.log("formData:", formData);
+  console.log("amount:", amount);
+  console.log("store:", store);
 
   const wLabels = {...formData};
   const navigator = useNavigation();
@@ -95,8 +99,17 @@ const SearchPartner = ({ route, navigation }) => {
     setRouteCoordinates(points);
   }
 
-  const handleNext = () => {
-    navigator.navigate("Partner", { formData,  partner: {legal_name: "Nicole Ayessa Alcover", address: "79 Cabreros St Cebu City, Cebu", type: "Individual"}});
+  const handlePress = (item) => {
+    navigator.navigate("Partner", {
+      formData,
+      partner: {
+        amount,
+        legal_name: item.store_name,
+        address: `79 Cabreros St ${item.barangay}, ${item.city}`,
+        type: item.partner_type,
+        store_id: item.store_id,
+      },
+    });
   };
 
   const onRegionChange = (region) => {
@@ -179,62 +192,59 @@ const SearchPartner = ({ route, navigation }) => {
           <Text className='text-primary font-semibold text-xl pt-8'>eZiCash Partners Nearby</Text>
         </View>
 
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={handleNext}>
-          <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
-            <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
-              <View style={styles.leftSection}>
-                <Text className='font-semibold text-lg text-primary'>Nicole Ayessa Alcover</Text>
-                <Text className='text-sm text-primary'>
-                    79 Cabreros St Cebu City, Cebu
-                </Text>
-                <View className='flex-row items-center gap-2'>
-                  <Image alt="cash in" source={require("../../public/icn/available-icn.png")}></Image>
-                  <Text className='text-sm text-link'>
-                    Available
-                  </Text>
+        <View>
+          {store.map((item, index) => (
+            <View key={index}>
+              <TouchableOpacity
+                style={[__gstyles__.shadow]}
+                className="bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300"
+                onPress={() => handlePress(item)}
+              >
+                <View
+                  style={{ justifyContent: "space-between" }}
+                  className="flex-row items-center p-2 px-4"
+                >
+                  <View
+                    className="gap-2"
+                    style={{ flexDirection: "row", alignItems: "center" }}
+                  >
+                    <View style={styles.leftSection}>
+                      <Text className="font-semibold text-lg text-primary">
+                        {item.store_name}
+                      </Text>
+                      <Text className="text-sm text-primary">
+                        79 Cabreros St {item.barangay}, {item.city}
+                      </Text>
+                      <View className="flex-row items-center gap-2">
+                        <Image
+                          alt="cash in"
+                          source={require("../../public/icn/available-icn.png")}
+                        />
+                        <Text className="text-sm text-link">Available</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <MaterialIcons
+                    name="navigate-next"
+                    size={24}
+                    className="text-primary"
+                    style={styles.buttonIcon}
+                  />
                 </View>
-              </View>
-            </View>
-            <MaterialIcons
-              name="navigate-next"
-              size={24}
-              className='text-primary'
-              style={styles.buttonIcon}
-            />
-          </View>
-        </TouchableOpacity>
+              </TouchableOpacity>
 
-        <View
-          className='mb-4 border-gray-500'
-          style={{
-            borderBottomWidth: StyleSheet.hairlineWidth,
-          }}
-        />
-
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={getDirection}>
-          <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
-            <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
-              <View style={styles.leftSection}>
-                <Text className='font-semibold text-lg text-primary'>Nicole Ayessa Alcover</Text>
-                <Text className='text-sm text-primary'>
-                    79 Cabreros St Cebu City, Cebu
-                </Text>
-                <View className='flex-row items-center gap-2'>
-                  <Image alt="cash in" source={require("../../public/icn/available-icn.png")}></Image>
-                  <Text className='text-sm text-link'>
-                    Available
-                  </Text>
-                </View>
-              </View>
+              {/* Conditionally render the border, except for the last item */}
+              {index !== store.length - 1 && (
+                <View
+                  className="mb-4 border-gray-500"
+                  style={{
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                  }}
+                />
+              )}
             </View>
-            <MaterialIcons
-              name="navigate-next"
-              size={24}
-              className='text-primary'
-              style={styles.buttonIcon}
-            />
-          </View>
-        </TouchableOpacity>
+          ))}
+        </View>
 
       </ScrollView>
     </View>

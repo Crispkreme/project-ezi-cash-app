@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { View, Text, ImageBackground, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, ImageBackground, StyleSheet, Image } from "react-native";
 
 export default function DashboardHeader({profile = false}) {
 
@@ -26,7 +26,7 @@ export default function DashboardHeader({profile = false}) {
             )
           }
           <Text style={styles.subtext} className=' mt-2 text-white'>
-            {formData.first_name} {formData.middle_name} {formData.last_name}
+            {formData.name}
           </Text>
         </View>
         <Image style={{marginHorizontal: profile ? 20 : 30, top: profile ? -50 : 0}} source={require("../../public/icn/notification-icn.png")}/>
