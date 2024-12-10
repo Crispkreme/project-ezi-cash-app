@@ -113,8 +113,8 @@ CREATE TABLE `transactions` (
 --
 
 INSERT INTO `transactions` (`id`, `user_id`, `partner_id`, `type`, `bank`, `service`, `amount`, `total_amount`, `balance`, `transaction_status`, `payer_id`, `payment_id`, `updated_at`, `created_at`) VALUES
-(7, 14, NULL, '', 'Paypal', 'Cash In', 500, 0, 0, 'Pending', NULL, NULL, '2024-12-08 11:13:50', '2024-12-08 11:13:50'),
-(8, 13, NULL, '', '', 'Cash In', 800, 0, 0, 'Pending', NULL, NULL, '2024-12-10 01:47:40', '2024-12-10 01:47:40');
+(7, 21, NULL, '', 'Paypal', 'Cash In', 500, 0, 0, 'Pending', NULL, NULL, '2024-12-08 11:13:50', '2024-12-08 11:13:50'),
+(8, 22, NULL, '', '', 'Cash In', 800, 0, 0, 'Pending', NULL, NULL, '2024-12-10 01:47:40', '2024-12-10 01:47:40');
 
 -- --------------------------------------------------------
 
@@ -126,7 +126,10 @@ CREATE TABLE `users_table` (
   `user_id` int(11) NOT NULL,
   `user_phone_no` varchar(11) NOT NULL,
   `user_mpin` char(4) NOT NULL,
-  `partner_type` varchar(100) DEFAULT NULL,
+  `user_email` varchar(100) NOT NULL,
+  `user_pass` varchar(255) NOT NULL,
+  `user_name` varchar(100) NOT NULL,
+  `partner_type` varchar(100) NOT NULL,
   `updated_at` datetime NOT NULL,
   `created_at` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -135,10 +138,10 @@ CREATE TABLE `users_table` (
 -- Dumping data for table `users_table`
 --
 
-INSERT INTO `users_table` (`user_id`, `user_phone_no`, `user_mpin`, `partner_type`, `updated_at`, `created_at`) VALUES
-(21, '9052885214', '1234', '', '2024-11-28 22:17:54', '2024-11-28 22:17:54'),
-(22, '9672510357', '1234', 'Individual', '2024-12-02 23:25:39', '2024-12-02 23:25:39'),
-(23, '9654887548', '1996', 'Store', '2024-12-04 12:25:13', '2024-12-04 12:25:13');
+INSERT INTO `users_table` (`user_id`, `user_phone_no`, `user_mpin`, `user_email`, `user_pass`, `user_name`, `partner_type`, `updated_at`, `created_at`) VALUES
+(21, '9672510357', '1234', '', '', '', 'Store', '2024-11-28 22:17:54', '2024-11-28 22:17:54'),
+(22, '9052885214', '1234', '', '', '', 'Partner', '2024-11-28 22:17:54', '2024-11-28 22:17:54'),
+(30, '', '', 'cjvicro@gmail.com', '$2a$10$0U.mS2Wz9JI0I7w79fJ3huXGNqIA.tHJNMD2QCZYpcFHyLT32xRUS', '', '', '2024-12-10 17:19:00', '2024-12-10 17:19:00');
 
 -- --------------------------------------------------------
 
@@ -171,7 +174,7 @@ CREATE TABLE `user_details` (
 INSERT INTO `user_details` (`user_detail_id`, `first_name`, `middle_name`, `last_name`, `birthdate`, `email`, `nationality`, `main_source`, `province`, `city`, `barangay`, `zipcode`, `user_id`, `created_at`, `updated_at`) VALUES
 (13, 'Victor', 'Atay', 'Chiong', '2024-11-28 22:17:54', 'johndoe@gmail.com', 'Nationality', 'Main Source of Funds', 'Province', 'City/Municipality', 'Barangay', '6000', 21, '2024-11-28 22:17:54', '2024-11-28 22:17:54'),
 (14, 'Marvin', 'Masaglang', 'Ramos', '2024-12-02 23:25:39', 'marvinramos.nutnull@gmail.com', 'Nationality', 'Main Source of Funds', 'Province', 'City/Municipality', 'Barangay', '6000', 22, '2024-12-02 23:25:39', '2024-12-02 23:25:39'),
-(15, 'Gagahag', 'Bababhaa', 'Hahahaha', '2024-12-04 12:25:13', 'Marcinshmshs@gmail.ckm', 'Filipino', 'Allowance', 'Cebu', 'Cebu City (Capital)', 'Adlawon', '6000', 23, '2024-12-04 12:25:13', '2024-12-04 12:25:13');
+(15, 'Gagahag', 'Bababhaa', 'Hahahaha', '2024-12-04 12:25:13', 'Marcinshmshs@gmail.ckm', 'Filipino', 'Allowance', 'Cebu', 'Cebu City (Capital)', 'Adlawon', '6000', 30, '2024-12-04 12:25:13', '2024-12-04 12:25:13');
 
 -- --------------------------------------------------------
 
@@ -193,6 +196,22 @@ CREATE TABLE `wallets` (
 
 INSERT INTO `wallets` (`id`, `user_detail_id`, `balance`, `created_at`, `updated_at`) VALUES
 (1, 15, 10000.00, '2024-12-09 08:51:29', '2024-12-09 08:51:29');
+
+CREATE TABLE `admin_details` (
+  `admin_id` int(11) NOT NULL,
+  `admin_name` varchar(100) NOT NULL,
+  `admin_type` varchar(50) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `updated_at` date NOT NULL,
+  `created_at` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `admin_details`
+--
+
+INSERT INTO `admin_details` (`admin_id`, `admin_name`, `admin_type`, `user_id`, `updated_at`, `created_at`) VALUES
+(9, 'melonandead', 'Admin', 30, '2024-12-10', '2024-12-10');
 
 --
 -- Indexes for dumped tables
