@@ -11,7 +11,6 @@ import {
   Pressable
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { __gstyles__ } from "../globalStylesheet";
 
 const Login = ({route}) => {
 
@@ -85,8 +84,6 @@ const Login = ({route}) => {
           console.error(error);
           alert("Error connecting to the server. Please check your network.");
         }
-
-        
       }
     }
 

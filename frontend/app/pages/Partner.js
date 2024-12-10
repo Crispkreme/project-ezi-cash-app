@@ -1,11 +1,9 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
-import { __gstyles__, colors } from "../globalStylesheet";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { __gstyles__ } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
-import { AirbnbRating, Rating } from "react-native-ratings";
+import { Rating } from "react-native-ratings";
 
 const Partner = ({ route, navigation }) => {
   const { formData, search, key, partner } = route.params;
@@ -29,7 +27,19 @@ const Partner = ({ route, navigation }) => {
   },[key]);
 
   const handleConfirm = async () => {
-    navigator.navigate("PaymentConfirm", { formData, partner, payment: {type: "E-wallet", balance: 0, service: "Cash In", amount: 500, bank: "Paypal"} });
+    navigator.navigate("PaymentConfirm", {
+      formData,
+      partner,
+      payment: {
+        type: "E-wallet",
+        balance: 0,
+        service: "Cash In",
+        amount: partner.amount,
+        bank: "Paypal",
+        store_id: partner.store_id,
+        legal_name: partner.legal_name,
+      },
+    });
   };
 
   const handleNext = () => {
@@ -50,7 +60,7 @@ const Partner = ({ route, navigation }) => {
           <View>
             <Image alt="cash in"  source={require("../../public/icn/available-icn.png")}></Image>
           </View>
-          <Text className='text-primary inline font-semibold text-xl'>{partner.name}</Text>
+          <Text className='text-primary inline font-semibold text-xl'>{partner.legal_name}</Text>
         </View>
 
         <View style={[__gstyles__.shadow]} className='bg-primary-bg px-4 py-2 rounded-lg mb-4 border border-gray-300'>
@@ -82,7 +92,7 @@ const Partner = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Name</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>{partner.name}</Text>
+            <Text className='text-gray-400 text-base text-primary'>{partner.legal_name}</Text>
           </View>
         </View>
 

@@ -22,6 +22,10 @@ const PartnerDashboard = ({ route, navigation }) => {
     navigator.navigate("Profile", {formData});
   }
 
+  const viewDashboard = () => {
+    navigator.navigate("PartnerDashboard", {formData});
+  }
+
   const viewRequests = () => {
     navigator.navigate("PartnerRequests", {formData});
   }
@@ -159,7 +163,7 @@ const PartnerDashboard = ({ route, navigation }) => {
         </ScrollView>
         <View style={styles.footer} className='py-2 flex-row gap-4'>
           
-          <View style={styles.footerBtnContainer} className='relative' onPress={handleConfirm}>
+          <View style={styles.footerBtnContainer} className='relative' onPress={viewDashboard}>
             <Image className='' alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
           </View>

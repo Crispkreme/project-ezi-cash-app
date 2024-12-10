@@ -1,5 +1,5 @@
 import React from 'react';
-import { createStaticNavigation, Link, NavigationContainer } from '@react-navigation/native';
+import { createStaticNavigation } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Main from './app/pages/Main';
 import RegisterOTP from './app/pages/auth/RegisterOTP';
@@ -7,6 +7,7 @@ import OpenAccount from './app/pages/auth/OpenAccount';
 import RegisterAccount from './app/pages/auth/RegisterAccount';
 import "./globals.css";
 import Authentication from './app/components/Authentication';
+import BusinessHour from './app/components/BusinessHour';
 import ConfirmAccount from './app/pages/auth/ConfirmAccount';
 import SetMPIN from './app/pages/auth/SetMPIN';
 import Dashboard from './app/pages/Dashboard';
@@ -18,9 +19,11 @@ import SearchPartner from './app/pages/SearchPartner';
 import SearchHeader from './app/components/SearchHeader';
 import Partner from './app/pages/Partner';
 import PaymentConfirm from './app/pages/PaymentConfirm';
+import PayPalWebView from './app/pages/PayPalWebView';
 import WaitingApproval from './app/pages/confirmation/WaitingApproval';
 import PaymentConfirmationHeader from './app/components/PaymentConfirmationHeader';
 import Approved from './app/pages/confirmation/Approved';
+import Cancelled from './app/pages/confirmation/Cancelled';
 import GoToStore from './app/pages/GoToStore';
 import FinishTransaction from './app/pages/FinishTransaction';
 import TransactionComplete from './app/pages/TransactionComplete';
@@ -36,11 +39,12 @@ import SuccessfulLinkHeader from './app/components/SuccessfulLinkHeader';
 import Profile from './app/pages/Profile';
 import EziCashPartnerApplication from './app/pages/ezicash/EziCashPartnerApplication';
 import PartnerDashboard from './app/pages/PartnerDashboard';
-import PartnerDashboardHeader from './app/components/PartnerDashboardHeader';
 import PartnerRequests from './app/pages/PartnerRequests';
 import PartnerTransactions from './app/pages/PartnerTransactions';
 import PartnerCommissionFeeStatements from './app/pages/PartnerCommissionFeeStatements';
 import PartnerSettledCommissions from './app/pages/PartnerSettledCommissions';
+import PartnerLocate from './app/pages/PartnerLocate';
+import PartnerServiceManagement from './app/pages/PartnerServiceManagement';
 
 const Stack = createStackNavigator({
   screens: {
@@ -83,6 +87,9 @@ const Stack = createStackNavigator({
     },
     ConfirmAccount: {
       screen: ConfirmAccount
+    },
+    BusinessHour: {
+      screen: BusinessHour
     },
     SetMPIN: {
       screen: SetMPIN,
@@ -162,6 +169,18 @@ const Stack = createStackNavigator({
         header: () => null
       }
     },
+    PartnerLocate: {
+      screen: PartnerLocate,
+      options: {
+        header: () => <HighHeader title="Locate" position={"high"}/>
+      }
+    },
+    PartnerServiceManagement: {
+      screen: PartnerServiceManagement,
+      options: {
+        header: () => null
+      }
+    },
     Profile: {
       screen: Profile,
       options: {
@@ -198,6 +217,12 @@ const Stack = createStackNavigator({
         header: () => null
       }
     },
+    PayPalWebView: {
+      screen: PayPalWebView,
+      options: {
+        header: () => null
+      }
+    },
     WaitingApproval: {
       screen: WaitingApproval,
       options: {
@@ -208,6 +233,12 @@ const Stack = createStackNavigator({
       screen: Approved,
       options: {
         header: () => <PaymentConfirmationHeader title="Approved" />
+      }
+    },
+    Cancelled: {
+      screen: Cancelled,
+      options: {
+        header: () => <PaymentConfirmationHeader title="Cancelled" />
       }
     },
     GoToStore: {

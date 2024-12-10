@@ -34,6 +34,10 @@ const PartnerCommissionFeeStatements = ({ route, navigation }) => {
     navigator.navigate("PartnerSettledCommissions", {formData});
   }
 
+  const viewTransactions = () => {
+    navigator.navigate("PartnerTransactions", {formData});
+  }
+
   return (
     <ImageBackground style={{flex: 1}} source={require("../../public/image/background.png")}>
       <View>
@@ -91,7 +95,7 @@ const PartnerCommissionFeeStatements = ({ route, navigation }) => {
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
           </TouchableOpacity>
 
-          <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
+          <View style={styles.footerBtnContainer} className='flex-start'  onPress={viewTransactions}>
             <Image alt="cash out" source={require("../../public/icn/transactions-icn.png")}></Image>
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Transactions</Text>
           </View>
