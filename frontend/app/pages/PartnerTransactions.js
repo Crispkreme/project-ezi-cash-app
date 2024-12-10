@@ -5,36 +5,31 @@ import { __gstyles__ } from "../globalStylesheet";
 
 const PartnerTransactions = ({ route, navigation }) => {
   const { formData } = route.params;
-  const [transactions, setTransactions] = useState([]);
+  
   const wLabels = {...formData};
   const navigator = useNavigation();
+  const [transactions, setTransactions] = useState([]);
   const [todayTransactions, setTodayTransactions] = useState([]);
   const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
 
   const handleConfirm = async () => {
     navigator.navigate("SetMPIN");
   };
-  console.log(transactions);
   const handleNext = () => {
     navigator.navigate("EWallet", {formData});
   };
-
   const viewProfile = () => {
     navigator.navigate("Profile", {formData});
   }
-
   const viewDashboard = () => {
     navigator.navigate("PartnerDashboard", {formData});
   }
-
   const viewRequests = () => {
     navigator.navigate("PartnerRequests", {formData});
   }
-
   const viewTransactions = () => {
     navigator.navigate("PartnerTransactions", {formData});
   }
-  
   const viewServiceManagement = (transaction) => {
     navigator.navigate("PartnerServiceManagement", { formData, transaction });
   };
@@ -70,7 +65,6 @@ const PartnerTransactions = ({ route, navigation }) => {
   
     fetchTransaction();
   }, []);
-
   const groupTransactionsByDate = (transactions) => {
     const grouped = {};
     const today = new Date().toDateString();

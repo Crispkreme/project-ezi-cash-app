@@ -119,7 +119,6 @@ app.post('/register', async (req, res) => {
     res.status(500).json({ message: 'An unexpected error occurred.' });
   }
 });
-
 const getUserData = async (userId) => {
   return new Promise((resolve, reject) => {
     const query = `
@@ -185,7 +184,6 @@ app.post('/otp', (req, res) => {
     otp,
   });
 });
-
 app.get("/check-phone", async (req, res) => {
   const {phone} = req.query || {};
   console.log("phone: ", phone);
@@ -203,7 +201,6 @@ app.get("/check-phone", async (req, res) => {
     }
   });
 });
-
 app.post("/payment-transaction", async (req, res) => {
   try {
     const {
