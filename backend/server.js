@@ -402,6 +402,42 @@ app.get("/get-wallet/:user_detail_id", async (req, res) => {
     });
   });
 });
+app.post('/save-business-hours', (req, res) => {
+  
+  const { schedule } = req.body;
+
+  const createdAt = new Date().toISOString();
+  const updatedAt = createdAt;
+
+  const queries = [];
+  const values = [];
+
+  for (const [day, { partner_id, isOpen, open_at, close_at, business_date }] of Object.entries(schedule)) {
+    const isOpenValue = isOpen ? 1 : 0;
+
+    const openTime = new Date(`${business_date}T${open_at}`).toTimeString().slice(0, 8);
+    const closeTime = new Date(`${business_date}T${close_at}`).toTimeString().slice(0, 8);
+
+    if (!openTime || !closeTime) {
+      return res.status(400).json({ message: `Invalid time format for ${day}.` });
+    }
+
+    queries.push(`
+      INSERT INTO business_hours (partner_id, isOpen, day, open_at, close_at, business_date, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    values.push(partner_id, isOpenValue, day, openTime, closeTime, business_date, createdAt, updatedAt);
+  }
+
+  db.query(queries.join(';'), values, (error, result) => {
+    if (error) {
+      console.error('Database Error:', error);
+      return res.status(500).json({ message: 'Database error occurred.', error });
+    }
+
+    res.json({ message: 'Business hours saved successfully.' });
+  });
+});
 
 // paypal functionality
 app.post('/paypal', (req, res) => {
@@ -455,7 +491,6 @@ app.post('/paypal', (req, res) => {
     }
   });
 });
-
 app.post('/success', (req, res) => {
   const { PayerID, paymentId, data } = req.body;
 
@@ -535,7 +570,6 @@ app.post('/success', (req, res) => {
     });
   });
 });
-
 app.get('/cancel', (req, res) => res.send('Payment was cancelled.'));
 
 // Start the server

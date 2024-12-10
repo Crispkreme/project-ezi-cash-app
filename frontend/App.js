@@ -7,6 +7,7 @@ import OpenAccount from './app/pages/auth/OpenAccount';
 import RegisterAccount from './app/pages/auth/RegisterAccount';
 import "./globals.css";
 import Authentication from './app/components/Authentication';
+import BusinessHour from './app/components/BusinessHour';
 import ConfirmAccount from './app/pages/auth/ConfirmAccount';
 import SetMPIN from './app/pages/auth/SetMPIN';
 import Dashboard from './app/pages/Dashboard';
@@ -86,6 +87,9 @@ const Stack = createStackNavigator({
     },
     ConfirmAccount: {
       screen: ConfirmAccount
+    },
+    BusinessHour: {
+      screen: BusinessHour
     },
     SetMPIN: {
       screen: SetMPIN,
