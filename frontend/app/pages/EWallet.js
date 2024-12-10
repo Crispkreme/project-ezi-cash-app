@@ -7,11 +7,12 @@ import { __gstyles__ } from "../globalStylesheet";
 
 const EWallet = ({ route, navigation }) => {
   const { formData } = route.params || {};
+
   const wLabels = {...formData};
   const navigator = useNavigation();
 
   const [state, setState] = useState({
-    linkedWallet: formData?.user_phone_no || "",
+    linkedWallet: formData?.phone || "",
   });
 
   const handleConfirm = async () => {

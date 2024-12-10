@@ -6,22 +6,23 @@ import { __gstyles__ } from "../globalStylesheet";
 
 const AddAmount = ({ route, navigation }) => {
   const { formData } = route.params;
-
   const wLabels = {...formData};
   const navigator = useNavigation();
-
   const [state, setState] = useState({
     linkedWallet: formData.user_phone_no,
     amount: 0
   });
 
+  console.log("add amount", formData);
+
   const handleConfirm = async () => {
     try {
-      const response = await fetch(`${process.env.base_url}/get-partners`, {
-        method: 'GET',
+      const response = await fetch(`${process.env.base_url}/payment-transaction`, {
+        method: 'post',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({...formData, amount: state.amount})
       });
   
       if (!response.ok) {
@@ -32,11 +33,11 @@ const AddAmount = ({ route, navigation }) => {
   
       const body = await response.json();
 
-      navigator.navigate("SearchPartner", {
-        formData,
-        amount: state.amount,
-        store: body.data,
-      });
+      // navigator.navigate("SearchPartner", {
+      //   formData,
+      //   amount: state.amount,
+      //   // store: body.data,
+      // });
 
     } catch (error) {
       console.error("Error during handleConfirm:", error);
@@ -63,7 +64,7 @@ const AddAmount = ({ route, navigation }) => {
               <View style={styles.leftSection}>
                 <Text className='font-semibold text-lg text-primary'>Home</Text>
                 <Text className='text-sm text-primary'>
-                  32-5H Cabreros St., {formData.barangay}, {formData.city},
+                  {formData.address},
                 </Text>
               </View>
             </View>

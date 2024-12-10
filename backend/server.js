@@ -37,48 +37,19 @@ db.connect((err) => {
 
 // Register a user
 app.post('/register', async (req, res) => {
-  const { 
-    user_phone_no,
-    first_name,
-    middle_name,
-    last_name,
-    birthdate,
-    email,
-    nationality,
-    main_source,
-    province,
-    city,
-    barangay,
-    zipcode,
-    HasNoMiddleName,
-    MPIN
-  } = req.body;
+  const { user_phone_no, first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, HasNoMiddleName, MPIN } = req.body;
 
   console.log(req.body)
 
   // Validate required fields
-  if (
-    !user_phone_no ||
-    !first_name ||
-    (!HasNoMiddleName && !middle_name) || // Validate MiddleName only if not marked as "No Middle Name"
-    !last_name,
-    !birthdate,
-    !email,
-    !nationality,
-    !main_source,
-    !province,
-    !city,
-    !barangay,
-    !zipcode,
-    !HasNoMiddleName,
-    !MPIN
-  ) {
+  if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name, !birthdate, !email, !nationality, !main_source, !province, !city, !barangay, !zipcode, !HasNoMiddleName, !MPIN ) {
     return res.status(400).json({ message: 'Please provide all required fields.' });
   }
 
   try {
 
     db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", user_phone_no, 
+
       (err, result) => {
         if (err) {
           console.error('Database Error:', err);
@@ -121,22 +92,7 @@ app.post('/register', async (req, res) => {
             // Execute query
             db.query(
               query,
-              [
-                first_name,
-                middle_name || '', // Pass null if MiddleName is not provided
-                last_name,
-                new Date(), // TODO, since birthdate cannot be passed here
-                email,
-                nationality,
-                main_source,
-                province,
-                city,
-                barangay,
-                zipcode,
-                userId,
-                new Date(),
-                new Date()
-              ],
+              [ first_name, middle_name || '', last_name, new Date(), email, nationality, main_source, province, city, barangay, zipcode, userId, new Date(), new Date() ],
               async (err, result) => {
                 if (err) {
                   console.error('Database Error:', err);
@@ -166,16 +122,34 @@ app.post('/register', async (req, res) => {
 
 const getUserData = async (userId) => {
   return new Promise((resolve, reject) => {
-    db.query("SELECT * FROM user_details WHERE user_id = ? ", userId, (err, row) => {
-      if(err) {
+    const query = `
+      SELECT 
+        ud.user_detail_id,
+        CONCAT(ud.first_name, ' ', IFNULL(ud.middle_name, ''), ' ', ud.last_name) AS name,
+        ut.partner_type,
+        w.balance,
+        ut.user_phone_no AS phone,
+        CONCAT(ud.barangay, ', ', ud.city, ', ', ud.province, ', ', ud.zipcode) AS address
+      FROM 
+        user_details ud
+      JOIN 
+        users_table ut ON ud.user_id = ut.user_id
+      LEFT JOIN 
+        wallets w ON ud.user_detail_id = w.user_detail_id
+      WHERE 
+        ud.user_id = ?;
+    `;
+
+    db.query(query, [userId], (err, rows) => {
+      if (err) {
         console.error('Database Error:', err);
-        reject(undefined);
+        return reject(undefined);
       }
-      
-      resolve(row[0]) ;
+
+      resolve(rows[0]);
     });
-  })
-}
+  });
+};
 
 const otps = new Map();
 app.post('/otp', (req, res) => {
@@ -214,7 +188,7 @@ app.post('/otp', (req, res) => {
 
 app.get("/check-phone", async (req, res) => {
   const {phone} = req.query || {};
-  
+  console.log("phone: ", phone);
   db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", phone, 
   (err, result) => {
     if (err) {
@@ -230,23 +204,121 @@ app.get("/check-phone", async (req, res) => {
   });
 });
 
+app.post("/payment-transaction", async (req, res) => {
+  try {
+    const {
+      user_detail_id: user_id,
+      partner_type: type,
+      service,
+      amount,
+    } = req.body;
+
+    const bank = "";
+    const total_amount = 0;
+    const balance = 0;
+    const transaction_status = "Pending";
+    const payer_id = null;
+    const partner_id = null;
+    const payment_id = null;
+    const created_at = new Date();
+    const updated_at = new Date();
+
+    const checkPendingQuery = `
+      SELECT COUNT(*) AS pendingCount 
+      FROM transactions 
+      WHERE user_id = ? AND transaction_status = 'Pending'
+    `;
+
+    db.query(checkPendingQuery, [user_id], (err, result) => {
+      if (err) {
+        console.error("Database Error (Check Pending):", err);
+        return res.status(500).json({
+          message: "Error while checking pending transactions.",
+          error: err.message,
+        });
+      }
+
+      const pendingCount = result[0]?.pendingCount || 0;
+
+      if (pendingCount > 0) {
+        return res.status(400).json({
+          message: "User already has a pending transaction.",
+        });
+      }
+
+      const insertQuery = `
+        INSERT INTO transactions 
+        (user_id, partner_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      const queryParams = [ user_id, partner_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at ];
+
+      db.query(insertQuery, queryParams, (err, result) => {
+        if (err) {
+          console.error("Database Error (Insert Transaction):", err);
+          return res.status(500).json({
+            message: "Error while saving transaction details.",
+            error: err.message,
+          });
+        }
+
+        if (result.affectedRows > 0) {
+          return res.status(200).json({
+            message: "Transaction saved successfully",
+            data: { id: result.insertId, ...req.body },
+          });
+        } else {
+          return res.status(500).json({
+            message: "Transaction failed to save!",
+            data: undefined,
+          });
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Server Error:", error);
+    return res.status(500).json({
+      message: "An unexpected error occurred.",
+      error: error.message,
+    });
+  }
+});
 app.post("/login", async (req, res) => {
-  const {phone, pin} = req.body;
-  db.query("SELECT * FROM users_table WHERE user_phone_no= ? AND user_mpin= ?",[phone, pin],
-  async (err, result) => {
+  
+  const { phone, pin } = req.body;
+
+  db.query("SELECT * FROM users_table WHERE user_phone_no= ? AND user_mpin= ?", [phone, pin], async (err, result) => {
     if (err) {
       console.error('Database Error:', err);
       return res.status(500).json({ message: 'Error while checking user credentials.' });
     }
-    
-    if(result.length > 0) {
-      const data = await getUserData(result[0].user_id);
-      return res.status(200).json({ message: 'Proceed to login', data: {...data, ...result[0]} });
+
+    if (result.length > 0) {
+
+      try {
+
+        const userData = await getUserData(result[0].user_id);
+        console.log("userData", userData);
+
+        if (!userData) {
+        return res.status(404).json({ message: 'User details not found.' });
+        }
+
+        return res.status(200).json({ 
+          message: 'Proceed to login', 
+          data: userData 
+        });
+        
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        return res.status(500).json({ message: 'Error while fetching user data.' });
+      }
     } else {
-      return res.status(500).json({ message: 'MPIN is incorrect', data: -1 });
+      return res.status(400).json({ message: 'MPIN is incorrect', data: -1 });
     }
   });
-})
+});
 
 // get all partners
 app.get("/get-partners", async (req, res) => {
@@ -279,6 +351,126 @@ app.get("/get-partners", async (req, res) => {
       message: "Partners retrieved successfully", 
       data: result 
     });
+  });
+});
+app.get("/get-transaction", async (req, res) => {
+  const query = `
+    SELECT 
+      CONCAT(user_details.first_name, ' ', IFNULL(user_details.middle_name, ''), ' ', user_details.last_name) AS name,
+      transactions.created_at AS date,
+      transactions.service,
+      transactions.id,
+      transactions.amount,
+      transactions.bank,
+      transactions.transaction_status AS status,
+      user_details.user_id
+    FROM transactions
+    INNER JOIN user_details ON transactions.user_id = user_details.user_detail_id
+    ORDER BY transactions.created_at DESC;
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Database Error:", err);
+      return res.status(500).json({ message: "Error while fetching transactions." });
+    }
+
+    if (!results || results.length === 0) {
+      return res.status(200).json({
+        message: "No transactions found.",
+        data: [],
+      });
+    }
+
+    // Group transactions by raw date (ISO format)
+    const groupedTransactions = results.reduce((groups, transaction) => {
+      const dateKey = new Date(transaction.date).toISOString().split("T")[0];
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(transaction);
+      return groups;
+    }, {});
+
+    // Format grouped data into an array of groups
+    const formattedResults = Object.entries(groupedTransactions).map(([date, transactions]) => ({
+      date,
+      transactions,
+    }));
+
+    return res.status(200).json({
+      message: "Transactions retrieved successfully.",
+      data: formattedResults,
+    });
+  });
+});
+app.get("/get-wallet/:user_detail_id", async (req, res) => {
+  const { user_detail_id } = req.params;
+
+  const query = `
+    SELECT 
+      wallets.id,
+      wallets.balance,
+      user_details.user_detail_id
+    FROM wallets
+    INNER JOIN user_details ON wallets.user_detail_id = user_details.user_detail_id
+    WHERE user_details.user_detail_id = ? 
+    ORDER BY wallets.id DESC;
+  `;
+
+  db.query(query, [user_detail_id], (err, results) => {
+    if (err) {
+      console.error("Database Error:", err);
+      return res.status(500).json({ message: "Error while fetching wallets." });
+    }
+
+    if (!results || results.length === 0) {
+      return res.status(200).json({
+        message: "No wallets found.",
+        data: [],
+      });
+    }
+    console.log("results", results);
+    return res.status(200).json({
+      message: "Wallets retrieved successfully.",
+      data: results,
+    });
+  });
+});
+app.post('/save-business-hours', (req, res) => {
+
+  const { schedule } = req.body;
+
+  const createdAt = new Date().toISOString();
+  const updatedAt = createdAt;
+
+  const queries = [];
+  const values = [];
+
+  for (const [day, { partner_id, isOpen, open_at, close_at, business_date }] of Object.entries(schedule)) {
+    const isOpenValue = isOpen ? 1 : 0;
+
+    const openTime = new Date(`${business_date}T${open_at}`).toTimeString().slice(0, 8);
+    const closeTime = new Date(`${business_date}T${close_at}`).toTimeString().slice(0, 8);
+
+    if (!openTime || !closeTime) {
+      return res.status(400).json({ message: `Invalid time format for ${day}.` });
+    }
+
+    queries.push(`
+      INSERT INTO business_hours (partner_id, isOpen, day, open_at, close_at, business_date, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    values.push(partner_id, isOpenValue, day, openTime, closeTime, business_date, createdAt, updatedAt);
+  }
+
+  db.query(queries.join(';'), values, (error, result) => {
+    if (error) {
+      console.error('Database Error:', error);
+      return res.status(500).json({ message: 'Database error occurred.', error });
+    }
+
+    res.json({ message: 'Business hours saved successfully.' });
   });
 });
 
@@ -334,7 +526,6 @@ app.post('/paypal', (req, res) => {
     }
   });
 });
-
 app.post('/success', (req, res) => {
   const { PayerID, paymentId, data } = req.body;
 
@@ -414,7 +605,6 @@ app.post('/success', (req, res) => {
     });
   });
 });
-
 app.get('/cancel', (req, res) => res.send('Payment was cancelled.'));
 
 // Start the server
