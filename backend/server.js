@@ -153,7 +153,10 @@ const getUserData = async (userId) => {
 
 const otps = new Map();
 app.post('/otp', (req, res) => {
-  const { mobileNumber } = req.body;
+  let { mobileNumber } = req.body;
+  console.log(mobileNumber);
+  mobileNumber = String(mobileNumber).replace("+63","");
+  console.log(mobileNumber);
 
   if (!mobileNumber) {
     return res.status(400).json({ error: 'Mobile number is required' });
@@ -614,9 +617,12 @@ app.post("/web-login", async(req, res) => {
         return res.status(500).json({message: err, data:{}});
       }
       const x = await bcrypt.compare(password, result[0].user_pass);
-      console.log(x);
-      console.log(result[0].user_pass);
-      return res.status(200).json({message: '', data: result[0]})
+      if(x) {
+        return res.status(200).json({message: '', data: result[0].user_email})
+      } else {
+        return res.status(500).json({message: '', data: ''});
+      }
+      
     });
 
   } catch(e) {

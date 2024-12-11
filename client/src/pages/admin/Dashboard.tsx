@@ -3,7 +3,6 @@ import ezcashCustomer from '../../assets/ezcash-customers.png';
 import commission from '../../assets/commission.png';
 
 export default function Dashboard() {
-
   const activities = [
     {activity: 'New User', date: new Date(), time: new Date(), info: 'Ayessa Nicole'},
     {activity: 'Partner Registration', date: new Date(), time: new Date(), info: 'Individual'},

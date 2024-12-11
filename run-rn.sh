@@ -8,7 +8,7 @@ SERVER_PID=$!
 
 echo "Starting React Application..."
 cd ../frontend
-npm run start &
+npm run start
 
 CLIENT_PID=$!
 

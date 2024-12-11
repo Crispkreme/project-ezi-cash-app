@@ -37,6 +37,10 @@ export default function AdminLayout({children}: {children: React.ReactElement}) 
     partnerManagement: location.pathname.includes("/partnermanagement/"),
     finance: location.pathname.includes("/finance/"),
   }
+
+  const dt = sessionStorage.getItem('session');
+  const parsed = JSON.parse(String(dt));
+  
   return (
     <main className="flex min-h-screen text-white">
       <div className="w-[300px] bg-primary flex flex-col px-8">
@@ -44,7 +48,7 @@ export default function AdminLayout({children}: {children: React.ReactElement}) 
           <img className='bg-white mx-auto mt-8 p-1 rounded-lg' src={dashboardLogo} alt="" />
         </div>
         <div className='mt-8 flex flex-col'>
-          <span className='text-white text-xl px-4'>Shynne</span>
+          <span className='text-white text-xl px-4'>{parsed.name}</span>
           <div className='flex gap-2 items-center mt-2 px-4'>
             <span className='text-gray-400 text-xs'>Role</span>
             <span className='bg-white text-primary roboto-medium rounded-md p-1 px-2 text-xs'>
@@ -89,7 +93,7 @@ export default function AdminLayout({children}: {children: React.ReactElement}) 
             }
 
             <Link className={`w-full px-4 rounded-full py-2 ${activePath.profile ? 'bg-white text-primary' : ''}`} to="/admin/dashboard">Profile</Link>
-            <Link className='w-full px-4 rounded-full py-2' to="/dashboard">Logout</Link>
+            <Link className='w-full px-4 rounded-full py-2' to="/login">Logout</Link>
           </div>
         </div>
       </div>
@@ -108,7 +112,7 @@ export default function AdminLayout({children}: {children: React.ReactElement}) 
               activeRole.admin && (
                 <>
                 { activePath.dashboard && <><span className='roboto-bold text-xl'>Dashboard Overview</span>
-                  <span className='text-gray-600 text-xs robot-medium'>Hi Shynne, Welcome back!</span></>}
+                  <span className='text-gray-600 text-xs robot-medium'>Hi {parsed.name}, Welcome back!</span></>}
                 { activePath.transactions && <><span className='roboto-bold text-xl'>All Transaction!</span></>}
                 { activePath.management && <><span className='roboto-bold text-xl'>User Management</span></>}
                 { activePath.access && <><span className='roboto-bold text-xl'>Access Control</span></>}

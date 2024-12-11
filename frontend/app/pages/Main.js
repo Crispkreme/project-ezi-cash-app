@@ -10,10 +10,12 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Logo from "../../public/svg/logo.jsx";
+import DropdownComponent from "../components/DropdownComponent.js";
 
 const Main = () => {
   const navigation = useNavigation();
   const [mobileNumber, setMobileNumber] = useState("");
+  const [zone, setZone] = useState("+63");
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleNext = () => {
@@ -46,7 +48,7 @@ const Main = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ mobileNumber: mobileNumber }),
+        body: JSON.stringify({ mobileNumber: "+63" + mobileNumber }),
       });
 
       if (response.ok) {
@@ -80,9 +82,10 @@ const Main = () => {
           <Text style={styles.subHeaderText}>Enter mobile number to get started</Text>
         </View>
 
-        <View style={styles.scrollContainer} className="px-8 pt-24">
+        <View style={[styles.scrollContainer, {flexDirection: 'row', alignItems: 'center', gap: 20}]} className="px-8 items-center">
+          <Text>+63</Text>
           <TextInput
-            className="p-4 border-b border-black mb-4 text-lg"
+            className="p-4 border-b border-black mb-4 text-lg w-64"
             placeholder="Enter your mobile number"
             value={mobileNumber}
             onChangeText={(text) => setMobileNumber(text)}

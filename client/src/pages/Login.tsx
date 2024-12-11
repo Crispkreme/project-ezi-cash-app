@@ -20,21 +20,20 @@ export default function Login() {
   const submit = async (e:React.MouseEvent) => {
     e.preventDefault();
 
-    const res = await fetch("/api/web-login", {
+    const res = await fetch("/api/web-verification-code", {
       method: 'POST',
       headers: {
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(formData)
+      body: JSON.stringify({email: formData.email})
     });
-
     if(!res.ok) return;
-
     const b = await res.json();
 
-    console.log(b.data);
-
-    // navigate("/verification")
+    sessionStorage.setItem('verification-code',b.data);
+    sessionStorage.setItem('registration','false');
+    sessionStorage.setItem('user-login', JSON.stringify(formData));
+    navigate("/verification");
   }
 
   return (

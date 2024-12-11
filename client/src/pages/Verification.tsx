@@ -12,6 +12,7 @@ export default function Verification() {
 
   const [pin, setPin] = useState<Array<string>>(['','','','']);
   const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
 
   const changeHandle = (e:React.ChangeEvent<HTMLInputElement>) => {
     const t = e.currentTarget;
@@ -45,7 +46,7 @@ export default function Verification() {
     const code = sessionStorage.getItem('verification-code');
     const registration = sessionStorage.getItem('registration');
     const p = pin.join("");
-    if(code === p && registration) {
+    if(code === p && registration === 'true') {
       const data = sessionStorage.getItem('user-signup');
 
       const res = await fetch("/api/web-signup", {
@@ -64,6 +65,8 @@ export default function Verification() {
 
       sessionStorage.removeItem('registration');
       sessionStorage.removeItem('verification-code');
+      sessionStorage.removeItem('user-login');
+      sessionStorage.removeItem('user-signup');
 
       const type = {
         'Admin': 'admin',
@@ -71,11 +74,36 @@ export default function Verification() {
         'Finance': 'finance'
       }
 
+      if(data) sessionStorage.setItem('session', JSON.stringify({name: JSON.parse(data).email}));
+
       return navigate(`/${type[body.data.admin_type as keyof typeof type]}/dashboard`);
+    } else {
+      const userLogin = sessionStorage.getItem('user-login');
+      const dt = JSON.parse(String(userLogin));
+
+      const res = await fetch("/api/web-login", {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dt)
+      });
+  
+      if(!res.ok) return;
+  
+      const b = await res.json();
+      sessionStorage.setItem('session', JSON.stringify({name: b.data}));
+      return navigate('/admin/dashboard');
     }
   }
 
   const cancel = () => navigate("/login");
+
+  useEffect(() => {
+    const reg = sessionStorage.getItem('user-signup') ? sessionStorage.getItem('user-signup') : sessionStorage.getItem('user-login');
+    const dt = JSON.parse(String(reg));
+    setEmail(dt.email);
+  },[]);
 
   return (
     <CredentialLayout>
@@ -85,7 +113,7 @@ export default function Verification() {
             <CredentialTitle>
               <>Enter Verification Code</>
             </CredentialTitle>
-            <span className="roboto-light">We've send a code to your@gmail.com</span>
+            <span className="roboto-light">We've send a code to {email}</span>
           </div>
           <form className="flex flex-col justify-center items-center gap-2">
             <div className="flex gap-2 justify-center py-12">
