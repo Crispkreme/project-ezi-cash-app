@@ -49,7 +49,7 @@ export default function AdminLayout({children}: {children: React.ReactElement}) 
           <img className='bg-white mx-auto mt-8 p-1 rounded-lg' src={dashboardLogo} alt="" />
         </div>
         <div className='mt-8 flex flex-col'>
-          <span className='text-white text-xl px-4'>{parsed.name}</span>
+          <span className='text-white text-xl px-4'>{parsed.admin_name}</span>
           <div className='flex gap-2 items-center mt-2 px-4'>
             <span className='text-gray-400 text-xs'>Role</span>
             <span className='bg-white text-primary roboto-medium rounded-md p-1 px-2 text-xs'>

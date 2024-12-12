@@ -38,7 +38,7 @@ export default function PerformingMonitoring() {
 
         const pendingcin = arr.filter(a => a.service === 'Cash In' && a.transaction_status === 'Pending').length;
         const completedcin = arr.filter(a => a.service === 'Cash In' && a.transaction_status !== 'Pending').length;
-        const pendingcout = arr.filter(a => a.service === 'Cash Out' && a.transaction_status !== 'Pending').length;
+        const pendingcout = arr.filter(a => a.service === 'Cash Out' && a.transaction_status === 'Pending').length;
         const completedcout = arr.filter(a => a.service === 'Cash Out' && a.transaction_status !== 'Pending').length;
 
         const successR = ((completedcin + completedcout) / (completedcin + completedcout + pendingcin + pendingcout)) * 100;

@@ -1,20 +1,34 @@
 import AdminLayout from "../../layout/AdminLayout";
 import search from '../../assets/search.png';
+import { useState } from "react";
 
 export default function TransactionsOverview() {
 
   const activities = [
     {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
     {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
+    {service: 'Cash Out',payment: 500, partner: 'Victor Chiong', customer: 'Karen Gonzales', date: new Date(), time: new Date(), fee: 15},
     {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
+    {service: 'Cash Out',payment: 500, partner: 'Marvin Ramos', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
+    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Karen Gonzales', date: new Date(), time: new Date(), fee: 15},
+    {service: 'Cash Out',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Karen Gonzales', date: new Date(), time: new Date(), fee: 15},
     {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-
+    {service: 'Cash Out',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
   ]
+
+  const [search, setSearch] = useState('');
+  const [searchAct, setSearchAct] = useState([...activities]);
+
+  const onChange = (e:React.ChangeEvent<HTMLInputElement>) => {
+    const t = e.currentTarget;
+    const val = t.value.toLowerCase()
+    setSearch(t.value);
+
+    const filter = activities.filter(u => u.service.toLowerCase().includes(val) || u.partner.toLowerCase().includes(val) || u.payment.toString().toLowerCase().includes(val)
+      || u.customer.toLowerCase().includes(val) || u.fee.toString().toLowerCase().includes(val) );
+
+      setSearchAct([...filter]);
+  }
 
   return (
     <AdminLayout>
@@ -23,12 +37,12 @@ export default function TransactionsOverview() {
           <div className="flex justify-end">
             <div className="relative flex items-center">
               <img className="absolute right-2 w-1/12" src={search} alt="" />
-              <input placeholder="Search" className="px-4 text-primary py-2 border border-primary bg-gray-300 shadow-lg text-sm rounded-full" type="text" name="search" id="search" />
+              <input onChange={onChange} value={search} placeholder="Search" className="px-4 text-primary py-2 border border-primary bg-gray-300 shadow-lg text-sm rounded-full" type="text" name="search" id="search" />
             </div>
           </div>
           <div className="flex flex-col gap-4">
             {
-              activities.map((a, idx) => {
+              searchAct.length > 0 && searchAct.map((a, idx) => {
                 return (
                   <div key={idx} className="px-16 shadow-lg py-8 grid grid-cols-6 w-full border border-gray-200 justify-between">
                     <span className="text-lg roboto-medium">{a.service}</span>

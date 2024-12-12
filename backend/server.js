@@ -723,13 +723,14 @@ app.get('/cancel', (req, res) => res.send('Payment was cancelled.'));
 app.post("/web-login", async(req, res) => {
   try {
     const {email, password} = req.body;
-    db.query("SELECT user_email, user_pass FROM users_table WHERE user_email = ?", [email], async (err, result) => {
+    db.query("SELECT * FROM users_table u INNER JOIN admin_details a ON u.user_id = a.user_id WHERE u.user_email = ?", [email], async (err, result) => {
       if(err) {
+        console.log(err);
         return res.status(500).json({message: err, data:{}});
       }
       const x = await bcrypt.compare(password, result[0].user_pass);
       if(x) {
-        return res.status(200).json({message: '', data: result[0].user_email})
+        return res.status(200).json({message: '', data: {...result[0], user_pass: ''}})
       } else {
         return res.status(500).json({message: '', data: ''});
       }
@@ -923,7 +924,7 @@ app.patch('/add-admins', async (req, res) => {
 
 app.get('/partner-application-list', async (req, res) => {
   try {
-    db.query(`SELECT * FROM partnership_application`, (err, info) => {
+    db.query(`SELECT * FROM partnership_application ORDER BY partner_application_id desc`, (err, info) => {
       if(err) {
         console.log(err);
         return res.status(500).json({message: err, data: []});

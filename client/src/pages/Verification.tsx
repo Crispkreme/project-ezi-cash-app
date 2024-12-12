@@ -100,11 +100,11 @@ export default function Verification() {
       sessionStorage.removeItem('user-login');
       sessionStorage.removeItem('user-signup');
 
-      sessionStorage.setItem('session', JSON.stringify({name: b.data}));
+      sessionStorage.setItem('session', JSON.stringify({...b.data }));
       setTimeout(() => {
         const t = b.data.admin_type === 'Admin' ? 'admin' : b.data.admin_type === 'Partner Management' ? 'partnermanagement' : 'finance';
         navigate(`/${t}/dashboard`);
-      },1000);
+      },2000);
       
     }
   }

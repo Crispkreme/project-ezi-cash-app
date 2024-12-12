@@ -17,7 +17,6 @@ export default function UserManagement() {
     {id: 3, type: 'Customer', name: 'Shynne Canada', address: 'Sambag 1, Urgello Cebu City', email: 'shyjhye@gmail.com', contact: '09273622933'},
     {id: 4, type: 'Customer', name: 'Nicole Ayessa Alcover', address: '79 Cabreros St Cebu City, Cebu', email: 'ayessaalc@gmail.com', contact: '09273622933'},
     {id: 5, type: 'Partner', name: 'Nicole Ayessa Alcover', address: '79 Cabreros St Cebu City, Cebu', email: 'ayessaalc@gmail.com', contact: '09273622933'},
-
   ]
 
   const dept = [
@@ -25,8 +24,11 @@ export default function UserManagement() {
     {id: 2, name: 'Jeanie Mae', dept: 'Finance Team', lastlogin: '5 minutes ago', date_added: new Date()},
     {id: 3, name: 'Nicole Ayessa Alcover', dept: 'Parnter Management Team', lastlogin: '5 minutes ago', date_added: new Date()},
     {id: 4, name: 'Shynne Canada', dept: 'Finance Team', lastlogin: '5 minutes ago', date_added: new Date()},
-
   ]
+
+  const [search, setSearch] = useState('');
+  const [searchRes, setSearchRes] = useState([...user]);
+  const [searchDept, setSearchDept] = useState([...dept]);
 
   const [state, setState] = useState({
     user: true,
@@ -34,6 +36,26 @@ export default function UserManagement() {
   });
 
   const viewSwitch = (category:keyof typeof state) => setState(prev => ({user: false, dept: false, [category]: !prev[category as keyof typeof state]}));
+
+  const searchChange = (e:React.ChangeEvent<HTMLInputElement>) => {
+    const t = e.currentTarget;
+    const val = t.value.toLowerCase();
+
+    setSearch(t.value);
+
+    if(state.user) {
+      const filter = user.filter(u => u.type.toLowerCase().includes(val) || u.name.toLowerCase().includes(val) || u.email.toLowerCase().includes(val) || u.contact.toLowerCase().includes(val)
+      || u.address.toLowerCase().includes(val))
+
+      setSearchRes([...filter]);
+
+    } else {
+      const filter = dept.filter(u => u.name.toLowerCase().includes(val) || u.dept.toLowerCase().includes(val) || u.date_added.toDateString().toLowerCase().includes(val)
+      || u.lastlogin.toLowerCase().includes(val));
+
+      setSearchDept([...filter]);
+    }
+  }
 
   return (
     <AdminLayout>
@@ -46,13 +68,13 @@ export default function UserManagement() {
           <div className="flex justify-end">
             <div className="relative flex items-center">
               <img className="absolute right-2 w-1/12" src={search} alt="" />
-              <input placeholder="Search" className="px-4 text-primary py-2 border border-primary bg-gray-300 shadow-lg text-sm rounded-full" type="text" name="search" id="search" />
+              <input onChange={searchChange} value={search} placeholder="Search" className="px-4 text-primary py-2 border border-primary bg-gray-300 shadow-lg text-sm rounded-full" type="text" name="search" id="search" />
             </div>
           </div>
           <div className="flex flex-col gap-4">
             {
               state.user && (
-                user.map((a, idx) => {
+                searchRes.length > 0 && searchRes.map((a, idx) => {
                   return (
                     <div key={idx} className="gap-4 shadow-lg py-8 grid grid-cols-6 w-full border border-gray-200 justify-between">
                       <span className="flex justify-center items-center text-lg roboto-medium">{a.type}</span>
@@ -79,7 +101,7 @@ export default function UserManagement() {
                     <span className="flex justify-center items-center roboto-regular text-right text-primary">Last Log In</span>
                     <span className="flex justify-center items-center roboto-regular text-right text-primary">Date Added</span>
                   </div>
-                  {dept.map((a, idx) => {
+                  {searchDept.length > 0 && searchDept.map((a, idx) => {
                     return (
                       <div key={idx} className="px-16 shadow-lg py-8 grid grid-cols-4 w-full border border-gray-200 justify-between">
                         <span className="flex justify-start items-center text-lg roboto-medium">{a.name}</span>
