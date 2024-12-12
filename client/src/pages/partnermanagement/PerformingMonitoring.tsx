@@ -11,17 +11,53 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 ChartJS.register(CategoryScale, LinearScale,ArcElement, BarElement, Title, Tooltip, Legend);
 
 export default function PerformingMonitoring() {
 
+  const [cashIn, setCashIn] = useState({
+    pending: 0,
+    complete: 0
+  });
+  const [cashOut, setCashOut] = useState({
+    pending: 0,
+    complete: 0
+  });
+
+  const [successRate, setSuccessRate] = useState(0);
+
+  useEffect(() => {
+    const getDt = async () => {
+      const res = await fetch('/api/transactions');
+
+      if(res.ok) {
+        const body = await res.json();
+        const arr = [...body.data];
+
+        const pendingcin = arr.filter(a => a.service === 'Cash In' && a.transaction_status === 'Pending').length;
+        const completedcin = arr.filter(a => a.service === 'Cash In' && a.transaction_status !== 'Pending').length;
+        const pendingcout = arr.filter(a => a.service === 'Cash Out' && a.transaction_status !== 'Pending').length;
+        const completedcout = arr.filter(a => a.service === 'Cash Out' && a.transaction_status !== 'Pending').length;
+
+        const successR = ((completedcin + completedcout) / (completedcin + completedcout + pendingcin + pendingcout)) * 100;
+
+        setCashIn({pending: pendingcin, complete: completedcin});
+        setSuccessRate(successR);
+        setCashOut({pending: pendingcout, complete: completedcout});
+        
+      }
+    }
+
+    getDt();
+  },[]);
+
   const cashin = {
     labels: [],
     datasets: [{
       label: 'Cash In',
-      data: [50, 50],
+      data: [cashIn.complete, cashIn.pending],
       backgroundColor: [
         '#00c4cd',
         '#000',
@@ -32,8 +68,8 @@ export default function PerformingMonitoring() {
   const cashout = {
     labels: [],
     datasets: [{
-      label: 'Cash In',
-      data: [89, 11],
+      label: 'Cash Out',
+      data: [cashOut.complete, cashOut.pending],
       backgroundColor: [
         '#00c4cd',
         '#000',
@@ -45,7 +81,7 @@ export default function PerformingMonitoring() {
     labels: [],
     datasets: [{
       label: '',
-      data: [75, 25],
+      data: [successRate, Math.abs(successRate - 100)],
       backgroundColor: [
         '#00c4cd',
         '#000',

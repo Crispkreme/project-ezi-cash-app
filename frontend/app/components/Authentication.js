@@ -7,7 +7,6 @@ export default function Header() {
   const navigation = useNavigation();
   const { mobileNumber } = route.params || {};
 
-
   const handleBack = () => {
     navigation.goBack();
   }
