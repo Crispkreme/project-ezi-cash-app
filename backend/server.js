@@ -40,81 +40,92 @@ db.connect((err) => {
 app.post('/register', async (req, res) => {
   const { user_phone_no, first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, HasNoMiddleName, MPIN } = req.body;
 
-  console.log(req.body)
+  console.log(req.body);
 
   // Validate required fields
-  if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name, !birthdate, !email, !nationality, !main_source, !province, !city, !barangay, !zipcode, !HasNoMiddleName, !MPIN ) {
+  if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name || !birthdate || !email || !nationality || !main_source || !province || !city || !barangay || !zipcode || !MPIN ) {
     return res.status(400).json({ message: 'Please provide all required fields.' });
   }
 
   try {
-
-    db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", user_phone_no, 
-
+    // Check if phone number is already linked
+    db.query(
+      'SELECT user_phone_no FROM users_table WHERE user_phone_no = ?',
+      [user_phone_no],
       (err, result) => {
         if (err) {
           console.error('Database Error:', err);
-          return res.status(500).json({ message: 'Error while saving user credentials.' });
+          return res.status(500).json({ message: 'Error while checking phone number.' });
         }
 
-        if(result.length > 0) {
-          console.log("already linked")
-          return res.status(500).json({ message: 'The mobile number is already linked!.' });
+        if (result.length > 0) {
+          return res.status(409).json({ message: 'The mobile number is already linked.' });
         }
 
+        // Insert user credentials
         const insQuery = `
-          INSERT INTO users_table 
-          (user_phone_no, user_mpin, updated_at, created_at) 
+          INSERT INTO users_table (user_phone_no, user_mpin, updated_at, created_at)
           VALUES (?, ?, ?, ?)
         `;
-
-        db.query(
-          insQuery,
-          [
-            user_phone_no,
-            MPIN,
-            new Date(),
-            new Date()
-          ],
-          (err, result) => {
-            if (err) {
-              console.error('Database Error:', err);
-              return res.status(500).json({ message: 'Error while saving user credentials.' });
-            }
-            
-            const userId = result.insertId;
-
-            const query = `
-              INSERT INTO user_details 
-              (first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, user_id, created_at, updated_at) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
-
-            // Execute query
-            db.query(
-              query,
-              [ first_name, middle_name || '', last_name, new Date(), email, nationality, main_source, province, city, barangay, zipcode, userId, new Date(), new Date() ],
-              async (err, result) => {
-                if (err) {
-                  console.error('Database Error:', err);
-                  return res.status(500).json({ message: 'Error while saving user details.' });
-                }
-                
-                const data = await getUserData(userId);
-                if(data.data !== -1) {
-                  return res.status(200).json({message: "Login Successful!", data: data});
-                } else {
-                  return res.status(500).json({message: "Login unsuccessful!", data: undefined});
-                }
-
-              }
-            );
+        db.query(insQuery, [user_phone_no, MPIN, new Date(), new Date()], (err, result) => {
+          if (err) {
+            console.error('Database Error:', err);
+            return res.status(500).json({ message: 'Error while saving user credentials.' });
           }
-        );
 
+          const userId = result.insertId;
+
+          // Insert user details
+          const userDetailsQuery = `
+            INSERT INTO user_details
+            (first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, user_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `;
+          db.query(
+            userDetailsQuery,
+            [ first_name, middle_name || '', last_name, new Date(birthdate), email, nationality, main_source, province, city, barangay, zipcode, userId, new Date(), new Date() ],
+            async (err, result) => {
+              if (err) {
+                console.error('Database Error:', err);
+                return res.status(500).json({ message: 'Error while saving user details.' });
+              }
+
+              try {
+                const data = await getUserData(userId);
+
+                if (data.data !== -1) {
+                  const userDetailId = data.user_detail_id;
+
+                  // Create wallet
+                  const walletQuery = `
+                    INSERT INTO wallets (user_detail_id, balance, created_at, updated_at)
+                    VALUES (?, ?, ?, ?)
+                  `;
+                  const initialBalance = 0;
+                  db.query(
+                    walletQuery,
+                    [userDetailId, initialBalance, new Date(), new Date()],
+                    (err, result) => {
+                      if (err) {
+                        console.error('Database Error:', err);
+                        return res.status(500).json({ message: 'Error while creating the wallet.' });
+                      }
+
+                      res.status(201).json({ message: 'Registration successful!', data });
+                    }
+                  );
+                } else {
+                  res.status(500).json({ message: 'Failed to retrieve user data.' });
+                }
+              } catch (error) {
+                console.error('Unexpected Error:', error);
+                res.status(500).json({ message: 'An unexpected error occurred while retrieving user data.' });
+              }
+            }
+          );
+        });
       }
     );
-
   } catch (err) {
     console.error('Unexpected Error:', err);
     res.status(500).json({ message: 'An unexpected error occurred.' });
@@ -300,7 +311,6 @@ app.post("/login", async (req, res) => {
       try {
 
         const userData = await getUserData(result[0].user_id);
-        console.log("userData", userData);
 
         if (!userData) {
         return res.status(404).json({ message: 'User details not found.' });
@@ -474,6 +484,101 @@ app.post('/save-business-hours', (req, res) => {
     res.json({ message: 'Business hours saved successfully.' });
   });
 });
+app.get('/get-total-transaction/:user_detail_id', async (req, res) => {
+
+  const { user_detail_id } = req.params;
+  const query = `SELECT * FROM partner_wallets WHERE user_detail_id = ?`;
+
+  db.query(query, [user_detail_id], (err, results) => {
+
+    if (err) {
+      console.error('Database Error:', err);
+      return res.status(500).json({ message: 'Error while fetching transactions.' });
+    }
+
+    if (!results || results.length === 0) {
+      return res.status(200).json({
+        message: 'No transactions found.',
+        data: [],
+      });
+    }
+
+    console.log("results", results);
+    return res.status(200).json({
+      data: results,
+    });
+  });
+});
+app.get('/get-store-rating/:user_detail_id', async (req, res) => {
+  const { user_detail_id } = req.params;
+
+  const query = `
+    SELECT AVG(rating) as overall_rating
+    FROM ratings
+    WHERE user_detail_id = ?
+  `;
+
+  db.query(query, [user_detail_id], (err, results) => {
+    if (err) {
+      console.error('Database Error:', err);
+      return res.status(500).json({ message: 'Error while fetching ratings.' });
+    }
+
+    if (!results || results.length === 0 || results[0].overall_rating === null) {
+      return res.status(200).json({
+        message: 'No ratings found.',
+        data: { overall_rating: 0 },
+      });
+    }
+
+    return res.status(200).json({
+      data: { overall_rating: results[0].overall_rating },
+    });
+  });
+});
+app.get('/get-all-success-transaction/:user_detail_id', async (req, res) => {
+  const { user_detail_id } = req.params;
+
+  // Query to count all transactions with 'Success' status for the given user_detail_id
+  const query = `
+    SELECT COUNT(*) as success_count
+    FROM transactions
+    WHERE partner_id = ? AND transaction_status = 'Success'
+  `;
+
+  db.query(query, [user_detail_id], (err, results) => {
+    if (err) {
+      console.error('Database Error:', err);
+      return res.status(500).json({ message: 'Error while fetching success transactions.' });
+    }
+
+    return res.status(200).json({
+      data: { success_count: results[0].success_count },
+    });
+  });
+});
+app.get('/get-all-failed-transaction/:user_detail_id', async (req, res) => {
+  const { user_detail_id } = req.params;
+
+  // Query to count all transactions with 'Failed' status for the given user_detail_id
+  const query = `
+    SELECT COUNT(*) as failed_count
+    FROM transactions
+    WHERE partner_id = ? AND transaction_status = 'Failed'
+  `;
+
+  db.query(query, [user_detail_id], (err, results) => {
+    if (err) {
+      console.error('Database Error:', err);
+      return res.status(500).json({ message: 'Error while fetching failed transactions.' });
+    }
+
+    return res.status(200).json({
+      data: { failed_count: results[0].failed_count },
+    });
+  });
+});
+
 
 // paypal functionality
 app.post('/paypal', (req, res) => {
@@ -606,9 +711,12 @@ app.post('/success', (req, res) => {
     });
   });
 });
-
 app.get('/cancel', (req, res) => res.send('Payment was cancelled.'));
 
+// APP PARTNER
+
+
+// WEB
 app.post("/web-login", async(req, res) => {
   try {
     const {email, password} = req.body;
@@ -630,7 +738,6 @@ app.post("/web-login", async(req, res) => {
     // return res.status(500).json({message: e, data: {}});
   }
 });
-
 app.post('/web-verification-code', async (req, res) => {
   try {
     const {email} = req.body;
@@ -666,7 +773,6 @@ app.post('/web-verification-code', async (req, res) => {
     return res.status(500).json({message:e.message, data: undefined});
   }
 });
-
 app.post("/web-signup", async (req, res) => {
   try {
 

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 10, 2024 at 08:55 AM
+-- Generation Time: Dec 12, 2024 at 04:37 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -20,6 +20,28 @@ SET time_zone = "+00:00";
 --
 -- Database: `project-ezi-cash-app`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_details`
+--
+
+CREATE TABLE `admin_details` (
+  `admin_id` int(11) NOT NULL,
+  `admin_name` varchar(100) NOT NULL,
+  `admin_type` varchar(50) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `updated_at` date NOT NULL,
+  `created_at` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `admin_details`
+--
+
+INSERT INTO `admin_details` (`admin_id`, `admin_name`, `admin_type`, `user_id`, `updated_at`, `created_at`) VALUES
+(9, 'melonandead', 'Admin', 30, '2024-12-10', '2024-12-10');
 
 -- --------------------------------------------------------
 
@@ -46,6 +68,21 @@ CREATE TABLE `business_hours` (
 INSERT INTO `business_hours` (`business_hour_id`, `partner_id`, `isOpen`, `day`, `open_at`, `close_at`, `business_date`, `created_at`, `updated_at`) VALUES
 (1, 15, 1, 'Sunday', '16:16:34', '16:16:34', '2024-12-15', '2024-12-10 07:46:24', '2024-12-10 07:46:24'),
 (2, 15, 1, 'Sunday', '16:16:34', '16:16:34', '2024-12-15', '2024-12-10 07:47:01', '2024-12-10 07:47:01');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `feedbacks`
+--
+
+CREATE TABLE `feedbacks` (
+  `id` int(11) NOT NULL,
+  `store_id` int(11) DEFAULT NULL,
+  `user_detail_id` int(11) DEFAULT NULL,
+  `feedback` text DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -84,6 +121,37 @@ CREATE TABLE `notifications` (
 INSERT INTO `notifications` (`id`, `store_id`, `individual_id`, `notification`, `updated_at`, `created_at`) VALUES
 (1, 22, 21, 'has Cash In with the total amount of 1015.00 with a transactionId of PAYID-M5KBN3I8W56129395516112W on 2024-12-07T09:36:15.949Z', '2024-12-07 09:36:15', '2024-12-07 09:36:15'),
 (2, 22, 21, 'has Cash In with the total amount of 515.00 with a transactionId of PAYID-M5KG7DQ5BX6556082377610S on 2024-12-07T15:54:11.146Z', '2024-12-07 15:54:11', '2024-12-07 15:54:11');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `partner_wallets`
+--
+
+CREATE TABLE `partner_wallets` (
+  `id` int(11) NOT NULL,
+  `user_detail_id` int(11) DEFAULT NULL,
+  `earnings` double NOT NULL DEFAULT 0,
+  `transaction_fees` double NOT NULL DEFAULT 0,
+  `comission` double NOT NULL DEFAULT 0,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ratings`
+--
+
+CREATE TABLE `ratings` (
+  `id` int(11) NOT NULL,
+  `store_id` int(11) NOT NULL,
+  `user_detail_id` int(11) NOT NULL,
+  `rating` decimal(15,2) NOT NULL,
+  `updated_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -141,7 +209,8 @@ CREATE TABLE `users_table` (
 INSERT INTO `users_table` (`user_id`, `user_phone_no`, `user_mpin`, `user_email`, `user_pass`, `user_name`, `partner_type`, `updated_at`, `created_at`) VALUES
 (21, '9672510357', '1234', '', '', '', 'Store', '2024-11-28 22:17:54', '2024-11-28 22:17:54'),
 (22, '9052885214', '1234', '', '', '', 'Partner', '2024-11-28 22:17:54', '2024-11-28 22:17:54'),
-(30, '', '', 'cjvicro@gmail.com', '$2a$10$0U.mS2Wz9JI0I7w79fJ3huXGNqIA.tHJNMD2QCZYpcFHyLT32xRUS', '', '', '2024-12-10 17:19:00', '2024-12-10 17:19:00');
+(30, '', '', 'cjvicro@gmail.com', '$2a$10$0U.mS2Wz9JI0I7w79fJ3huXGNqIA.tHJNMD2QCZYpcFHyLT32xRUS', '', '', '2024-12-10 17:19:00', '2024-12-10 17:19:00'),
+(31, '9999999999', '1234', '', '', '', '', '2024-12-12 11:17:32', '2024-12-12 11:17:32');
 
 -- --------------------------------------------------------
 
@@ -174,7 +243,8 @@ CREATE TABLE `user_details` (
 INSERT INTO `user_details` (`user_detail_id`, `first_name`, `middle_name`, `last_name`, `birthdate`, `email`, `nationality`, `main_source`, `province`, `city`, `barangay`, `zipcode`, `user_id`, `created_at`, `updated_at`) VALUES
 (13, 'Victor', 'Atay', 'Chiong', '2024-11-28 22:17:54', 'johndoe@gmail.com', 'Nationality', 'Main Source of Funds', 'Province', 'City/Municipality', 'Barangay', '6000', 21, '2024-11-28 22:17:54', '2024-11-28 22:17:54'),
 (14, 'Marvin', 'Masaglang', 'Ramos', '2024-12-02 23:25:39', 'marvinramos.nutnull@gmail.com', 'Nationality', 'Main Source of Funds', 'Province', 'City/Municipality', 'Barangay', '6000', 22, '2024-12-02 23:25:39', '2024-12-02 23:25:39'),
-(15, 'Gagahag', 'Bababhaa', 'Hahahaha', '2024-12-04 12:25:13', 'Marcinshmshs@gmail.ckm', 'Filipino', 'Allowance', 'Cebu', 'Cebu City (Capital)', 'Adlawon', '6000', 30, '2024-12-04 12:25:13', '2024-12-04 12:25:13');
+(15, 'Gagahag', 'Bababhaa', 'Hahahaha', '2024-12-04 12:25:13', 'Marcinshmshs@gmail.ckm', 'Filipino', 'Allowance', 'Cebu', 'Cebu City (Capital)', 'Adlawon', '6000', 30, '2024-12-04 12:25:13', '2024-12-04 12:25:13'),
+(17, 'Marvin', 'Masaglang', 'Ramos', '2024-12-12 11:17:32', 'sample@sample.com', 'Filipino', 'Job', 'Cebu', 'alcantara', 'Cabandiangan', '6000', 31, '2024-12-12 11:17:32', '2024-12-12 11:17:32');
 
 -- --------------------------------------------------------
 
@@ -197,22 +267,6 @@ CREATE TABLE `wallets` (
 INSERT INTO `wallets` (`id`, `user_detail_id`, `balance`, `created_at`, `updated_at`) VALUES
 (1, 15, 10000.00, '2024-12-09 08:51:29', '2024-12-09 08:51:29');
 
-CREATE TABLE `admin_details` (
-  `admin_id` int(11) NOT NULL,
-  `admin_name` varchar(100) NOT NULL,
-  `admin_type` varchar(50) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `updated_at` date NOT NULL,
-  `created_at` date NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `admin_details`
---
-
-INSERT INTO `admin_details` (`admin_id`, `admin_name`, `admin_type`, `user_id`, `updated_at`, `created_at`) VALUES
-(9, 'melonandead', 'Admin', 30, '2024-12-10', '2024-12-10');
-
 --
 -- Indexes for dumped tables
 --
@@ -233,6 +287,18 @@ ALTER TABLE `messages`
 -- Indexes for table `notifications`
 --
 ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `partner_wallets`
+--
+ALTER TABLE `partner_wallets`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `ratings`
+--
+ALTER TABLE `ratings`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -282,6 +348,18 @@ ALTER TABLE `notifications`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
+-- AUTO_INCREMENT for table `partner_wallets`
+--
+ALTER TABLE `partner_wallets`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `ratings`
+--
+ALTER TABLE `ratings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
@@ -291,13 +369,13 @@ ALTER TABLE `transactions`
 -- AUTO_INCREMENT for table `users_table`
 --
 ALTER TABLE `users_table`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `user_details`
 --
 ALTER TABLE `user_details`
-  MODIFY `user_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `user_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `wallets`

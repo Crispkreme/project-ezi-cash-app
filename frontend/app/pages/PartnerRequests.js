@@ -62,6 +62,7 @@ const PartnerRequests = ({ route, navigation }) => {
   
     fetchTransaction();
   }, []);
+  
   const groupTransactionsByDate = (transactions) => {
     const grouped = {};
     const today = new Date().toDateString();
