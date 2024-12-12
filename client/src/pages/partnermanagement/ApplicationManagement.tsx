@@ -5,52 +5,65 @@ import { useEffect, useState } from "react";
 import file from '../../assets/file.png';
 import verified from '../../assets/verified.png';
 import declined from '../../assets/declined.png';
+import { Link } from "react-router-dom";
 
+interface userDt {
+  id: number, 
+  role: string, 
+  name: string, 
+  location: string, 
+  verification: {
+    business_reg_doc: null | boolean,
+    gov_id: null | boolean,
+    proof_address: null | boolean,
+  }, documents: {
+    business_permit: string,
+    government_id: string,
+    proof_of_address: string,
+  }
+}
 
 export default function ApplicationManagement() {
 
-  const [user,setUsers] = useState([
-    {id: 1, role: 'Individual', name: 'Nicole Ayessa Alcover', location: '79 Cabreros St Cebu City, Cebu', verification: {
-      business_reg_doc: null,
-      gov_id: null,
-      proof_address: null
-    }},
-    {id: 2, role: 'Individual', name: 'Jeanette Alcover', location: 'Carcar City, Cebu', verification: {
-      business_reg_doc: null,
-      gov_id: null,
-      proof_address: null
-    }},
-    {id: 3, role: 'Store', name: 'Shynne Canada', location: 'Sambag 1, Urgello Cebu City', verification: {
-      business_reg_doc: null,
-      gov_id: null,
-      proof_address: null
-    }},
-  ]);
+  const [user,setUsers] = useState<Array<userDt>>([]);
+
+  useEffect(() => {
+    const fetchData = async() => {
+      const res = await fetch('/api/partner-application-list');
+      if(res.ok) {
+        const dt = await res.json();
+        const data = [...dt.data];
+        const temp = data.map(d => {
+          return {id: d.partner_application_id, role: d.partnership_type, name: d.legal_name, location: String(d.business_zip)+' '+ String(d.business_city)+ ' ' + String(d.business_state), verification: {
+            business_reg_doc: d.business_permit_verify === 0 ? null : d.business_permit_verify === 1 ? true : false,
+            gov_id: d.government_id_verify === 0 ? null : d.government_id_verify === 1 ? true : false,
+            proof_address: d.proof_of_address_verify === 0 ? null : d.proof_of_address_verify === 1 ? true : false,
+          }, documents: {
+            business_permit: d.business_permit,
+            government_id: d.government_id,
+            proof_of_address: d.proof_of_address,
+          }}
+        });
+
+        const declined = temp.filter(el => el.verification.business_reg_doc === false && el.verification.gov_id === false && el.verification.proof_address === false);
+        const verified = temp.filter(el => el.verification.business_reg_doc && el.verification.gov_id && el.verification.proof_address );
+        const pending = temp.filter(el => !verified.includes(el) && !declined.includes(el));
+
+        setUsers([...pending]);
+        setInteractedDocuments({verified: [...verified], declined: [...declined]})
+      }
+    }
+
+    fetchData();
+  },[]);
+
+  
 
   const [activeWindow, setActiveWindow] = useState(0);
-
-  const [interactedDocuments, setInteractedDocuments] = useState({
-    verified: [
-      {id: 1, role: 'Individual', name: 'Nicole Ayessa Alcover', location: '79 Cabreros St Cebu City, Cebu', verification: {
-        business_reg_doc: true,
-        gov_id: true,
-        proof_address: true
-      }},
-    ],
-    declined: [
-      {id: 1, role: 'Individual', name: 'Nicole Ayessa Alcover', location: '79 Cabreros St Cebu City, Cebu', verification: {
-        business_reg_doc: false,
-        gov_id: false,
-        proof_address: false
-      }},
-      {id: 2, role: 'Individual', name: 'Jeanette Alcover', location: 'Carcar City, Cebu', verification: {
-        business_reg_doc: false,
-        gov_id: false,
-        proof_address: false
-      }},
-    ]
+  const [interactedDocuments, setInteractedDocuments] = useState<{verified: Array<userDt>, declined: Array<userDt>}>({
+    verified: [],
+    declined: [],
   })
-  
 
   const [state, setState] = useState(false);
   const [interactedModal, setInteractedModal] = useState(false);
@@ -66,18 +79,46 @@ export default function ApplicationManagement() {
     console.log(state);
   },[state]);
 
-  const verify = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const verify = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const name = e.currentTarget.name;
+    const x = {
+      business_reg_doc: 'business_permit_verify',
+      gov_id: 'government_id_verify',
+      proof_address: 'proof_of_address_verify'
+    }
     
+    const res = await fetch('/api/verification', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({partner_application_id: user[active].id, column: x[name as keyof typeof x], value: 1})
+    });
+
+
     const temp = [...user];
     temp[active] = {...temp[active], verification: {...temp[active].verification, [name]: true}};
     setUsers([...temp]);
   }
 
-  const decline = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const decline = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const name = e.currentTarget.name;
+
+    const x = {
+      business_reg_doc: 'business_permit_verify',
+      gov_id: 'government_id_verify',
+      proof_address: 'proof_of_address_verify'
+    }
+    
+    const res = await fetch('/api/verification', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({partner_application_id: user[active].id, column: x[name as keyof typeof x], value: 2})
+    });
     
     const temp = [...user];
     temp[active] = {...temp[active], verification: {...temp[active].verification, [name]: false}};
@@ -85,7 +126,6 @@ export default function ApplicationManagement() {
   }
 
   const acceptDocuments = (e: React.MouseEvent<HTMLButtonElement>) => {
-    console.log(user[active]);
     if(user[active].verification.business_reg_doc === true && user[active].verification.gov_id === true && user[active].verification.proof_address === true) {
       toggle(e);
     } else {
@@ -119,7 +159,7 @@ export default function ApplicationManagement() {
               <span className="flex justify-center items-center text-sm roboto-regular">Review and Verify Document</span>
             </div>
             {
-              activeWindow === 0 && user.map((a, idx) => {
+              (activeWindow === 0 && user.length > 0  )  && user.map((a, idx) => {
                 return (
                   <div key={idx} className="gap-4 shadow-lg py-4 grid grid-cols-4 w-full border border-gray-200 justify-between">
                     <span className="flex justify-center items-center text-sm roboto-regular">{a.name}</span>
@@ -191,18 +231,20 @@ export default function ApplicationManagement() {
                   <h1 className="roboto-bold text-lg">1</h1>
                   <div className="flex flex-col gap-4">
                     <span className="roboto-bold text-lg">Business Registration Document (Store only)</span>
-                    <div className="flex gap-2 rounded-lg items-center border border-gray-300 py-2 px-4">
-                      <img src={file} />
-                      <div className="flex flex-col text-xs gap-1">
-                        <span>business_registration</span>
-                        <span>PDF, 14MB</span>
+                    <a target="_blank" href={'/api/file/' + (user.length > 0 && user[active].documents.business_permit)}>
+                      <div className="flex gap-2 rounded-lg items-center border border-gray-300 py-2 px-4">
+                        <img src={file} />
+                        <div className="flex flex-col text-xs gap-1">
+                          <span>{user.length > 0 && user[active].documents.business_permit}</span>
+                          <span>PDF, 14MB</span>
+                        </div>
                       </div>
-                    </div>
+                    </a>
                   </div>
                 </div>
                 <div>
                   {
-                    user[active].verification.business_reg_doc === null && interactedModal === false && (
+                    user.length > 0 && user[active].verification.business_reg_doc === null && interactedModal === false && (
                       <div className="flex justify-center items-center gap-2 pl-32 h-full">
                         <button onClick={verify} name="business_reg_doc" className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
                           <img src={verified} alt="" />
@@ -216,7 +258,7 @@ export default function ApplicationManagement() {
                     )
                   }
                   {
-                    (user[active].verification.business_reg_doc === true || (interactedModal === true && activeWindow === 1 && interactedDocuments.verified[active].verification.business_reg_doc === true)) && (
+                    (user.length > 0 && user[active].verification.business_reg_doc === true || (interactedModal === true && activeWindow === 1 && interactedDocuments.verified[active].verification.business_reg_doc === true)) && (
                       <div className="flex justify-center items-center gap-2 pl-32 h-full">
                         <span className="flex items-center gap-2 px-4 py-2 bg-green-200 rounded-full">
                           <img src={verified} alt="" />
@@ -227,7 +269,7 @@ export default function ApplicationManagement() {
                   }
 
                   {
-                    (user[active].verification.business_reg_doc === false || (interactedModal === true && activeWindow === 2 && interactedDocuments.declined[active].verification.business_reg_doc === false)) && (
+                    (user.length > 0 && user[active].verification.business_reg_doc === false || (interactedModal === true && activeWindow === 2 && interactedDocuments.declined[active].verification.business_reg_doc === false)) && (
                       <div className="flex justify-center items-center gap-2 pl-32 h-full">
                         <span className="flex items-center gap-2 px-4 py-2 bg-red-200 rounded-full">
                           <img src={declined} alt="" />
@@ -244,18 +286,20 @@ export default function ApplicationManagement() {
                   <h1 className="roboto-bold text-lg">1</h1>
                   <div className="flex flex-col gap-4">
                     <span className="roboto-bold text-lg">Government issued IDs of Authorized Representative</span>
-                    <div className="flex gap-2 rounded-lg items-center border border-gray-300 py-2 px-4">
-                      <img src={file} />
-                      <div className="flex flex-col text-xs gap-1">
-                        <span>government_id</span>
-                        <span>PDF, 5MB</span>
+                    <a target="_blank" href={'/api/file/' + (user.length > 0 && user[active].documents.government_id)}>
+                      <div className="flex gap-2 rounded-lg items-center border border-gray-300 py-2 px-4">
+                        <img src={file} />
+                        <div className="flex flex-col text-xs gap-1">
+                        <span>{user.length > 0 && user[active].documents.government_id}</span>
+                          <span>PDF, 5MB</span>
+                        </div>
                       </div>
-                    </div>
+                    </a>
                   </div>
                 </div>
                 <div>
                   {
-                    user[active].verification.gov_id === null && interactedModal === false && (
+                    user.length > 0 && user[active].verification.gov_id === null && interactedModal === false && (
                       <div className="flex justify-center items-center gap-2 pl-32 h-full">
                         <button onClick={verify} name="gov_id" className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
                           <img src={verified} alt="" />
@@ -269,7 +313,7 @@ export default function ApplicationManagement() {
                     )
                   }
                   {
-                    (user[active].verification.gov_id === true || (interactedModal === true && activeWindow === 1 && interactedDocuments.verified[active].verification.gov_id === true)) && (
+                    (user.length > 0 && user[active].verification.gov_id === true || (interactedModal === true && activeWindow === 1 && interactedDocuments.verified[active].verification.gov_id === true)) && (
                       <div className="flex justify-center items-center gap-2 pl-32 h-full">
                         <span className="flex items-center gap-2 px-4 py-2 bg-green-200 rounded-full">
                           <img src={verified} alt="" />
@@ -280,7 +324,7 @@ export default function ApplicationManagement() {
                   }
 
                   {
-                    (user[active].verification.gov_id === false || (interactedModal === true && activeWindow === 2 && interactedDocuments.declined[active].verification.gov_id === false)) && (
+                    (user.length > 0 && user[active].verification.gov_id === false || (interactedModal === true && activeWindow === 2 && interactedDocuments.declined[active].verification.gov_id === false)) && (
                       <div className="flex justify-center items-center gap-2 pl-32 h-full">
                         <span className="flex items-center gap-2 px-4 py-2 bg-red-200 rounded-full">
                           <img src={declined} alt="" />
@@ -297,18 +341,20 @@ export default function ApplicationManagement() {
                   <h1 className="roboto-bold text-lg">1</h1>
                   <div className="flex flex-col gap-4">
                     <span className="roboto-bold text-lg">Proof of Address</span>
-                    <div className="flex gap-2 rounded-lg items-center border border-gray-300 py-2 px-4">
-                      <img src={file} />
-                      <div className="flex flex-col text-xs gap-1">
-                        <span>proof_address</span>
-                        <span>PDF, 19MB</span>
+                    <a target="_blank" href={'/api/file/' + (user.length > 0 && user[active].documents.proof_of_address)}>
+                      <div className="flex gap-2 rounded-lg items-center border border-gray-300 py-2 px-4">
+                        <img src={file} />
+                        <div className="flex flex-col text-xs gap-1">
+                        <span>{user.length > 0 && user[active].documents.proof_of_address}</span>
+                          <span>PDF, 19MB</span>
+                        </div>
                       </div>
-                    </div>
+                    </a>
                   </div>
                 </div>
                 <div>
                   {
-                    user[active].verification.proof_address === null && interactedModal === false && (
+                    user.length > 0 && user[active].verification.proof_address === null && interactedModal === false && (
                       <div className="flex justify-center items-center gap-2 pl-32 h-full">
                         <button onClick={verify} name="proof_address" className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
                           <img src={verified} alt="" />
@@ -323,7 +369,7 @@ export default function ApplicationManagement() {
                   }
 
                   {
-                    (user[active].verification.proof_address === true || (interactedModal === true && activeWindow === 1 && interactedDocuments.verified[active].verification.proof_address === true)) && (
+                    (user.length > 0 && user[active].verification.proof_address === true || (interactedModal === true && activeWindow === 1 && interactedDocuments.verified[active].verification.proof_address === true)) && (
                       <div className="flex justify-center items-center gap-2 pl-32 h-full">
                         <span className="flex items-center gap-2 px-4 py-2 bg-green-200 rounded-full">
                           <img src={verified} alt="" />
@@ -334,7 +380,7 @@ export default function ApplicationManagement() {
                   }
 
                   {
-                    (user[active].verification.proof_address === false || (interactedModal === true && activeWindow === 2 && interactedDocuments.declined[active].verification.proof_address === false)) && (
+                    (user.length > 0 && user[active].verification.proof_address === false || (interactedModal === true && activeWindow === 2 && interactedDocuments.declined[active].verification.proof_address === false)) && (
                       <div className="flex justify-center items-center gap-2 pl-32 h-full">
                         <span className="flex items-center gap-2 px-4 py-2 bg-red-200 rounded-full">
                           <img src={declined} alt="" />

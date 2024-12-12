@@ -31,6 +31,18 @@ export default function PartnerManagement() {
 
   ]
 
+  const [search,setSearch] = useState('');
+  const [searchRes, setSearchRes] = useState([...user]);
+  const handleChange = (e:React.ChangeEvent<HTMLInputElement>) => {
+    const t = e.currentTarget;
+    setSearch(t.value);
+    const temp = [...user];
+    const f = temp.filter(c => c.type.toLowerCase().includes(t.value) || c.name.toLowerCase().includes(t.value) || c.address.toLowerCase().includes(t.value)
+    || c.email.toLowerCase().includes(t.value) || c.contact.toLowerCase().includes(t.value));
+
+    setSearchRes([...f]);
+  };
+
 
   return (
     <AdminLayout>
@@ -42,17 +54,13 @@ export default function PartnerManagement() {
           <div className="flex justify-end gap-2">
             <div className="relative flex items-center">
               <img className="absolute right-2 w-1/12" src={search} alt="" />
-              <input placeholder="Search" className="px-4 text-primary py-2 border border-primary bg-gray-300 shadow-lg text-sm rounded-full" type="text" name="search" id="search" />
+              <input onChange={handleChange} value={search} placeholder="Search" className="px-4 text-primary py-2 border border-primary bg-gray-300 shadow-lg text-sm rounded-full" type="text" name="search" id="search" />
             </div>
-            <Button text="Add"/>
-            <Button text="Suspend"/>
-            <Button text="Unsuspend"/>
-            <Button text="Remove"/>
             <Link to="/partnermanagement/application" className="underline ml-16">Application List</Link>
           </div>
           <div className="flex flex-col gap-4">
             {
-              user.map((a, idx) => {
+              searchRes.length > 0 && searchRes.map((a, idx) => {
                 return (
                   <div key={idx} className="gap-4 shadow-lg py-8 grid grid-cols-6 w-full border border-gray-200 justify-between">
                     <span className="flex justify-center items-center text-sm roboto-regular">{a.type}</span>
@@ -60,10 +68,9 @@ export default function PartnerManagement() {
                     <span className="flex justify-center items-center text-sm roboto-regular">{a.address}</span>
                     <span className="flex justify-center items-center text-sm roboto-regular text-primary">{a.email}</span>
                     <span className="flex justify-center items-center text-sm roboto-regular text-primary">{a.contact}</span>
-                    <span className="flex justify-center items-center gap-2">
-                      <img src={threedots} alt="" />
-                      <img src={edit} alt="" />
-                      <img src={stats} alt="" />
+                    <span className="flex flex-col justify-center items-center gap-2">
+                      <Button text="Suspend"/>
+                      <Button text="Unsuspend"/>
                     </span>
                   </div>
                 )

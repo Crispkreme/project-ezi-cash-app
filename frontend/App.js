@@ -45,6 +45,8 @@ import PartnerCommissionFeeStatements from './app/pages/PartnerCommissionFeeStat
 import PartnerSettledCommissions from './app/pages/PartnerSettledCommissions';
 import PartnerLocate from './app/pages/PartnerLocate';
 import PartnerServiceManagement from './app/pages/PartnerServiceManagement';
+import SuccessfulApplication from './app/pages/ezicash/SuccessfulApplication';
+import ApplicationStatus from './app/pages/ezicash/ApplicationStatus';
 
 const Stack = createStackNavigator({
   screens: {
@@ -264,7 +266,19 @@ const Stack = createStackNavigator({
       options: {
         header: () => null
       }
-    }
+    },
+    SuccessfulApplication: {
+      screen: SuccessfulApplication,
+      options: {
+        header: () => null
+      }
+    },
+    ApplicationStatus: {
+      screen: ApplicationStatus,
+      options: {
+        header: () => null
+      }
+    },
   }
 });
 

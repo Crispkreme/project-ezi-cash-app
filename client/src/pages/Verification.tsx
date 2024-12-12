@@ -3,6 +3,12 @@ import CredentialTitle from "../components/CredentialTitle";
 import CredentialLayout from "../layout/CredentialLayout";
 import { Link, redirect, useNavigate } from "react-router-dom";
 
+const type = {
+  'Admin': 'admin',
+  'Partner Management': 'partnermanagement',
+  'Finance': 'finance'
+}
+
 export default function Verification() {
   const navigate = useNavigate();
   
@@ -68,15 +74,12 @@ export default function Verification() {
       sessionStorage.removeItem('user-login');
       sessionStorage.removeItem('user-signup');
 
-      const type = {
-        'Admin': 'admin',
-        'Partner Management': 'partnermanagement',
-        'Finance': 'finance'
-      }
+      
 
       if(data) sessionStorage.setItem('session', JSON.stringify({name: JSON.parse(data).email}));
+      const t = body.data.admin_type === 'Admin' ? 'admin' : body.data.admin_type === 'Partner Management' ? 'partnermanagement' : 'finance';
 
-      return navigate(`/${type[body.data.admin_type as keyof typeof type]}/dashboard`);
+      return navigate(`/${t}/dashboard`);
     } else {
       const userLogin = sessionStorage.getItem('user-login');
       const dt = JSON.parse(String(userLogin));
@@ -92,8 +95,17 @@ export default function Verification() {
       if(!res.ok) return;
   
       const b = await res.json();
+      sessionStorage.removeItem('registration');
+      sessionStorage.removeItem('verification-code');
+      sessionStorage.removeItem('user-login');
+      sessionStorage.removeItem('user-signup');
+
       sessionStorage.setItem('session', JSON.stringify({name: b.data}));
-      return navigate('/admin/dashboard');
+      setTimeout(() => {
+        const t = b.data.admin_type === 'Admin' ? 'admin' : b.data.admin_type === 'Partner Management' ? 'partnermanagement' : 'finance';
+        navigate(`/${t}/dashboard`);
+      },1000);
+      
     }
   }
 

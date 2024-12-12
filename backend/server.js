@@ -6,9 +6,12 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const paypal = require('paypal-rest-sdk');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 const nodemailer = require('nodemailer');
+const path = require('path');
 
 paypal.configure({
   'mode': 'sandbox',
@@ -308,7 +311,7 @@ app.post("/login", async (req, res) => {
 
         return res.status(200).json({ 
           message: 'Proceed to login', 
-          data: userData 
+          data: {...userData, user_id: result[0].user_id} 
         });
         
       } catch (error) {
@@ -654,7 +657,7 @@ app.post('/web-verification-code', async (req, res) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if(error) {
-        return res.status(500).json({message: error, data: info.response});
+        return res.status(500).json({message: error, data: undefined});
       } else {
         return res.status(200).json({message: 'Success!', data: pin});
       }
@@ -704,6 +707,220 @@ app.post("/web-signup", async (req, res) => {
     
   } catch(e) {
     return res.status(500).json({message: e.message, data: undefined});
+  }
+});
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Directory where files will be saved
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
+
+app.post("/file-upload", upload.single('file'), async (req, res) => {
+  try {
+    return res.status(200).json({message:'Success!', data: req.file.filename});
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'There was an error applying!'});
+  }
+});
+
+app.get('/file/:filename', async (req, res) => {
+  const filePath = path.join(__dirname, 'uploads', req.params.filename);
+  return res.sendFile(filePath, (err) => {
+    if(err) {
+      return res.status(404).json({message:'File not found!'});
+    }
+  })
+});
+
+app.get('/transactions', async (req, res) => {
+  try {
+    db.query('SELECT * FROM transactions', (err, result) => {
+      if(err) {
+        console.log(err);
+
+        return res.status(500).json({message: err, data: []});
+      }
+
+      return res.status(200).json({message:'Success', data: result});
+    })
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:e, data: []});
+  }
+});
+
+app.patch('/verification', async (req, res) => {
+  try {
+    const body = req.body;
+
+    db.query(`UPDATE partnership_application SET ${body.column} = ? WHERE partner_application_id = ?`,
+      [body.value, body.partner_application_id],
+      (err, result) => {
+        if(err) {
+          return res.status(500).json({message: err});
+        }
+
+        return res.status(200).json({message: 'Success!'});
+      }
+    )
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message: 'Unsuccessful!'});
+  }
+});
+
+app.get('/get-admins', async (req, res) => {
+  try {
+    db.query(`SELECT * FROM admin_details`, (err, result) => {
+      if(err) {
+        console.log(err);
+        return res.status(500).json({message: err, data: []});
+      }
+      
+      console.log(result);
+      return res.status(200).json({message: 'Success', data: result});
+    })
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'Unsuccessful', data: []});
+  }
+});
+
+app.patch('/add-admins', async (req, res) => {
+  try {
+    const body = req.body;
+    console.log(body);
+    db.query(`UPDATE admin_details SET admin_type = ? WHERE admin_id = ?`,[body.department, body.admin_id],
+      (err, result) => {
+        if(err) {
+          console.log(err);
+          return res.status(500).json({message: 'Failed!'});
+        }
+
+        return res.status(200).json({message:'Success Update!'});
+      }
+    )
+
+
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message: e});
+  }
+});
+
+app.get('/partner-application-list', async (req, res) => {
+  try {
+    db.query(`SELECT * FROM partnership_application`, (err, info) => {
+      if(err) {
+        console.log(err);
+        return res.status(500).json({message: err, data: []});
+      }
+
+      return res.status(200).json({message: 'Successful!', data: info});
+    });
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message: e, data: []});
+  }
+});
+
+app.post("/partner-application", upload.single('file'), async (req, res) => {
+  try {
+    const body = req.body;
+    console.log(body);
+    db.query(`INSERT INTO partnership_application (
+      user_id, 
+      legal_name,
+      partnership_type, 
+      phone_no, 
+      email, 
+      legal_address, 
+      city, 
+      state, 
+      zip, 
+      business_location,
+      business_city,
+      business_state,
+      business_zip,
+      business_permit,
+      government_id,
+      proof_of_address,
+      business_permit_verify,
+      government_id_verify,
+      proof_of_address_verify,
+      bank,
+      bank_account_id,
+      account_id,
+      card_no,
+      card_holder
+    ) VALUES (
+      ?, 
+      ?,
+      ?, 
+      ?, 
+      ?, 
+      ?, 
+      ?, 
+      ?, 
+      ?, 
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?
+    )`, [
+      body.user_id, 
+      body.legal_name,
+      body.partnership_type, 
+      body.phone_no, 
+      body.email, 
+      body.legal_address, 
+      body.city, 
+      body.state, 
+      body.zip, 
+      body.business_location,
+      body.business_city,
+      body.business_state,
+      body.business_zip,
+      body.business_permit,
+      body.government_id,
+      body.proof_of_address,
+      0,
+      0,
+      0,
+      body.bank,
+      body.bank_account_id,
+      body.account_id,
+      body.card_no,
+      body.card_holder
+    ], async (err, result) => {
+      if(err) {
+        console.log(err);
+        return res.status(500).json({message:'There was an error in the application!'});
+      }
+
+      return res.status(200).json({message:'Successful Application!'});
+    });
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'There was an error applying!'});
   }
 });
 

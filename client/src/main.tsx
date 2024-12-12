@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import Login from './pages/Login.tsx'
 import Signup from './pages/Signup.tsx'
 import ForgotPassword from './pages/ForgotPassword.tsx'
@@ -22,6 +22,10 @@ import TransactionsMonitoring from './pages/finance/TransactionsMonitoring.tsx'
 import TransactionReports from './pages/finance/TransactionReports.tsx'
 import CommissionPaymentProcessing from './pages/finance/CommissionPaymentProcessing.tsx'
 
+const session = sessionStorage.getItem('session');
+console.log(session);
+const isLoggedIn = session !== null;
+console.log(isLoggedIn);
 const router = createBrowserRouter([
   {
     path: '/',
@@ -49,55 +53,55 @@ const router = createBrowserRouter([
   },
   {
     path: '/admin/dashboard',
-    element: <Dashboard />
+    element: isLoggedIn ? <Dashboard /> : <Navigate to="/login"/>
   },
   {
     path: '/admin/transactions',
-    element: <TransactionsOverview />
+    element: isLoggedIn ? <TransactionsOverview /> : <Navigate to="/login"/>
   },
   {
     path: '/admin/management',
-    element: <UserManagement />
+    element: isLoggedIn ? <UserManagement /> : <Navigate to="/login"/>
   },
   {
     path: '/admin/access',
-    element: <AccessControl />
+    element: isLoggedIn ? <AccessControl /> : <Navigate to="/login"/>
   },
   {
     path: '/partnermanagement/dashboard',
-    element: <ManagementDashboard />
+    element: isLoggedIn ? <ManagementDashboard /> : <Navigate to="/login"/>
   },
   {
     path: '/partnermanagement/partner',
-    element: <PartnerManagement />
+    element: isLoggedIn ? <PartnerManagement /> : <Navigate to="/login"/>
   },
   {
     path: '/partnermanagement/application',
-    element: <ApplicationManagement />
+    element: isLoggedIn ? <ApplicationManagement /> : <Navigate to="/login"/>
   },
   {
     path:'/partnermanagement/agreements',
-    element:<AgreementManagement />
+    element:isLoggedIn ? <AgreementManagement /> : <Navigate to="/login"/>
   },
   {
     path: '/partnermanagement/monitoring',
-    element: <PerformingMonitoring />
+    element: isLoggedIn ? <PerformingMonitoring /> : <Navigate to="/login"/>
   },
   {
     path: '/finance/dashboard',
-    element: <FinanceDashboard />
+    element: isLoggedIn ? <FinanceDashboard /> : <Navigate to="/login"/>
   },
   {
     path: '/finance/monitoring',
-    element: <TransactionsMonitoring />
+    element: isLoggedIn ? <TransactionsMonitoring /> : <Navigate to="/login"/>
   },
   {
     path: '/finance/reports',
-    element: <TransactionReports />
+    element: isLoggedIn ? <TransactionReports /> : <Navigate to="/login"/>
   },
   {
     path: '/finance/processing',
-    element: <CommissionPaymentProcessing />
+    element: isLoggedIn ? <CommissionPaymentProcessing /> : <Navigate to="/login"/>
   }
 ]);
 
