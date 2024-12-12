@@ -175,7 +175,7 @@ const PartnerTransactions = ({ route, navigation }) => {
 
                     return(
                       <TouchableOpacity
-                        key={transaction.id}
+                        key={`${transaction.id}-${transaction.date}`}
                         style={[
                           __gstyles__.shadow,
                           { justifyContent: "space-between", width: "100%" },
@@ -198,7 +198,7 @@ const PartnerTransactions = ({ route, navigation }) => {
                               {transaction.amount} {"\n"}
                             </Text>
                             <Text className="text-xs">
-                              {transaction.bank || "Unknown Bank"} {"\n"}
+                              {transaction.bank || "Paypal"} {"\n"}
                             </Text>
                             <Text className="text-xs">
                               {new Date(transaction.date).toLocaleString()} {"\n"}

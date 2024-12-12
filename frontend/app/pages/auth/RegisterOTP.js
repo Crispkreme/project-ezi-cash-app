@@ -5,8 +5,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Alert
+  StyleSheet
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -67,19 +66,6 @@ const RegisterOTP = ({ route }) => {
         setOtp(Array(6).fill(""));
         setTimeRemaining(2 * 60); 
         setIsOtpExpired(false); 
-
-        Alert.alert(
-          "New OTP Generated",
-          `Your new OTP is: ${data.otp}`,
-          [
-            {
-              text: "OK",
-              onPress: () => console.log("New OTP generated successfully."),
-            },
-          ],
-          { cancelable: false }
-        );
-
         console.log("New OTP generated:", data.otp);
       } else {
         alert("Failed to resend OTP. Please try again.");

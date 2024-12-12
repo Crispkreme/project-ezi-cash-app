@@ -217,83 +217,116 @@ app.get("/check-phone", async (req, res) => {
   });
 });
 app.post("/payment-transaction", async (req, res) => {
+  const { 
+    user_detail_id: user_id, 
+    partner_type: type, 
+    service, 
+    amount, 
+    partner_id: store_id = null 
+  } = req.body;
+
+  const defaults = {
+    bank: "Paypal",
+    total_amount: 0,
+    balance: 0,
+    transaction_status: "Pending",
+    payer_id: null,
+    payment_id: null,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
   try {
-    const {
-      user_detail_id: user_id,
-      partner_type: type,
-      service,
-      amount,
-    } = req.body;
-
-    const bank = "";
-    const total_amount = 0;
-    const balance = 0;
-    const transaction_status = "Pending";
-    const payer_id = null;
-    const partner_id = null;
-    const payment_id = null;
-    const created_at = new Date();
-    const updated_at = new Date();
-
     const checkPendingQuery = `
       SELECT COUNT(*) AS pendingCount 
       FROM transactions 
-      WHERE user_id = ? AND transaction_status = 'Pending'
+      WHERE user_id = ? AND transaction_status = 'Pending' AND service = ?
     `;
+    const [pendingResult] = await db.promise().query(checkPendingQuery, [user_id, service]);
+    const pendingCount = pendingResult[0]?.pendingCount || 0;
 
-    db.query(checkPendingQuery, [user_id], (err, result) => {
-      if (err) {
-        console.error("Database Error (Check Pending):", err);
-        return res.status(500).json({
-          message: "Error while checking pending transactions.",
-          error: err.message,
-        });
-      }
-
-      const pendingCount = result[0]?.pendingCount || 0;
-
-      if (pendingCount > 0) {
-        return res.status(400).json({
-          message: "User already has a pending transaction.",
-        });
-      }
-
-      const insertQuery = `
-        INSERT INTO transactions 
-        (user_id, partner_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-
-      const queryParams = [ user_id, partner_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at ];
-
-      db.query(insertQuery, queryParams, (err, result) => {
-        if (err) {
-          console.error("Database Error (Insert Transaction):", err);
-          return res.status(500).json({
-            message: "Error while saving transaction details.",
-            error: err.message,
-          });
-        }
-
-        if (result.affectedRows > 0) {
-          return res.status(200).json({
-            message: "Transaction saved successfully",
-            data: { id: result.insertId, ...req.body },
-          });
-        } else {
-          return res.status(500).json({
-            message: "Transaction failed to save!",
-            data: undefined,
-          });
-        }
+    if (pendingCount > 0) {
+      return res.status(400).json({
+        message: `User already has a pending ${service} transaction.`,
       });
+    }
+
+    const insertTransactionQuery = `
+      INSERT INTO transactions 
+      (user_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const transactionParams = [
+      user_id,
+      type,
+      defaults.bank,
+      service,
+      amount,
+      defaults.total_amount,
+      defaults.balance,
+      defaults.transaction_status,
+      defaults.payer_id,
+      defaults.payment_id,
+      defaults.created_at,
+      defaults.updated_at,
+    ];
+    const [transactionResult] = await db.promise().query(insertTransactionQuery, transactionParams);
+
+    if (transactionResult.affectedRows === 0) {
+      return res.status(500).json({ message: "Transaction failed to save!" });
+    }
+
+    // Insert into histories
+    const insertHistoryQuery = `
+      INSERT INTO histories 
+      (user_detail_id, service, amount, transaction_status, created_at, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    const historyParams = [
+      user_id,
+      service,
+      amount,
+      defaults.transaction_status,
+      defaults.created_at,
+      defaults.updated_at,
+    ];
+    const [historyResult] = await db.promise().query(insertHistoryQuery, historyParams);
+
+    if (historyResult.affectedRows === 0) {
+      return res.status(500).json({ message: "Failed to save transaction in histories!" });
+    }
+
+    const notificationMessage = `A new transaction of ${amount} for ${service} has been created.`;
+    const insertNotificationQuery = `
+      INSERT INTO notifications 
+      (individual_id, notification, created_at, updated_at) 
+      VALUES (?, ?, ?, ?)
+    `;
+    const notificationParams = [
+      user_id,
+      notificationMessage,
+      defaults.created_at,
+      defaults.updated_at,
+    ];
+
+    const [notificationResult] = await db.promise().query(insertNotificationQuery, notificationParams);
+
+    if (notificationResult.affectedRows === 0) {
+      return res.status(500).json({ message: "Failed to save notification!" });
+    }
+
+    return res.status(200).json({
+      message: "Transaction, history, and notification saved successfully",
+      data: {
+        transaction_id: transactionResult.insertId,
+        history_id: historyResult.insertId,
+        notification_id: notificationResult.insertId,
+        ...req.body,
+      },
     });
   } catch (error) {
     console.error("Server Error:", error);
-    return res.status(500).json({
-      message: "An unexpected error occurred.",
-      error: error.message,
-    });
+    return res.status(500).json({ message: "An unexpected error occurred.", error: error.message });
   }
 });
 app.post("/login", async (req, res) => {
@@ -368,16 +401,16 @@ app.get("/get-transaction", async (req, res) => {
   const query = `
     SELECT 
       CONCAT(user_details.first_name, ' ', IFNULL(user_details.middle_name, ''), ' ', user_details.last_name) AS name,
-      transactions.created_at AS date,
-      transactions.service,
-      transactions.id,
-      transactions.amount,
-      transactions.bank,
-      transactions.transaction_status AS status,
-      user_details.user_id
-    FROM transactions
-    INNER JOIN user_details ON transactions.user_id = user_details.user_detail_id
-    ORDER BY transactions.created_at DESC;
+      histories.created_at AS date,
+      histories.service,
+      histories.id,
+      histories.amount,
+      histories.transaction_status AS status,
+      user_details.user_detail_id
+    FROM histories
+    INNER JOIN user_details ON histories.user_detail_id = user_details.user_detail_id
+    WHERE histories.transaction_status = "Pending"
+    ORDER BY histories.created_at DESC;
   `;
 
   db.query(query, (err, results) => {
@@ -393,9 +426,8 @@ app.get("/get-transaction", async (req, res) => {
       });
     }
 
-    // Group transactions by raw date (ISO format)
     const groupedTransactions = results.reduce((groups, transaction) => {
-      const dateKey = new Date(transaction.date).toISOString().split("T")[0];
+      const dateKey = new Date(transaction.date).toDateString();
       if (!groups[dateKey]) {
         groups[dateKey] = [];
       }
@@ -403,15 +435,54 @@ app.get("/get-transaction", async (req, res) => {
       return groups;
     }, {});
 
-    // Format grouped data into an array of groups
     const formattedResults = Object.entries(groupedTransactions).map(([date, transactions]) => ({
       date,
-      transactions,
+      transactions: transactions.map((transaction, index) => ({
+        ...transaction,
+        uniqueKey: `${transaction.id}-${index}`,
+      })),
     }));
 
     return res.status(200).json({
       message: "Transactions retrieved successfully.",
       data: formattedResults,
+    });
+  });
+});
+app.get("/get-request", async (req, res) => {
+  const query = `
+    SELECT 
+      CONCAT(user_details.first_name, ' ', IFNULL(user_details.middle_name, ''), ' ', user_details.last_name) AS name,
+      transactions.created_at AS date,
+      transactions.service,
+      transactions.id,
+      transactions.amount,
+      transactions.bank,
+      transactions.transaction_status AS status,
+      user_details.user_id
+    FROM transactions
+    INNER JOIN user_details ON transactions.user_id = user_details.user_id
+    WHERE transactions.transaction_status = "Pending"
+    ORDER BY transactions.created_at DESC;
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Database Error:", err);
+      return res.status(500).json({ message: "Error while fetching transactions." });
+    }
+
+    if (!results || results.length === 0) {
+      return res.status(200).json({
+        message: "No pending transactions found.",
+        data: [],
+      });
+    }
+
+    // Return the results directly without grouping
+    return res.status(200).json({
+      message: "Pending transactions retrieved successfully.",
+      data: results,
     });
   });
 });
@@ -441,7 +512,6 @@ app.get("/get-wallet/:user_detail_id", async (req, res) => {
         data: [],
       });
     }
-    console.log("results", results);
     return res.status(200).json({
       message: "Wallets retrieved successfully.",
       data: results,
@@ -502,8 +572,6 @@ app.get('/get-total-transaction/:user_detail_id', async (req, res) => {
         data: [],
       });
     }
-
-    console.log("results", results);
     return res.status(200).json({
       data: results,
     });
@@ -578,7 +646,54 @@ app.get('/get-all-failed-transaction/:user_detail_id', async (req, res) => {
     });
   });
 });
+app.post('/approve-cash-request', (req, res) => {
 
+  const { individual_id, partner_id, transaction_id, transaction_status, approved_at } = req.body;
+
+  if (!individual_id || !partner_id || !transaction_id || !transaction_status || !approved_at) {
+    return res.status(400).json({ message: "Missing required fields." });
+  }
+
+  const updatedAt = new Date().toISOString();
+  const updateTransactionQuery = `
+    UPDATE transactions
+    SET 
+      partner_id = ?, 
+      transaction_status = ?, 
+      approved_at = ?, 
+      updated_at = ?
+    WHERE id = ?
+  `;
+  const updateTransactionValues = [partner_id, transaction_status, approved_at, updatedAt, transaction_id];
+  db.query(updateTransactionQuery, updateTransactionValues, (updateError, updateResult) => {
+
+    if (updateError) {
+      return res.status(500).json({ message: "Failed to update the transaction.", error: updateError });
+    }
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(404).json({ message: "Transaction not found." });
+    }
+
+    const notificationMessage = `${individual_id} Request was approved with partner with the ${partner_id}.`;
+    const insertNotificationQuery = `
+      INSERT INTO notifications (store_id, individual_id, notification, updated_at, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+    const notificationValues = [ partner_id, individual_id, notificationMessage, updatedAt, approved_at ];
+
+    db.query(insertNotificationQuery, notificationValues, (notificationError, notificationResult) => {
+      if (notificationError) {
+        console.error("Database Error (Insert Notification):", notificationError);
+        return res.status(500).json({ message: "Failed to save the notification.", error: notificationError });
+      }
+      return res.status(200).json({
+        message: "Transaction approved and notification saved successfully.",
+        transaction_id,
+      });
+    });
+  });
+});
 
 // paypal functionality
 app.post('/paypal', (req, res) => {
@@ -712,9 +827,6 @@ app.post('/success', (req, res) => {
   });
 });
 app.get('/cancel', (req, res) => res.send('Payment was cancelled.'));
-
-// APP PARTNER
-
 
 // WEB
 app.post("/web-login", async(req, res) => {

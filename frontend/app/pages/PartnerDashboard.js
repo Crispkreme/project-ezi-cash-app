@@ -138,9 +138,6 @@ const PartnerDashboard = ({ route, navigation }) => {
     }
   };
 
-  console.log("allSuccessTransaction", allSuccessTransaction);
-  console.log("allFailedTransaction", allFailedTransaction);
-
   useEffect(() => {
     fetchAllTransactions();
     fetchStoreRating();
