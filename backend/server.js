@@ -204,7 +204,6 @@ app.post('/otp', (req, res) => {
 });
 app.get("/check-phone", async (req, res) => {
   const {phone} = req.query || {};
-  console.log("phone: ", phone);
   db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", phone, 
   (err, result) => {
     if (err) {
@@ -405,8 +404,6 @@ app.get("/get-partners", async (req, res) => {
         });
       }
 
-      console.log("results:", results); 
-
       res.status(200).json({
         message: "Open businesses retrieved successfully.",
         data: results,
@@ -471,8 +468,17 @@ app.get("/get-transaction", async (req, res) => {
 });
 app.get("/get-request", async (req, res) => {
   const query = `
-    SELECT * FROM transactions
-    WHERE transactions.transaction_status = "Pending"
+    SELECT 
+      CONCAT(user_details.first_name, ' ', IFNULL(user_details.middle_name, ''), ' ', user_details.last_name) AS name,
+      transactions.created_at AS date,
+      transactions.service,
+      transactions.id,
+      transactions.amount,
+      transactions.transaction_status AS status,
+      user_details.user_detail_id
+    FROM transactions
+    INNER JOIN user_details ON transactions.user_id = user_details.user_detail_id
+    WHERE transactions.transaction_status = ''
     ORDER BY transactions.created_at DESC;
   `;
 
@@ -488,8 +494,6 @@ app.get("/get-request", async (req, res) => {
         data: [],
       });
     }
-
-    console.log("results", results);
     return res.status(200).json({
       message: "Pending transactions retrieved successfully.",
       data: results,
@@ -701,6 +705,71 @@ app.post('/approve-cash-request', (req, res) => {
         message: "Transaction approved and notification saved successfully.",
         transaction_id,
       });
+    });
+  });
+});
+app.get("/get-transaction-request/:user_detail_id", async (req, res) => {
+  const { user_detail_id } = req.params;
+
+  try {
+    const query = `
+      SELECT * 
+      FROM transactions
+      WHERE transactions.user_id = ?
+        AND transactions.transaction_status = 'Approved'
+      ORDER BY transactions.created_at DESC
+      LIMIT 1;
+    `;
+
+    db.query(query, [user_detail_id], (err, results) => {
+      if (err) {
+        console.error("Database Error:", err);
+        return res.status(500).json({ message: "Error while fetching transaction request." });
+      }
+
+      if (!results || results.length === 0) {
+        return res.status(404).json({
+          message: "No approved transactions found.",
+          data: [],
+        });
+      }
+
+      res.status(200).json({
+        message: "Latest approved transaction retrieved successfully.",
+        data: results,
+      });
+    });
+  } catch (error) {
+    console.error("Error fetching transaction request:", error);
+    res.status(500).json({ message: "An error occurred while fetching transaction request." });
+  }
+});
+app.post('/send-message', (req, res) => {
+  const { store_id, individual_id, message } = req.body;
+
+  if (!store_id || !individual_id || !message) {
+    return res.status(400).json({ message: "Missing required fields." });
+  }
+
+  const createdAt = new Date().toISOString();
+  const updatedAt = new Date().toISOString();
+
+  const insertMessageQuery = `
+    INSERT INTO messages (store_id, individual_id, message, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+  
+  const messageValues = [store_id, individual_id, message, createdAt, updatedAt];
+
+  db.query(insertMessageQuery, messageValues, (insertError, insertResult) => {
+    if (insertError) {
+      console.error("Database Error (Insert Message):", insertError);
+      return res.status(500).json({ message: "Failed to send message.", error: insertError });
+    }
+
+    res.status(200).json({
+      message: "Message sent successfully.",
+      message_id: insertResult.insertId,
     });
   });
 });

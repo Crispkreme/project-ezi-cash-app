@@ -7,9 +7,6 @@ const PayPalWebView = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { uri, data } = route.params;
-  
-  console.log("PayPalWebView uri", uri);
-  console.log("PayPalWebView data", data);
 
   if (!uri) {
     return (
