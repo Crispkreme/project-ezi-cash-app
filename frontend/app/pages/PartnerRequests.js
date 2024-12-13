@@ -15,7 +15,7 @@ const PartnerRequests = ({ route, navigation }) => {
   const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
 
   const handleConfirm = async (transactionDetails, formData) => {
-
+    // Prepare payload for the request
     const payload = {
       individual_id: transactionDetails.user_id,
       partner_id: formData.user_detail_id,
@@ -25,6 +25,7 @@ const PartnerRequests = ({ route, navigation }) => {
     };
   
     try {
+      // Make the API call
       const response = await fetch(`${process.env.base_url}/approve-cash-request`, {
         method: "POST",
         headers: {
@@ -36,16 +37,30 @@ const PartnerRequests = ({ route, navigation }) => {
       if (response.ok) {
         setIsModalVisible(false);
         alert("Request approved successfully.");
+  
+        const legalName = `${formData.first_name || ''} ${formData.middle_name || ''} ${formData.last_name || ''}`.trim();
+  
+        navigator.navigate("PartnerLocate", {
+          formData,
+          payment: transactionDetails.amount,
+          partner: {
+            ...formData,
+            legal_name: legalName,
+          },
+        });
       } else {
+        // Handle errors from the server
         const errorData = await response.json();
         console.error("Error:", errorData);
-        alert("Failed to approve the payment request. Please try again.");
+        alert(errorData.message || "Failed to approve the payment request. Please try again.");
       }
     } catch (error) {
+      // Handle network or unexpected errors
       console.error("Network Error:", error);
       alert("Failed to approve the payment request. Please check your connection and try again.");
     }
   };
+  
   const viewProfile = () => {
     navigator.navigate("Profile", {formData});
   }

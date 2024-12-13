@@ -366,36 +366,53 @@ app.post("/login", async (req, res) => {
 
 // get all partners
 app.get("/get-partners", async (req, res) => {
-  const query = `
-    SELECT 
-      CONCAT(ud.first_name, ' ', ud.middle_name, ' ', ud.last_name) AS store_name,
-      ud.city,
-      ud.barangay,
-      ud.province,
-      ut.partner_type,
-      ut.user_id AS store_id
-    FROM 
-      users_table AS ut
-    JOIN 
-      user_details AS ud
-    ON 
-      ut.user_id = ud.user_id
-    WHERE 
-      ut.partner_type = ?;
+  try {
+    const now = new Date();
+    const currentDate = now.toISOString().split("T")[0];
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const currentDay = dayNames[now.getDay()];
+    const currentTime = now.toTimeString().split(" ")[0];
+
+    const query = `
+      SELECT 
+        b.*, 
+        CONCAT(ud.first_name, ' ', ud.middle_name, ' ', ud.last_name) AS store_name, 
+        ud.barangay, 
+        ud.city
+      FROM business_hours b
+      INNER JOIN user_details ud ON b.partner_id = ud.user_detail_id
+      WHERE 
+        b.isOpen = 1
+        AND b.day = ?
+        AND b.business_date = ?
+        AND b.open_at <= ?
+        AND b.close_at >= ?
     `;
-  const values = ["Store"];
-  
-  db.query(query, values, (err, result) => {
-    if (err) {
-      console.error("Database Error:", err);
-      return res.status(500).json({ message: "Error fetching partners." });
-    }
-    console.log("Result:", result);
-    res.status(200).json({ 
-      message: "Partners retrieved successfully", 
-      data: result 
+
+    db.query(query, [currentDay, currentDate, currentTime, currentTime], (err, results) => {
+      if (err) {
+        console.error("Database Error:", err);
+        return res.status(500).json({ message: "Error while fetching business hours." });
+      }
+
+      if (!results || results.length === 0) {
+        return res.status(404).json({
+          message: "No open businesses found.",
+          data: [],
+        });
+      }
+
+      console.log("results:", results); 
+
+      res.status(200).json({
+        message: "Open businesses retrieved successfully.",
+        data: results,
+      });
     });
-  });
+  } catch (error) {
+    console.error("Error fetching business hours:", error);
+    res.status(500).json({ message: "An error occurred while fetching business hours." });
+  }
 });
 app.get("/get-transaction", async (req, res) => {
   const query = `
@@ -451,17 +468,7 @@ app.get("/get-transaction", async (req, res) => {
 });
 app.get("/get-request", async (req, res) => {
   const query = `
-    SELECT 
-      CONCAT(user_details.first_name, ' ', IFNULL(user_details.middle_name, ''), ' ', user_details.last_name) AS name,
-      transactions.created_at AS date,
-      transactions.service,
-      transactions.id,
-      transactions.amount,
-      transactions.bank,
-      transactions.transaction_status AS status,
-      user_details.user_id
-    FROM transactions
-    INNER JOIN user_details ON transactions.user_id = user_details.user_id
+    SELECT * FROM transactions
     WHERE transactions.transaction_status = "Pending"
     ORDER BY transactions.created_at DESC;
   `;
@@ -479,7 +486,7 @@ app.get("/get-request", async (req, res) => {
       });
     }
 
-    // Return the results directly without grouping
+    console.log("results", results);
     return res.status(200).json({
       message: "Pending transactions retrieved successfully.",
       data: results,
@@ -694,6 +701,7 @@ app.post('/approve-cash-request', (req, res) => {
     });
   });
 });
+
 
 // paypal functionality
 app.post('/paypal', (req, res) => {

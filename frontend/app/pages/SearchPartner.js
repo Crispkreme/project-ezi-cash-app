@@ -7,13 +7,11 @@ import { __gstyles__ } from "../globalStylesheet";
 import * as Location from 'expo-location';
 
 const SearchPartner = ({ route, navigation }) => {
+
   const { formData, amount, store, search, key } = route.params;
-
-  console.log("formData:", formData);
-  console.log("amount:", amount);
-  console.log("store:", store);
-
   const wLabels = {...formData};
+  const [isLoading, setIsLoading] = useState(true);
+  const [partner, setPartner] = useState([]);
   const navigator = useNavigation();
 
   const [state, setState] = useState({
@@ -139,6 +137,34 @@ const SearchPartner = ({ route, navigation }) => {
     setInit(true);
   },[]);
 
+  useEffect(() => {
+    const fetchPartner = async () => {
+      try {
+        const response = await fetch(`${process.env.base_url}/get-partners`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch partners");
+        }
+
+        const result = await response.json();
+        console.log("result", result);
+        setPartner(result.data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching partners:", error);
+        Alert.alert("Error", "An error occurred while fetching partners.");
+        setIsLoading(false);
+      }
+    };
+
+    fetchPartner();
+  }, []);
+  console.log("partner", partner);
   return (
     <View style={styles.container}>
       
@@ -193,57 +219,60 @@ const SearchPartner = ({ route, navigation }) => {
         </View>
 
         <View>
-          {store.map((item, index) => (
-            <View key={index}>
-              <TouchableOpacity
-                style={[__gstyles__.shadow]}
-                className="bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300"
-                onPress={() => handlePress(item)}
-              >
-                <View
-                  style={{ justifyContent: "space-between" }}
-                  className="flex-row items-center p-2 px-4"
+          {partner.length > 0 ? (
+            partner.map((item, index) => (
+              <View key={index}>
+                <TouchableOpacity
+                  style={[__gstyles__.shadow]}
+                  className="bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300"
+                  onPress={() => handlePress(item)}
                 >
                   <View
-                    className="gap-2"
-                    style={{ flexDirection: "row", alignItems: "center" }}
+                    style={{ justifyContent: "space-between" }}
+                    className="flex-row items-center p-2 px-4"
                   >
-                    <View style={styles.leftSection}>
-                      <Text className="font-semibold text-lg text-primary">
-                        {item.store_name}
-                      </Text>
-                      <Text className="text-sm text-primary">
-                        79 Cabreros St {item.barangay}, {item.city}
-                      </Text>
-                      <View className="flex-row items-center gap-2">
-                        <Image
-                          alt="cash in"
-                          source={require("../../public/icn/available-icn.png")}
-                        />
-                        <Text className="text-sm text-link">Available</Text>
+                    <View
+                      className="gap-2"
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <View style={styles.leftSection}>
+                        <Text className="font-semibold text-lg text-primary">
+                          {item.store_name}
+                        </Text>
+                        <Text className="text-sm text-primary">
+                          79 Cabreros St {item.barangay}, {item.city}
+                        </Text>
+                        <View className="flex-row items-center gap-2">
+                          <Image
+                            alt="cash in"
+                            source={require("../../public/icn/available-icn.png")}
+                          />
+                          <Text className="text-sm text-link">Available</Text>
+                        </View>
                       </View>
                     </View>
+                    <MaterialIcons
+                      name="navigate-next"
+                      size={24}
+                      className="text-primary"
+                      style={styles.buttonIcon}
+                    />
                   </View>
-                  <MaterialIcons
-                    name="navigate-next"
-                    size={24}
-                    className="text-primary"
-                    style={styles.buttonIcon}
-                  />
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
 
-              {/* Conditionally render the border, except for the last item */}
-              {index !== store.length - 1 && (
-                <View
-                  className="mb-4 border-gray-500"
-                  style={{
-                    borderBottomWidth: StyleSheet.hairlineWidth,
-                  }}
-                />
-              )}
-            </View>
-          ))}
+                {index !== store.length - 1 && (
+                  <View
+                    className="mb-4 border-gray-500"
+                    style={{
+                      borderBottomWidth: StyleSheet.hairlineWidth,
+                    }}
+                  />
+                )}
+              </View>
+            ))
+          ) : (
+            <Text>No partners found nearby.</Text>
+          )}
         </View>
 
       </ScrollView>
