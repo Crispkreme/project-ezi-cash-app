@@ -1,5 +1,4 @@
 import AdminLayout from "../../layout/AdminLayout";
-import search from '../../assets/search.png';
 import { useState } from "react";
 
 export default function TransactionsOverview() {

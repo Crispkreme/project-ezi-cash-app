@@ -1,5 +1,4 @@
 import AdminLayout from "../../layout/AdminLayout";
-import Button from "../../components/Button";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,22 +10,74 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useEffect, useState } from "react";
 
 ChartJS.register(CategoryScale, LinearScale,ArcElement, BarElement, Title, Tooltip, Legend);
 
+const monthsLabel = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
 export default function FinanceDashboard() {
 
-  const activities = [
-    {name: 'Aishli Store', role: 'Store', transactions: 942, revenue: 15800, avgVal: 16.60},
-    {name: 'Nicole Ayessa Alcover', role: 'Individual', transactions: 500, revenue: 10245, avgVal: 20.49},
-    {name: 'Aishli Store', role: 'Store', transactions: 942, revenue: 15800, avgVal: 16.60},
-  ];
+  const [finances, setFinances] = useState({
+    earnings: 0,
+    commissions: 0
+  });
+
+  const [m, setM] = useState<Array<string>>([]);
+  const [trans, setTrans] = useState<Array<number>>([]);
+
+  useEffect(() => {
+    const getDt = async () => {
+      const res = await fetch("/api/get-finances");
+      if(res.ok) {
+        const body = await res.json();
+        
+        const dt = [...body.data.result];
+        const tr = [...body.data.transactions];
+        let comm = 0;
+        let earnings = 0;
+        const months: Array<number> = [];
+        dt.forEach(p => {
+          comm += p.comission;
+          earnings += p.earnings;
+        });
+
+        tr.forEach( trs => {
+          months.push(new Date(trs.created_at).getMonth());
+        })
+        const t = [...new Set(months.sort((a,b) => a - b))];
+        const lbl = t.map(t => monthsLabel[t]);
+        setM(lbl);
+
+        let transactions:Array<number> = [];
+        t.forEach(c => {
+          let curMonth = 0;
+          tr.forEach(p => {
+            const z = new Date(p.created_at).getMonth();
+            if(z === c) {
+              curMonth+= 1;
+            }
+          });
+          transactions.push(curMonth);
+        });
+        
+        setTrans(transactions);
+
+        setFinances({
+          commissions: comm,
+          earnings: earnings
+        })
+      }
+    }
+
+    getDt();
+  },[]);
 
   const interaction = {
-    labels: ["January", "February", "March", "April"],
+    labels: m,
     datasets: [{
       label: 'Partners Interaction with Ezi Cash',
-      data: [20, 43, 15, 70],
+      data: trans,
       backgroundColor: [
         '#00c4cd',
         '#000',
@@ -34,8 +85,6 @@ export default function FinanceDashboard() {
     }]
   };
 
-  const valueGenerated = 50430;
-  const transactionVol = 5903;
   return (
     <AdminLayout>
       <div className="w-full p-8 flex flex-col justify-center gap-8 items-center h-full overflow-y-scroll text-primary">
@@ -51,14 +100,14 @@ export default function FinanceDashboard() {
                 <div className="flex gap-2 flex-col items-center shadow-xl border border-gray-200 px-8 py-4 rounded-2xl">
                   <span className="roboto-medium text-sm ">Total Revenue Generated</span>
                   <h1 className="flex text-4xl items-center gap-4 roboto-bold">
-                   ₱ {valueGenerated.toLocaleString()}
+                   ₱ {finances.commissions.toLocaleString()}
                   </h1>
                 </div>
 
                 <div className="flex gap-2 flex-col items-center shadow-xl border border-gray-200 px-8 py-4 rounded-2xl">
                   <span className="roboto-medium text-sm ">Total Revenue Generated</span>
                   <h1 className="flex text-4xl items-center gap-4 roboto-bold">
-                   {transactionVol.toLocaleString()}
+                   {finances.earnings.toLocaleString()}
                   </h1>
                 </div>
               </div>
@@ -74,7 +123,7 @@ export default function FinanceDashboard() {
                 May
               </button>
             </div>
-            <span className="text-sm roboto-bold">₱ {valueGenerated.toLocaleString()} Commission out of this month.</span>
+            <span className="text-sm roboto-bold">₱ {finances.commissions.toLocaleString()} Commission out of this month.</span>
             <div className="flex">
               <div className="flex">
                 <div className="flex flex-col items-center">

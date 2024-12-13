@@ -852,7 +852,8 @@ app.post("/web-login", async(req, res) => {
       if(x) {
         return res.status(200).json({message: '', data: {...result[0], user_pass: ''}})
       } else {
-        return res.status(500).json({message: '', data: ''});
+        console.log('Wrong Password!');
+        return res.status(500).json({message: 'Wrong Password', data: 'Wrong Password'});
       }
       
     });
@@ -1054,6 +1055,74 @@ app.get('/partner-application-list', async (req, res) => {
     });
   } catch(e) {
     console.log(e);
+    return res.status(500).json({message: e, data: []});
+  }
+});
+
+app.get('/ezicash-partners', async (req, res) => {
+  try {
+    db.query(`SELECT * FROM users_table a INNER JOIN partnership_application b ON a.user_id = b.user_id 
+      WHERE b.business_permit_verify = 1 AND b.government_id_verify = 1 AND b.proof_of_address_verify = 1`, (err, result) => {
+      if(err) {
+        console.log(err);
+        return res.status(500).json({message:'Error!' + err, data: []});
+      }
+
+      return res.status(200).json({message: 'Successful!', data: result});
+    });
+
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'Unsuccessful!', data:[]});
+  }
+});
+
+app.patch("/suspend-partner", async (req, res) => {
+  try {
+    const body = req.body;
+
+    db.query(`UPDATE partnership_application SET is_suspended = ? WHERE partner_application_id = ?`,[body.is_suspended, Number(body.partner_application_id)], (err, _) => {
+      if(err) {
+        return res.status(500).json({message: 'Unsuccessful!'});
+      }
+
+      return res.status(200).json({message: 'Success!'});
+    });
+  } catch(e) {
+    return res.status(500).json({message: 'Unsuccessful!'});
+  }
+});
+
+app.get('/get-transactions', async (req, res) => {
+  try {
+    db.query('SELECT * FROM transactions a INNER JOIN user_details b ON a.user_id = b.user_id INNER JOIN partnership_application c ON a.partner_id = c.partner_application_id', (err, result) => {
+      if(err) {
+        return res.status(500).json({message: 'Unsuccessful!' + err, data: []});
+      }
+
+      return res.status(200).json({message:'Successful!', data: result});
+    });
+  } catch(e) {
+    return res.status(500).json({message: err, data: []});
+  }
+});
+
+app.get("/get-finances", async (req, res) => {
+  try {
+    db.query('SELECT * FROM partner_wallets', (err, result) => {
+      if(err) {
+        return res.status(500).json({message: err, data: []});
+      }
+
+      db.query('SELECT * FROM transactions', (err, transactions) => {
+        if(err) {
+          return res.status(500).json({message: err, data: []});
+        }
+
+        return res.status(200).json({message: 'Success!', data: {result: result, transactions: transactions}});
+      });
+    });
+  } catch(e) {
     return res.status(500).json({message: e, data: []});
   }
 });

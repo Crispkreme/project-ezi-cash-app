@@ -3,6 +3,7 @@ import CredentialTitle from "../components/CredentialTitle";
 import Form from "../components/Form";
 import CredentialLayout from "../layout/CredentialLayout";
 import { Link, useNavigate } from "react-router-dom";
+import { CircleNotch } from "@phosphor-icons/react";
 
 export default function Signup() {
 
@@ -13,6 +14,7 @@ export default function Signup() {
   });
 
   const navigate = useNavigate();
+  const [loading,setLoading] = useState(false);
 
   const changeHandle = (formKey: string, value: string) => {
     setFormData(prev => ({...prev, [formKey]: value}));
@@ -21,6 +23,19 @@ export default function Signup() {
   const signUp = async (e:React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
+    const missingFields:Array<String> = [];
+    Object.entries(formData).forEach(([key, val]) => {
+      if(val === '') {
+        missingFields.push(key);
+      }
+    });
+
+    if(missingFields.length > 0) {
+      alert('Missing Fields: ' + missingFields.join(", "));
+      return;
+    }
+
+    setLoading(true);
     sessionStorage.setItem('user-signup', JSON.stringify(formData));
     const res = await fetch("/api/web-verification-code", {
       method: 'POST',
@@ -29,11 +44,15 @@ export default function Signup() {
       },
       body: JSON.stringify({email: formData.email})
     });
-    if(!res.ok) return;
+    if(!res.ok) {
+      alert("There was an error in signing up!");
+      return;
+    }
     const b = await res.json();
 
     sessionStorage.setItem('verification-code',b.data);
     sessionStorage.setItem('registration','true');
+    setLoading(false);
     navigate("/verification");
   }
 
@@ -51,7 +70,10 @@ export default function Signup() {
             <Form title="Name" formKey="name" setState={changeHandle}/>
             <Form title="Email Address" type="email" formKey="email" setState={changeHandle}/>
             <Form title="Create a password" type="password" formKey="password" setState={changeHandle}/>
-            <button onClick={signUp} className="text-white bg-primary py-2 rounded-md mt-8">Sign Up</button>
+            <button onClick={signUp} className="text-white flex items-center gap-2 justify-center bg-primary py-2 rounded-md mt-8">
+              {loading && <CircleNotch size={20} className="animate-spin"/>}
+              Sign Up
+            </button>
           </form>
           <span className="roboto-light mt-4">Already have an account? <Link className="font-bold" to="/login">Log in</Link></span>
         </section>
