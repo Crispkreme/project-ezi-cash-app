@@ -346,7 +346,7 @@ app.post("/login", async (req, res) => {
       try {
 
         const userData = await getUserData(result[0].user_id);
-
+        console.log("userData", userData);
         if (!userData) {
         return res.status(404).json({ message: 'User details not found.' });
         }
@@ -378,17 +378,25 @@ app.get("/get-partners", async (req, res) => {
     const query = `
       SELECT 
         b.*, 
-        CONCAT(ud.first_name, ' ', ud.middle_name, ' ', ud.last_name) AS store_name, 
+        ut.*, 
+        CONCAT(ud.first_name, ' ', IFNULL(ud.middle_name, ''), ' ', ud.last_name) AS store_name, 
         ud.barangay, 
         ud.city
-      FROM business_hours b
-      INNER JOIN user_details ud ON b.partner_id = ud.user_detail_id
+      FROM 
+        business_hours b
+      INNER JOIN 
+        user_details ud 
+        ON b.partner_id = ud.user_detail_id
+      INNER JOIN 
+        users_table ut 
+        ON ud.user_id = ut.user_id
       WHERE 
         b.isOpen = 1
+        AND ut.partner_type IN ('Partner', 'Store')
         AND b.day = ?
         AND b.business_date = ?
         AND b.open_at <= ?
-        AND b.close_at >= ?
+        AND b.close_at >= ?;
     `;
 
     db.query(query, [currentDay, currentDate, currentTime, currentTime], (err, results) => {
@@ -396,7 +404,7 @@ app.get("/get-partners", async (req, res) => {
         console.error("Database Error:", err);
         return res.status(500).json({ message: "Error while fetching business hours." });
       }
-
+      console.log("partnerss newrabat", results);
       if (!results || results.length === 0) {
         return res.status(404).json({
           message: "No open businesses found.",
