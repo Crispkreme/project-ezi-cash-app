@@ -12,15 +12,19 @@ interface userDt {
   role: string, 
   name: string, 
   location: string, 
-  verification: {
-    business_reg_doc: null | boolean,
-    gov_id: null | boolean,
-    proof_address: null | boolean,
-  }, documents: {
-    business_permit: string,
-    government_id: string,
-    proof_of_address: string,
-  }
+  verification: verificationDt, documents: documentDt
+}
+
+type verificationDt = {
+  business_reg_doc: null | boolean,
+  gov_id: null | boolean,
+  proof_address: null | boolean,
+}
+
+type documentDt = {
+  business_permit: string,
+  government_id: string,
+  proof_of_address: string,
 }
 
 export default function ApplicationManagement() {
@@ -45,7 +49,7 @@ export default function ApplicationManagement() {
           }}
         });
 
-        const declined = temp.filter(el => el.verification.business_reg_doc === false && el.verification.gov_id === false && el.verification.proof_address === false);
+        const declined = temp.filter(el => el.verification.business_reg_doc === false || el.verification.gov_id === false || el.verification.proof_address === false);
         const verified = temp.filter(el => el.verification.business_reg_doc && el.verification.gov_id && el.verification.proof_address );
         const pending = temp.filter(el => !verified.includes(el) && !declined.includes(el));
 
@@ -76,8 +80,10 @@ export default function ApplicationManagement() {
   }
 
   useEffect(() => {
-    console.log(state);
-  },[state]);
+    setActive(0);
+    console.log(active);
+    console.log(interactedDocuments.declined[active]);
+  },[activeWindow]);
 
   const verify = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -141,13 +147,22 @@ export default function ApplicationManagement() {
       <div className="w-full p-8 flex flex-col justify-center items-center h-full overflow-y-scroll text-primary">
         <div className="flex flex-col border p-8 gap-4 border-gray-200 w-full h-full shadow-lg">
           <div className="flex justify-start gap-2 mb-8 text-sm">
-            <button onClick={() => setActiveWindow(0)} className={`underline ${activeWindow === 0 && 'text-gray-400'}`}>
+            <button onClick={() => {
+              setActiveWindow(0);
+              setActive(0);
+            }} className={`underline ${activeWindow === 0 && 'text-gray-400'}`}>
               All Pending List
             </button>
-            <button onClick={() => setActiveWindow(1)} className={`underline ml-16 ${activeWindow === 1 && 'text-gray-400'}`}>
+            <button onClick={() => {
+              setActiveWindow(1);
+              setActive(0);
+            }} className={`underline ml-16 ${activeWindow === 1 && 'text-gray-400'}`}>
               Verified Documents
             </button>
-            <button onClick={() => setActiveWindow(2)} className={`underline ml-16 ${activeWindow === 2 && 'text-gray-400'}`}>
+            <button onClick={() => {
+              setActiveWindow(2);
+              setActive(0);
+            }} className={`underline ml-16 ${activeWindow === 2 && 'text-gray-400'}`}>
               Rejected Documents
             </button>
           </div>
@@ -226,171 +241,91 @@ export default function ApplicationManagement() {
           <div className="bg-white p-8 flex flex-col gap-8 w-full">
             <h1 className="roboto-bold text-xl">Document Verification</h1>
             <div className="flex flex-col">
-              <section className="border border-gray-400 p-2 flex justify-between">
-                <div className="flex gap-12">
-                  <h1 className="roboto-bold text-lg">1</h1>
-                  <div className="flex flex-col gap-4">
-                    <span className="roboto-bold text-lg">Business Registration Document (Store only)</span>
-                    <a target="_blank" href={'/api/file/' + (user.length > 0 && user[active].documents.business_permit)}>
-                      <div className="flex gap-2 rounded-lg items-center border border-gray-300 py-2 px-4">
-                        <img src={file} />
-                        <div className="flex flex-col text-xs gap-1">
-                          <span>{user.length > 0 && user[active].documents.business_permit}</span>
-                          <span>PDF, 14MB</span>
+              {
+                [
+                  { title: "Business Registration Document (Store only)", key: "business_permit", verif: "business_reg_doc"},
+                  { title: "Government issued IDs of Authorized Representative", key: "government_id", verif: "gov_id"},
+                  { title: "Proof of Address", key: "proof_of_address", verif: "proof_address"}
+                ].map( (el, idx) => {
+                  return (
+                    <section className="border border-gray-400 p-2 flex justify-between">
+                      <div className="flex gap-12">
+                        <h1 className="roboto-bold text-lg">{idx + 1}</h1>
+                        <div className="flex flex-col gap-4">
+                          <span className="roboto-bold text-lg">{el.title}</span>
+                          <a target="_blank" href={'/api/file/' + (activeWindow === 0 ? user.length > 0 && user[active].documents[el.key as keyof documentDt] : 
+                              activeWindow === 1 ? user.length > 0 && interactedDocuments.verified[active].documents[el.key as keyof documentDt] :
+                              user.length > 0 && interactedDocuments.declined[active].documents[el.key as keyof documentDt]
+                          )}>
+                            <div className="flex gap-2 rounded-lg items-center border border-gray-300 py-2 px-4">
+                              <img src={file} />
+                              <div className="flex flex-col text-xs gap-1">
+                                <span>{(activeWindow === 0 ? user.length > 0 && user[active].documents[el.key as keyof documentDt] : 
+                                  activeWindow === 1 ? user.length > 0 && interactedDocuments.verified[active].documents[el.key as keyof documentDt] :
+                                  user.length > 0 && interactedDocuments.declined[active].documents[el.key as keyof documentDt]
+                                )}</span>
+                                <span>PDF, 14MB</span>
+                              </div>
+                            </div>
+                          </a>
                         </div>
                       </div>
-                    </a>
-                  </div>
-                </div>
-                <div>
-                  {
-                    user.length > 0 && user[active].verification.business_reg_doc === null && interactedModal === false && (
-                      <div className="flex justify-center items-center gap-2 pl-32 h-full">
-                        <button onClick={verify} name="business_reg_doc" className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
-                          <img src={verified} alt="" />
-                          Verify
-                        </button>
-                        <button onClick={decline} name="business_reg_doc" className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
-                          <img src={declined} alt="" />
-                          Decline
-                        </button>
-                      </div>
-                    )
-                  }
-                  {
-                    (user.length > 0 && user[active].verification.business_reg_doc === true || (interactedModal === true && activeWindow === 1 && interactedDocuments.verified[active].verification.business_reg_doc === true)) && (
-                      <div className="flex justify-center items-center gap-2 pl-32 h-full">
-                        <span className="flex items-center gap-2 px-4 py-2 bg-green-200 rounded-full">
-                          <img src={verified} alt="" />
-                          Verified
-                        </span>
-                      </div>
-                    )
-                  }
+                      <div>
+                        {
+                          (activeWindow === 0 && user.length > 0 && user[active].verification[el.verif as keyof verificationDt] === null && interactedModal === false) && (
+                            <div className="flex justify-center items-center gap-2 pl-32 h-full">
+                              <button onClick={verify} name={el.verif} className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
+                                <img src={verified} alt="" />
+                                Verify
+                              </button>
+                              <button onClick={decline} name={el.verif} className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
+                                <img src={declined} alt="" />
+                                Decline
+                              </button>
+                            </div>
+                          )
+                        }
+                        {
+                          (activeWindow !== 0 && interactedModal === true && activeWindow === 1) ? interactedDocuments.verified[active].verification[el.verif as keyof verificationDt] === true && 
+                            <div className="flex justify-center items-center gap-2 pl-32 h-full">
+                              <span className="flex items-center gap-2 px-4 py-2 bg-green-200 rounded-full">
+                                <img src={verified} alt="" />
+                                Verified
+                              </span>
+                            </div>
+                          : (activeWindow === 0 && user.length > 0 && user[active].verification[el.verif as keyof verificationDt] === true) && (
+                            <div className="flex justify-center items-center gap-2 pl-32 h-full">
+                              <span className="flex items-center gap-2 px-4 py-2 bg-green-200 rounded-full">
+                                <img src={verified} alt="" />
+                                Verified
+                              </span>
+                            </div>
+                          )
+                        }
 
-                  {
-                    (user.length > 0 && user[active].verification.business_reg_doc === false || (interactedModal === true && activeWindow === 2 && interactedDocuments.declined[active].verification.business_reg_doc === false)) && (
-                      <div className="flex justify-center items-center gap-2 pl-32 h-full">
-                        <span className="flex items-center gap-2 px-4 py-2 bg-red-200 rounded-full">
-                          <img src={declined} alt="" />
-                          Declined
-                        </span>
+                        {
+                          (activeWindow !== 0 && interactedModal === true && activeWindow === 2) ? interactedDocuments.declined[active].verification[el.verif as keyof verificationDt] === false && 
+                            <div className="flex justify-center items-center gap-2 pl-32 h-full">
+                              <span className="flex items-center gap-2 px-4 py-2 bg-red-200 rounded-full">
+                                <img src={declined} alt="" />
+                                Declined
+                              </span>
+                            </div>
+                          : (activeWindow === 0 && user.length > 0 && user[active].verification[el.verif as keyof verificationDt] === false) && (
+                            <div className="flex justify-center items-center gap-2 pl-32 h-full">
+                              <span className="flex items-center gap-2 px-4 py-2 bg-red-200 rounded-full">
+                                <img src={declined} alt="" />
+                                Declined
+                              </span>
+                            </div>
+                          )
+                        }
                       </div>
-                    )
-                  }
-                </div>
-              </section>
-
-              <section className="border border-gray-400 p-2 flex justify-between">
-                <div className="flex gap-12">
-                  <h1 className="roboto-bold text-lg">1</h1>
-                  <div className="flex flex-col gap-4">
-                    <span className="roboto-bold text-lg">Government issued IDs of Authorized Representative</span>
-                    <a target="_blank" href={'/api/file/' + (user.length > 0 && user[active].documents.government_id)}>
-                      <div className="flex gap-2 rounded-lg items-center border border-gray-300 py-2 px-4">
-                        <img src={file} />
-                        <div className="flex flex-col text-xs gap-1">
-                        <span>{user.length > 0 && user[active].documents.government_id}</span>
-                          <span>PDF, 5MB</span>
-                        </div>
-                      </div>
-                    </a>
-                  </div>
-                </div>
-                <div>
-                  {
-                    user.length > 0 && user[active].verification.gov_id === null && interactedModal === false && (
-                      <div className="flex justify-center items-center gap-2 pl-32 h-full">
-                        <button onClick={verify} name="gov_id" className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
-                          <img src={verified} alt="" />
-                          Verify
-                        </button>
-                        <button onClick={decline} name="gov_id" className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
-                          <img src={declined} alt="" />
-                          Decline
-                        </button>
-                      </div>
-                    )
-                  }
-                  {
-                    (user.length > 0 && user[active].verification.gov_id === true || (interactedModal === true && activeWindow === 1 && interactedDocuments.verified[active].verification.gov_id === true)) && (
-                      <div className="flex justify-center items-center gap-2 pl-32 h-full">
-                        <span className="flex items-center gap-2 px-4 py-2 bg-green-200 rounded-full">
-                          <img src={verified} alt="" />
-                          Verified
-                        </span>
-                      </div>
-                    )
-                  }
-
-                  {
-                    (user.length > 0 && user[active].verification.gov_id === false || (interactedModal === true && activeWindow === 2 && interactedDocuments.declined[active].verification.gov_id === false)) && (
-                      <div className="flex justify-center items-center gap-2 pl-32 h-full">
-                        <span className="flex items-center gap-2 px-4 py-2 bg-red-200 rounded-full">
-                          <img src={declined} alt="" />
-                          Declined
-                        </span>
-                      </div>
-                    )
-                  }
-                </div>
-              </section>
-
-              <section className="border border-gray-400 p-2 flex justify-between">
-                <div className="flex gap-12">
-                  <h1 className="roboto-bold text-lg">1</h1>
-                  <div className="flex flex-col gap-4">
-                    <span className="roboto-bold text-lg">Proof of Address</span>
-                    <a target="_blank" href={'/api/file/' + (user.length > 0 && user[active].documents.proof_of_address)}>
-                      <div className="flex gap-2 rounded-lg items-center border border-gray-300 py-2 px-4">
-                        <img src={file} />
-                        <div className="flex flex-col text-xs gap-1">
-                        <span>{user.length > 0 && user[active].documents.proof_of_address}</span>
-                          <span>PDF, 19MB</span>
-                        </div>
-                      </div>
-                    </a>
-                  </div>
-                </div>
-                <div>
-                  {
-                    user.length > 0 && user[active].verification.proof_address === null && interactedModal === false && (
-                      <div className="flex justify-center items-center gap-2 pl-32 h-full">
-                        <button onClick={verify} name="proof_address" className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
-                          <img src={verified} alt="" />
-                          Verify
-                        </button>
-                        <button onClick={decline} name="proof_address" className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-full">
-                          <img src={declined} alt="" />
-                          Decline
-                        </button>
-                      </div>
-                    )
-                  }
-
-                  {
-                    (user.length > 0 && user[active].verification.proof_address === true || (interactedModal === true && activeWindow === 1 && interactedDocuments.verified[active].verification.proof_address === true)) && (
-                      <div className="flex justify-center items-center gap-2 pl-32 h-full">
-                        <span className="flex items-center gap-2 px-4 py-2 bg-green-200 rounded-full">
-                          <img src={verified} alt="" />
-                          Verified
-                        </span>
-                      </div>
-                    )
-                  }
-
-                  {
-                    (user.length > 0 && user[active].verification.proof_address === false || (interactedModal === true && activeWindow === 2 && interactedDocuments.declined[active].verification.proof_address === false)) && (
-                      <div className="flex justify-center items-center gap-2 pl-32 h-full">
-                        <span className="flex items-center gap-2 px-4 py-2 bg-red-200 rounded-full">
-                          <img src={declined} alt="" />
-                          Declined
-                        </span>
-                      </div>
-                    )
-                  }
-                </div>
-              </section>
+                    </section>
+                  )
+                })
+              }
+              
               {
                 activeWindow === 0 && (
                   <div className="w-full flex justify-end gap-4 mt-8">
