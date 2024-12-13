@@ -219,14 +219,12 @@ app.get("/check-phone", async (req, res) => {
   });
 });
 app.post("/payment-transaction", async (req, res) => {
-  const { 
-    user_detail_id: user_id, 
-    partner_type: type, 
-    service, 
-    amount, 
-    partner_id: store_id = null 
-  } = req.body;
 
+  const { formData, payment, partner } = req.body;
+  const { user_id, service } = formData;
+  const { amount } = payment;
+  const { store_id } = partner;
+  
   const defaults = {
     bank: "Paypal",
     total_amount: 0,
@@ -255,12 +253,13 @@ app.post("/payment-transaction", async (req, res) => {
 
     const insertTransactionQuery = `
       INSERT INTO transactions 
-      (user_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (user_id, partner_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const transactionParams = [
       user_id,
-      type,
+      store_id,
+      payment.type,
       defaults.bank,
       service,
       amount,
@@ -278,14 +277,13 @@ app.post("/payment-transaction", async (req, res) => {
       return res.status(500).json({ message: "Transaction failed to save!" });
     }
 
-    // Insert into histories
     const insertHistoryQuery = `
       INSERT INTO histories 
       (user_detail_id, service, amount, transaction_status, created_at, updated_at) 
       VALUES (?, ?, ?, ?, ?, ?)
     `;
     const historyParams = [
-      user_id,
+      formData.user_detail_id,
       service,
       amount,
       defaults.transaction_status,
@@ -305,7 +303,7 @@ app.post("/payment-transaction", async (req, res) => {
       VALUES (?, ?, ?, ?)
     `;
     const notificationParams = [
-      user_id,
+      formData.user_id,
       notificationMessage,
       defaults.created_at,
       defaults.updated_at,
@@ -331,6 +329,7 @@ app.post("/payment-transaction", async (req, res) => {
     return res.status(500).json({ message: "An unexpected error occurred.", error: error.message });
   }
 });
+
 app.post("/login", async (req, res) => {
   
   const { phone, pin } = req.body;
