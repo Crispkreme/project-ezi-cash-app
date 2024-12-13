@@ -48,7 +48,10 @@ const PaymentConfirm = ({ route, navigation }) => {
       }
   
       const body = await response.json();
-      console.log("transaction_id", body.data.transaction_id);
+      navigator.navigate("WaitingApproval", {
+        formData,
+        transactionId: body.data.transaction_id,
+      });
 
     } catch (error) {
       console.error("Error during handleConfirm:", error);
