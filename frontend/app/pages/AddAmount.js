@@ -13,8 +13,6 @@ const AddAmount = ({ route, navigation }) => {
     amount: 0
   });
 
-  console.log("add amount", formData);
-
   const handleConfirm = async () => {
     try {
       const response = await fetch(`${process.env.base_url}/payment-transaction`, {
@@ -33,11 +31,11 @@ const AddAmount = ({ route, navigation }) => {
   
       const body = await response.json();
 
-      // navigator.navigate("SearchPartner", {
-      //   formData,
-      //   amount: state.amount,
-      //   // store: body.data,
-      // });
+      navigator.navigate("SearchPartner", {
+        formData,
+        amount: state.amount,
+        store: body.data,
+      });
 
     } catch (error) {
       console.error("Error during handleConfirm:", error);
