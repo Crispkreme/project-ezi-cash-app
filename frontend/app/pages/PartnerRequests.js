@@ -14,53 +14,6 @@ const PartnerRequests = ({ route, navigation }) => {
   const [todayTransactions, setTodayTransactions] = useState([]);
   const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
 
-  const handleConfirm = async (transactionDetails, formData) => {
-    // Prepare payload for the request
-    const payload = {
-      individual_id: transactionDetails.user_id,
-      partner_id: formData.user_detail_id,
-      transaction_id: transactionDetails.id,
-      transaction_status: "Approved",
-      approved_at: new Date().toISOString(),
-    };
-  
-    try {
-      // Make the API call
-      const response = await fetch(`${process.env.base_url}/approve-cash-request`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-  
-      if (response.ok) {
-        setIsModalVisible(false);
-        alert("Request approved successfully.");
-  
-        const legalName = `${formData.first_name || ''} ${formData.middle_name || ''} ${formData.last_name || ''}`.trim();
-  
-        navigator.navigate("PartnerLocate", {
-          formData,
-          payment: transactionDetails.amount,
-          partner: {
-            ...formData,
-            legal_name: legalName,
-          },
-        });
-      } else {
-        // Handle errors from the server
-        const errorData = await response.json();
-        console.error("Error:", errorData);
-        alert(errorData.message || "Failed to approve the payment request. Please try again.");
-      }
-    } catch (error) {
-      // Handle network or unexpected errors
-      console.error("Network Error:", error);
-      alert("Failed to approve the payment request. Please check your connection and try again.");
-    }
-  };
-  
   const viewProfile = () => {
     navigator.navigate("Profile", {formData});
   }
@@ -99,7 +52,7 @@ const PartnerRequests = ({ route, navigation }) => {
         if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
           setTransactions(parsedResponse.data);
         } else {
-          setTransactions([]); // Ensure transactions is an empty array if no data is found
+          setTransactions([]);
           alert('No transactions found.');
         }
       } catch (error) {
@@ -128,6 +81,39 @@ const PartnerRequests = ({ route, navigation }) => {
     return grouped;
   };
   const groupedTransactions = groupTransactionsByDate(transactions) || {};
+
+  const handleConfirm = async (transactionDetails, formData) => {
+    
+    const payload = {
+      individual_id: transactionDetails.user_detail_id,
+      partner_id: formData.user_detail_id,
+      transaction_id: transactionDetails.id,
+      transaction_status: "Approved",
+      approved_at: new Date().toISOString(),
+    };
+    
+    try {
+      const response = await fetch(`${process.env.base_url}/approve-cash-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (response.ok) {
+        setIsModalVisible(false);
+        alert("Request approved successfully.");  
+      } else {
+        const errorData = await response.json();
+        console.error("Error:", errorData);
+        alert(errorData.message || "Failed to approve the payment request. Please try again.");
+      }
+    } catch (error) {
+      console.error("Network Error:", error);
+      alert("Failed to approve the payment request. Please check your connection and try again.");
+    }
+  };
 
   return (
     <ImageBackground style={{flex: 1}} source={require("../../public/image/background.png")}>
@@ -175,31 +161,57 @@ const PartnerRequests = ({ route, navigation }) => {
 
                   return (
                     <TouchableOpacity
-                      key={`${transaction.id}-${transaction.date}`}
+                      key={transaction.id}
                       style={[
                         __gstyles__.shadow,
-                        { justifyContent: 'space-between', width: '100%' },
+                        { justifyContent: "space-between", width: "100%" },
                       ]}
-                      className="flex-row p-2 rounded-full py-4 px-4"
+                      className="flex-row p-2 rounded-full py-4 px-4 mb-2"
+                      // onPress={() => viewServiceManagement(transaction)}
                     >
                       <View className="flex-row items-center">
                         <Image source={transactionIcon} />
                         <Text>
-                          <Text className="text-base">{transaction.name} {'\n'}</Text>
+                          <Text style={{ width: 50 }} className="text-base text-ellipsis overflow-hidden w-10">{transaction.name} {"\n"}</Text>
                           <Text className="text-xs">{transaction.service}</Text>
                         </Text>
                       </View>
 
-                      <View style={{ flexDirection: 'row' }}>
+                      <View style={{ flexDirection: "row" }}>
                         <Text>
                           <Text className="text-lg font-bold text-right">
-                            {transaction.amount} {'\n'}
+                            {transaction.amount} {"\n"}
                           </Text>
-                          <Text className="text-xs">{transaction.bank || 'Paypal'} {'\n'}</Text>
                           <Text className="text-xs">
-                            {new Date(transaction.date).toLocaleString()} {'\n'}
+                            {transaction.bank || "Paypal"} {"\n"}
+                          </Text>
+                          <Text className="text-xs">
+                            {new Date(transaction.date).toLocaleString()} {"\n"}
                           </Text>
                         </Text>
+
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
+                        >
+                          <TouchableOpacity
+                            onPress={() => acceptRequest(transaction)}
+                            style={__gstyles__.shadow}
+                            className="p-2 rounded-full"
+                          >
+                            <Image source={require("../../public/icn/accept.png")} />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => rejectRequest(transaction)}
+                            style={__gstyles__.shadow}
+                            className="p-2 rounded-full"
+                          >
+                            <Image source={require("../../public/icn/reject.png")} />
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </TouchableOpacity>
                   );

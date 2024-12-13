@@ -152,7 +152,7 @@ const SearchPartner = ({ route, navigation }) => {
         }
 
         const result = await response.json();
-        console.log("result", result);
+  
         setPartner(result.data);
         setIsLoading(false);
       } catch (error) {
@@ -164,7 +164,7 @@ const SearchPartner = ({ route, navigation }) => {
 
     fetchPartner();
   }, []);
-  console.log("partner", partner);
+  
   return (
     <View style={styles.container}>
       

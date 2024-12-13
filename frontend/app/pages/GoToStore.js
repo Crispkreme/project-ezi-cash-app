@@ -1,11 +1,12 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput, Touchable } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { __gstyles__ } from "../globalStylesheet";
 
 const GoToStore = ({ route }) => {
+
   const { formData, partner, payment } = route.params;
 
   const wLabels = {...formData};
@@ -17,7 +18,56 @@ const GoToStore = ({ route }) => {
   });
 
   const handleConfirm = async () => {
-    navigator.navigate("FinishTransaction", { formData, partner, payment });
+    try {
+      const response = await fetch(`${process.env.base_url}/payment-transaction`, {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({...formData, amount: state.amount})
+      });
+  
+      if (!response.ok) {
+        const errorBody = await response.json();
+        alert(errorBody.message);
+        return;
+      }
+  
+      const body = await response.json();
+
+      // navigator.navigate("FinishTransaction", {
+      //   formData,
+      //   amount: state.amount,
+      //   store: body.data,
+      // });
+
+    } catch (error) {
+      console.error("Error during handleConfirm:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
+
+  const sendMessage = async () => {
+    // try {
+    //   const response = await fetch(process.env.base_url + "/send-message", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({ mobileNumber: mobileNumber }),
+    //   });
+  
+    //   if (response.ok) {
+    //     alert('asdasdasdasd');
+    //     // navigator.navigate("FinishTransaction", { formData, partner, payment });
+        
+    //   } else {
+    //     alert("Failed to send OTP. Please try again.");
+    //   }
+    // } catch (error) {
+    //   console.error(error);
+    //   alert("Error connecting to the server. Please check your network.");
+    // }
   };
 
   const handleNext = () => {
@@ -100,21 +150,26 @@ const GoToStore = ({ route }) => {
               </View>
             </View>
           </View>
-          <View className='flex-row'>
+          <View className="flex-row">
             <TextInput
-              className='w-full p-4 mt-4 mb-4 text-sm bg-gray-200'
+              className="w-full p-4 mt-4 mb-4 text-sm bg-gray-200"
               placeholder="Send message"
-              value={state.amount}
-              onChangeText={(am) => setState(prev => ({...prev, amount: am}))}
-              keyboardType="phone-pad"
+              value={state.message}
+              onChangeText={(am) => setState((prev) => ({ ...prev, message: am }))}
               maxLength={10}
             />
-            <MaterialIcons
-              name="send"
-              size={16}
-              className=' absolute right-4 top-8'
-              style={styles.buttonIcon}
-            />
+            
+            <TouchableOpacity
+              onPress={() => {sendMessage()}}
+              style={{ position: 'absolute', right: 16, top: 16 }}
+            >
+              <MaterialIcons
+                name="send"
+                size={16}
+                className="text-gray-700"
+                style={styles.buttonIcon}
+              />
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
 

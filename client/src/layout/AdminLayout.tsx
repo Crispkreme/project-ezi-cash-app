@@ -3,7 +3,6 @@ import dashboardLogo from '../assets/dashboard-logo.png';
 import headerLogo from '../assets/header-logo.png';
 import notification from '../assets/notification.png';
 import settings from '../assets/settings.png';
-import Middleware from '../pages/admin/middleware';
 
 export default function AdminLayout({children}: {children: React.ReactElement}) {
 
