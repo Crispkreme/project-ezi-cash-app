@@ -7,17 +7,15 @@ import { Rating } from "react-native-ratings";
 
 const Partner = ({ route, navigation }) => {
   const { formData, search, key, partner } = route.params;
-
   const wLabels = {...formData};
   const navigator = useNavigation();
-
   const [state, setState] = useState({
     linkedWallet: '09222222',
     amount: 0,
     init: false,
     active: 0
   });
-
+  console.log("partner", partner);
   useEffect(() => {
     if(!state.init) {
       setState(prev => ({...prev, init: true}));
@@ -41,7 +39,6 @@ const Partner = ({ route, navigation }) => {
       },
     });
   };
-
   const handleNext = () => {
     navigator.navigate("Partner", { formData,  partner});
   };

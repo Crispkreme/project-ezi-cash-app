@@ -12,35 +12,12 @@ const AddAmount = ({ route, navigation }) => {
     linkedWallet: formData.user_phone_no,
     amount: 0
   });
-
+  console.log("formData", formData);
   const handleConfirm = async () => {
-    try {
-      const response = await fetch(`${process.env.base_url}/payment-transaction`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({...formData, amount: state.amount})
-      });
-  
-      if (!response.ok) {
-        const errorBody = await response.json();
-        alert(errorBody.message);
-        return;
-      }
-  
-      const body = await response.json();
-
-      navigator.navigate("SearchPartner", {
-        formData,
-        amount: state.amount,
-        store: body.data,
-      });
-
-    } catch (error) {
-      console.error("Error during handleConfirm:", error);
-      alert("An error occurred. Please try again.");
-    }
+    navigator.navigate("SearchPartner", {
+      formData,
+      amount: state.amount,
+    });
   };
   
   const handleNext = () => {

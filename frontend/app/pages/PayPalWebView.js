@@ -25,7 +25,7 @@ const PayPalWebView = () => {
       const payerId = urlParams.get('PayerID');
 
       if (paymentId && payerId) {
-        navigation.navigate('WaitingApproval', { paymentId, payerId, data });
+        navigation.navigate('GoToStore', { paymentId, payerId, data });
       }
     }
 
