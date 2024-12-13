@@ -1,42 +1,149 @@
 import { useNavigation } from "@react-navigation/native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ImageBackground } from "react-native";
 import { Rating } from "react-native-ratings";
 import { __gstyles__ } from "../globalStylesheet";
 
 const PartnerDashboard = ({ route, navigation }) => {
-  const { formData } = route.params;
 
+  const { formData } = route.params;
   const wLabels = {...formData};
   const navigator = useNavigation();
+  const [allTransaction, setAllTransaction] = useState([]);
+  const [allRating, setAllRating ] = useState([]);
+  const [allSuccessTransaction, setAllSuccessTransaction ] = useState([]);
+  const [allFailedTransaction, setAllFailedTransaction ] = useState([]);
+  const currentMonth = new Date().toLocaleString('default', { month: 'long' });
 
   const handleConfirm = async () => {
     navigator.navigate("SetMPIN");
   };
-  
   const handleNext = () => {
     navigator.navigate("EWallet", {formData});
   };
-
   const viewProfile = () => {
     navigator.navigate("Profile", {formData});
   }
-
   const viewDashboard = () => {
     navigator.navigate("PartnerDashboard", {formData});
   }
-
   const viewRequests = () => {
     navigator.navigate("PartnerRequests", {formData});
   }
-
   const viewTransactions = () => {
     navigator.navigate("PartnerTransactions", {formData});
   }
-
   const viewCommissionFeeStatements = () => {
     navigator.navigate("PartnerCommissionFeeStatements", {formData});
   }
+
+  const fetchAllTransactions = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.base_url}/get-total-transaction/${formData?.user_detail_id || ""}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      const data = await response.json();
+  
+      if (Array.isArray(data) && data.length > 0) {
+        setAllTransaction(data[0]);
+      } else {
+        console.warn("No transactions found");
+        setAllTransaction({});
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      alert("An error occurred while fetching transactions.");
+    }
+  };
+  const fetchStoreRating = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.base_url}/get-store-rating/${formData?.user_detail_id || ""}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      const data = await response.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        setAllRating(data[0]);
+      } else {
+        console.warn("No transactions found");
+        setAllRating({});
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      alert("An error occurred while fetching transactions.");
+    }
+  };
+  const fetchCountSuccessTransaction = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.base_url}/get-all-success-transaction/${formData?.user_detail_id || ""}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      const data = await response.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        setAllSuccessTransaction(data[0]);
+      } else {
+        console.warn("No transactions found");
+        setAllSuccessTransaction({});
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      alert("An error occurred while fetching transactions.");
+    }
+  };
+  const fetchCountFailedTransaction = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.base_url}/get-all-failed-transaction/${formData?.user_detail_id || ""}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      const data = await response.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        setAllFailedTransaction(data[0]);
+      } else {
+        console.warn("No transactions found");
+        setAllFailedTransaction({});
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      alert("An error occurred while fetching transactions.");
+    }
+  };
+
+  useEffect(() => {
+    fetchAllTransactions();
+    fetchStoreRating();
+    fetchCountFailedTransaction();
+    fetchCountSuccessTransaction();
+  }, []);
 
   return (
     <ImageBackground style={{flex: 1}} source={require("../../public/image/background.png")}>
@@ -49,17 +156,12 @@ const PartnerDashboard = ({ route, navigation }) => {
               <Text style={{fontSize: 26}}>Hi eZiCash Partner,{"\n"}</Text>
             </Text>
             <Text style={{fontSize: 20}} className=' mt-1 text-white'>
-              {formData.first_name} {formData.middle_name} {formData.last_name}
+              {formData.name}
             </Text>
           </Text>
-
-          
           <Image source={require("../../public/icn/notification-icn.png")}/>
         </View>
-        
       </View>
-
-
       <View style={[styles.container, {borderTopStartRadius: 20, borderTopEndRadius: 20}]}>
         <ScrollView>
           <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
@@ -71,14 +173,14 @@ const PartnerDashboard = ({ route, navigation }) => {
 
           <View style={{flexDirection: 'row'}} className='gap-8 mb-8'>
             <TouchableOpacity style={[__gstyles__.shadow, {maxWidth: 105, width: 105}]} className='p-2 rounded-xl border border-primary'>
-              <Text style={{fontSize: 28}} className='text-primary p-4 text-center font-bold'>20</Text>
+              <Text style={{fontSize: 28}} className='text-primary p-4 text-center font-bold'>{allSuccessTransaction.success_count || 0}</Text>
               <Text className='text-gray-400 text-xs'>
                 Total number of Success Service
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[__gstyles__.shadow, {maxWidth: 105, width: 105}]} className='p-2 rounded-xl border border-primary'>
-              <Text style={{fontSize: 28}} className='text-primary p-4 text-center font-bold'>2</Text>
+              <Text style={{fontSize: 28}} className='text-primary p-4 text-center font-bold'>{allFailedTransaction.failed_count || 0}</Text>
               <Text className='text-gray-400 text-xs'>
                 Canceled Services
               </Text>
@@ -89,31 +191,15 @@ const PartnerDashboard = ({ route, navigation }) => {
           <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
             <Text style={{maxWidth: 300}} className=' text-primary font-semibold text-xl'>Earnings</Text>
             <TouchableOpacity style={__gstyles__.shadow}>
-              <Text style={{maxWidth: 300}} className='  text-primary font-semibold text-sm px-6 py-2'>May</Text>
+              <Text style={{maxWidth: 300}} className='  text-primary font-semibold text-sm px-6 py-2'>{currentMonth}</Text>
             </TouchableOpacity>
           </View>
 
           <View style={{flexDirection: 'row'}} className='gap-2 mb-8'>
             <TouchableOpacity style={[__gstyles__.shadow, {maxWidth: 105, width: 105}]} className='px-2 py-4 rounded-xl border border-primary justify-between'>
-              <Text className='text-primary text-base p-2 text-center'>₱4050.00</Text>
+              <Text className='text-primary text-base p-2 text-center'>₱ {allTransaction?.earnings || "0.00"}</Text>
               <Text className='text-gray-400 text-xs text-right'>
-                E-Wallet
-                <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[__gstyles__.shadow, {maxWidth: 105, width: 105}]} className='px-2 py-4 rounded-xl border border-primary justify-between'>
-              <Text className='text-primary text-base p-2 text-center'>₱4050.00</Text>
-              <Text className='text-gray-400 text-xs text-right'>
-                E-Wallet
-                <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[__gstyles__.shadow, {maxWidth: 105, width: 105}]} className='px-2 py-4 rounded-xl border border-primary justify-between'>
-              <Text className='text-primary text-base p-2 text-center'>₱4050.00</Text>
-              <Text className='text-gray-400 text-xs text-right'>
-                E-Wallet
+                Paypal
                 <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
               </Text>
             </TouchableOpacity>
@@ -126,7 +212,7 @@ const PartnerDashboard = ({ route, navigation }) => {
 
           <View style={{flexDirection: 'row'}} className='gap-2 mb-8'>
             <TouchableOpacity style={[__gstyles__.shadow, {maxWidth: 150, width: 150}]} className='px-2 py-4 rounded-xl border border-primary justify-between'>
-              <Text className='text-primary text-base p-2 text-center'>₱ 5800.00</Text>
+              <Text className='text-primary text-base p-2 text-center'>₱ {allTransaction?.earnings || "0.00"}</Text>
             </TouchableOpacity>
           </View>
 
@@ -134,13 +220,13 @@ const PartnerDashboard = ({ route, navigation }) => {
           <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
             <Text style={{maxWidth: 300}} className=' text-primary font-semibold text-xl'>Commission Fees</Text>
             <TouchableOpacity style={__gstyles__.shadow}>
-              <Text style={{maxWidth: 300}} className='  text-primary font-semibold text-sm px-6 py-2'>May</Text>
+              <Text style={{maxWidth: 300}} className='  text-primary font-semibold text-sm px-6 py-2'>{currentMonth}</Text>
             </TouchableOpacity>
           </View>
 
           <View className='gap-2 mb-8'>
             <TouchableOpacity onPress={viewCommissionFeeStatements} style={[__gstyles__.shadow]} className='px-2 py-4 rounded-xl border border-primary'>
-              <Text className='text-primary text-2xl p-2 text-center'>₱ 5800.00</Text>
+              <Text className='text-primary text-2xl p-2 text-center'>₱ {allTransaction?.comission || "0.00"}</Text>
             </TouchableOpacity>
           </View>
 
@@ -154,7 +240,7 @@ const PartnerDashboard = ({ route, navigation }) => {
             <TouchableOpacity style={[__gstyles__.shadow]} className='px-2 py-4 rounded-xl border border-primary'>
               <Text className='text-primary text-2xl p-2 text-center'>
                 <Text><Rating imageSize={20} type='custom' ratingColor="white" startingValue={2} ratingImage={require("../../public/icn/star-icn.png")} ratingCount={1}/></Text>
-                <Text className='text-primary text-2xl p-2 text-center'> 4.7</Text>
+                <Text className='text-primary text-2xl p-2 text-center'> {allRating.overall_rating || 0}</Text>
                 <Text className='text-primary text-base p-2 text-center'> Avg. Customer Ratings</Text>
               </Text>
             </TouchableOpacity>

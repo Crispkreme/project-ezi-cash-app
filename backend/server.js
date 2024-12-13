@@ -6,8 +6,12 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const paypal = require('paypal-rest-sdk');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
+const nodemailer = require('nodemailer');
+const path = require('path');
 
 paypal.configure({
   'mode': 'sandbox',
@@ -39,81 +43,92 @@ db.connect((err) => {
 app.post('/register', async (req, res) => {
   const { user_phone_no, first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, HasNoMiddleName, MPIN } = req.body;
 
-  console.log(req.body)
+  console.log(req.body);
 
   // Validate required fields
-  if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name, !birthdate, !email, !nationality, !main_source, !province, !city, !barangay, !zipcode, !HasNoMiddleName, !MPIN ) {
+  if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name || !birthdate || !email || !nationality || !main_source || !province || !city || !barangay || !zipcode || !MPIN ) {
     return res.status(400).json({ message: 'Please provide all required fields.' });
   }
 
   try {
-
-    db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", user_phone_no, 
-
+    // Check if phone number is already linked
+    db.query(
+      'SELECT user_phone_no FROM users_table WHERE user_phone_no = ?',
+      [user_phone_no],
       (err, result) => {
         if (err) {
           console.error('Database Error:', err);
-          return res.status(500).json({ message: 'Error while saving user credentials.' });
+          return res.status(500).json({ message: 'Error while checking phone number.' });
         }
 
-        if(result.length > 0) {
-          console.log("already linked")
-          return res.status(500).json({ message: 'The mobile number is already linked!.' });
+        if (result.length > 0) {
+          return res.status(409).json({ message: 'The mobile number is already linked.' });
         }
 
+        // Insert user credentials
         const insQuery = `
-          INSERT INTO users_table 
-          (user_phone_no, user_mpin, updated_at, created_at) 
+          INSERT INTO users_table (user_phone_no, user_mpin, updated_at, created_at)
           VALUES (?, ?, ?, ?)
         `;
-
-        db.query(
-          insQuery,
-          [
-            user_phone_no,
-            MPIN,
-            new Date(),
-            new Date()
-          ],
-          (err, result) => {
-            if (err) {
-              console.error('Database Error:', err);
-              return res.status(500).json({ message: 'Error while saving user credentials.' });
-            }
-            
-            const userId = result.insertId;
-
-            const query = `
-              INSERT INTO user_details 
-              (first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, user_id, created_at, updated_at) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
-
-            // Execute query
-            db.query(
-              query,
-              [ first_name, middle_name || '', last_name, new Date(), email, nationality, main_source, province, city, barangay, zipcode, userId, new Date(), new Date() ],
-              async (err, result) => {
-                if (err) {
-                  console.error('Database Error:', err);
-                  return res.status(500).json({ message: 'Error while saving user details.' });
-                }
-                
-                const data = await getUserData(userId);
-                if(data.data !== -1) {
-                  return res.status(200).json({message: "Login Successful!", data: data});
-                } else {
-                  return res.status(500).json({message: "Login unsuccessful!", data: undefined});
-                }
-
-              }
-            );
+        db.query(insQuery, [user_phone_no, MPIN, new Date(), new Date()], (err, result) => {
+          if (err) {
+            console.error('Database Error:', err);
+            return res.status(500).json({ message: 'Error while saving user credentials.' });
           }
-        );
 
+          const userId = result.insertId;
+
+          // Insert user details
+          const userDetailsQuery = `
+            INSERT INTO user_details
+            (first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, user_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `;
+          db.query(
+            userDetailsQuery,
+            [ first_name, middle_name || '', last_name, new Date(birthdate), email, nationality, main_source, province, city, barangay, zipcode, userId, new Date(), new Date() ],
+            async (err, result) => {
+              if (err) {
+                console.error('Database Error:', err);
+                return res.status(500).json({ message: 'Error while saving user details.' });
+              }
+
+              try {
+                const data = await getUserData(userId);
+
+                if (data.data !== -1) {
+                  const userDetailId = data.user_detail_id;
+
+                  // Create wallet
+                  const walletQuery = `
+                    INSERT INTO wallets (user_detail_id, balance, created_at, updated_at)
+                    VALUES (?, ?, ?, ?)
+                  `;
+                  const initialBalance = 0;
+                  db.query(
+                    walletQuery,
+                    [userDetailId, initialBalance, new Date(), new Date()],
+                    (err, result) => {
+                      if (err) {
+                        console.error('Database Error:', err);
+                        return res.status(500).json({ message: 'Error while creating the wallet.' });
+                      }
+
+                      res.status(201).json({ message: 'Registration successful!', data });
+                    }
+                  );
+                } else {
+                  res.status(500).json({ message: 'Failed to retrieve user data.' });
+                }
+              } catch (error) {
+                console.error('Unexpected Error:', error);
+                res.status(500).json({ message: 'An unexpected error occurred while retrieving user data.' });
+              }
+            }
+          );
+        });
       }
     );
-
   } catch (err) {
     console.error('Unexpected Error:', err);
     res.status(500).json({ message: 'An unexpected error occurred.' });
@@ -152,7 +167,10 @@ const getUserData = async (userId) => {
 
 const otps = new Map();
 app.post('/otp', (req, res) => {
-  const { mobileNumber } = req.body;
+  let { mobileNumber } = req.body;
+  console.log(mobileNumber);
+  mobileNumber = String(mobileNumber).replace("+63","");
+  console.log(mobileNumber);
 
   if (!mobileNumber) {
     return res.status(400).json({ error: 'Mobile number is required' });
@@ -202,83 +220,116 @@ app.get("/check-phone", async (req, res) => {
   });
 });
 app.post("/payment-transaction", async (req, res) => {
+  const { 
+    user_detail_id: user_id, 
+    partner_type: type, 
+    service, 
+    amount, 
+    partner_id: store_id = null 
+  } = req.body;
+
+  const defaults = {
+    bank: "Paypal",
+    total_amount: 0,
+    balance: 0,
+    transaction_status: "Pending",
+    payer_id: null,
+    payment_id: null,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
   try {
-    const {
-      user_detail_id: user_id,
-      partner_type: type,
-      service,
-      amount,
-    } = req.body;
-
-    const bank = "";
-    const total_amount = 0;
-    const balance = 0;
-    const transaction_status = "Pending";
-    const payer_id = null;
-    const partner_id = null;
-    const payment_id = null;
-    const created_at = new Date();
-    const updated_at = new Date();
-
     const checkPendingQuery = `
       SELECT COUNT(*) AS pendingCount 
       FROM transactions 
-      WHERE user_id = ? AND transaction_status = 'Pending'
+      WHERE user_id = ? AND transaction_status = 'Pending' AND service = ?
     `;
+    const [pendingResult] = await db.promise().query(checkPendingQuery, [user_id, service]);
+    const pendingCount = pendingResult[0]?.pendingCount || 0;
 
-    db.query(checkPendingQuery, [user_id], (err, result) => {
-      if (err) {
-        console.error("Database Error (Check Pending):", err);
-        return res.status(500).json({
-          message: "Error while checking pending transactions.",
-          error: err.message,
-        });
-      }
-
-      const pendingCount = result[0]?.pendingCount || 0;
-
-      if (pendingCount > 0) {
-        return res.status(400).json({
-          message: "User already has a pending transaction.",
-        });
-      }
-
-      const insertQuery = `
-        INSERT INTO transactions 
-        (user_id, partner_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-
-      const queryParams = [ user_id, partner_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at ];
-
-      db.query(insertQuery, queryParams, (err, result) => {
-        if (err) {
-          console.error("Database Error (Insert Transaction):", err);
-          return res.status(500).json({
-            message: "Error while saving transaction details.",
-            error: err.message,
-          });
-        }
-
-        if (result.affectedRows > 0) {
-          return res.status(200).json({
-            message: "Transaction saved successfully",
-            data: { id: result.insertId, ...req.body },
-          });
-        } else {
-          return res.status(500).json({
-            message: "Transaction failed to save!",
-            data: undefined,
-          });
-        }
+    if (pendingCount > 0) {
+      return res.status(400).json({
+        message: `User already has a pending ${service} transaction.`,
       });
+    }
+
+    const insertTransactionQuery = `
+      INSERT INTO transactions 
+      (user_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const transactionParams = [
+      user_id,
+      type,
+      defaults.bank,
+      service,
+      amount,
+      defaults.total_amount,
+      defaults.balance,
+      defaults.transaction_status,
+      defaults.payer_id,
+      defaults.payment_id,
+      defaults.created_at,
+      defaults.updated_at,
+    ];
+    const [transactionResult] = await db.promise().query(insertTransactionQuery, transactionParams);
+
+    if (transactionResult.affectedRows === 0) {
+      return res.status(500).json({ message: "Transaction failed to save!" });
+    }
+
+    // Insert into histories
+    const insertHistoryQuery = `
+      INSERT INTO histories 
+      (user_detail_id, service, amount, transaction_status, created_at, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    const historyParams = [
+      user_id,
+      service,
+      amount,
+      defaults.transaction_status,
+      defaults.created_at,
+      defaults.updated_at,
+    ];
+    const [historyResult] = await db.promise().query(insertHistoryQuery, historyParams);
+
+    if (historyResult.affectedRows === 0) {
+      return res.status(500).json({ message: "Failed to save transaction in histories!" });
+    }
+
+    const notificationMessage = `A new transaction of ${amount} for ${service} has been created.`;
+    const insertNotificationQuery = `
+      INSERT INTO notifications 
+      (individual_id, notification, created_at, updated_at) 
+      VALUES (?, ?, ?, ?)
+    `;
+    const notificationParams = [
+      user_id,
+      notificationMessage,
+      defaults.created_at,
+      defaults.updated_at,
+    ];
+
+    const [notificationResult] = await db.promise().query(insertNotificationQuery, notificationParams);
+
+    if (notificationResult.affectedRows === 0) {
+      return res.status(500).json({ message: "Failed to save notification!" });
+    }
+
+    return res.status(200).json({
+      message: "Transaction, history, and notification saved successfully",
+      data: {
+        transaction_id: transactionResult.insertId,
+        history_id: historyResult.insertId,
+        notification_id: notificationResult.insertId,
+        ...req.body,
+      },
     });
   } catch (error) {
     console.error("Server Error:", error);
-    return res.status(500).json({
-      message: "An unexpected error occurred.",
-      error: error.message,
-    });
+    return res.status(500).json({ message: "An unexpected error occurred.", error: error.message });
   }
 });
 app.post("/login", async (req, res) => {
@@ -296,7 +347,6 @@ app.post("/login", async (req, res) => {
       try {
 
         const userData = await getUserData(result[0].user_id);
-        console.log("userData", userData);
 
         if (!userData) {
         return res.status(404).json({ message: 'User details not found.' });
@@ -304,7 +354,7 @@ app.post("/login", async (req, res) => {
 
         return res.status(200).json({ 
           message: 'Proceed to login', 
-          data: userData 
+          data: {...userData, user_id: result[0].user_id} 
         });
         
       } catch (error) {
@@ -319,51 +369,68 @@ app.post("/login", async (req, res) => {
 
 // get all partners
 app.get("/get-partners", async (req, res) => {
-  const query = `
-    SELECT 
-      CONCAT(ud.first_name, ' ', ud.middle_name, ' ', ud.last_name) AS store_name,
-      ud.city,
-      ud.barangay,
-      ud.province,
-      ut.partner_type,
-      ut.user_id AS store_id
-    FROM 
-      users_table AS ut
-    JOIN 
-      user_details AS ud
-    ON 
-      ut.user_id = ud.user_id
-    WHERE 
-      ut.partner_type = ?;
+  try {
+    const now = new Date();
+    const currentDate = now.toISOString().split("T")[0];
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const currentDay = dayNames[now.getDay()];
+    const currentTime = now.toTimeString().split(" ")[0];
+
+    const query = `
+      SELECT 
+        b.*, 
+        CONCAT(ud.first_name, ' ', ud.middle_name, ' ', ud.last_name) AS store_name, 
+        ud.barangay, 
+        ud.city
+      FROM business_hours b
+      INNER JOIN user_details ud ON b.partner_id = ud.user_detail_id
+      WHERE 
+        b.isOpen = 1
+        AND b.day = ?
+        AND b.business_date = ?
+        AND b.open_at <= ?
+        AND b.close_at >= ?
     `;
-  const values = ["Store"];
-  
-  db.query(query, values, (err, result) => {
-    if (err) {
-      console.error("Database Error:", err);
-      return res.status(500).json({ message: "Error fetching partners." });
-    }
-    console.log("Result:", result);
-    res.status(200).json({ 
-      message: "Partners retrieved successfully", 
-      data: result 
+
+    db.query(query, [currentDay, currentDate, currentTime, currentTime], (err, results) => {
+      if (err) {
+        console.error("Database Error:", err);
+        return res.status(500).json({ message: "Error while fetching business hours." });
+      }
+
+      if (!results || results.length === 0) {
+        return res.status(404).json({
+          message: "No open businesses found.",
+          data: [],
+        });
+      }
+
+      console.log("results:", results); 
+
+      res.status(200).json({
+        message: "Open businesses retrieved successfully.",
+        data: results,
+      });
     });
-  });
+  } catch (error) {
+    console.error("Error fetching business hours:", error);
+    res.status(500).json({ message: "An error occurred while fetching business hours." });
+  }
 });
 app.get("/get-transaction", async (req, res) => {
   const query = `
     SELECT 
       CONCAT(user_details.first_name, ' ', IFNULL(user_details.middle_name, ''), ' ', user_details.last_name) AS name,
-      transactions.created_at AS date,
-      transactions.service,
-      transactions.id,
-      transactions.amount,
-      transactions.bank,
-      transactions.transaction_status AS status,
-      user_details.user_id
-    FROM transactions
-    INNER JOIN user_details ON transactions.user_id = user_details.user_detail_id
-    ORDER BY transactions.created_at DESC;
+      histories.created_at AS date,
+      histories.service,
+      histories.id,
+      histories.amount,
+      histories.transaction_status AS status,
+      user_details.user_detail_id
+    FROM histories
+    INNER JOIN user_details ON histories.user_detail_id = user_details.user_detail_id
+    WHERE histories.transaction_status = "Pending"
+    ORDER BY histories.created_at DESC;
   `;
 
   db.query(query, (err, results) => {
@@ -379,9 +446,8 @@ app.get("/get-transaction", async (req, res) => {
       });
     }
 
-    // Group transactions by raw date (ISO format)
     const groupedTransactions = results.reduce((groups, transaction) => {
-      const dateKey = new Date(transaction.date).toISOString().split("T")[0];
+      const dateKey = new Date(transaction.date).toDateString();
       if (!groups[dateKey]) {
         groups[dateKey] = [];
       }
@@ -389,15 +455,44 @@ app.get("/get-transaction", async (req, res) => {
       return groups;
     }, {});
 
-    // Format grouped data into an array of groups
     const formattedResults = Object.entries(groupedTransactions).map(([date, transactions]) => ({
       date,
-      transactions,
+      transactions: transactions.map((transaction, index) => ({
+        ...transaction,
+        uniqueKey: `${transaction.id}-${index}`,
+      })),
     }));
 
     return res.status(200).json({
       message: "Transactions retrieved successfully.",
       data: formattedResults,
+    });
+  });
+});
+app.get("/get-request", async (req, res) => {
+  const query = `
+    SELECT * FROM transactions
+    WHERE transactions.transaction_status = "Pending"
+    ORDER BY transactions.created_at DESC;
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Database Error:", err);
+      return res.status(500).json({ message: "Error while fetching transactions." });
+    }
+
+    if (!results || results.length === 0) {
+      return res.status(200).json({
+        message: "No pending transactions found.",
+        data: [],
+      });
+    }
+
+    console.log("results", results);
+    return res.status(200).json({
+      message: "Pending transactions retrieved successfully.",
+      data: results,
     });
   });
 });
@@ -427,7 +522,6 @@ app.get("/get-wallet/:user_detail_id", async (req, res) => {
         data: [],
       });
     }
-    console.log("results", results);
     return res.status(200).json({
       message: "Wallets retrieved successfully.",
       data: results,
@@ -470,6 +564,147 @@ app.post('/save-business-hours', (req, res) => {
     res.json({ message: 'Business hours saved successfully.' });
   });
 });
+app.get('/get-total-transaction/:user_detail_id', async (req, res) => {
+
+  const { user_detail_id } = req.params;
+  const query = `SELECT * FROM partner_wallets WHERE user_detail_id = ?`;
+
+  db.query(query, [user_detail_id], (err, results) => {
+
+    if (err) {
+      console.error('Database Error:', err);
+      return res.status(500).json({ message: 'Error while fetching transactions.' });
+    }
+
+    if (!results || results.length === 0) {
+      return res.status(200).json({
+        message: 'No transactions found.',
+        data: [],
+      });
+    }
+    return res.status(200).json({
+      data: results,
+    });
+  });
+});
+app.get('/get-store-rating/:user_detail_id', async (req, res) => {
+  const { user_detail_id } = req.params;
+
+  const query = `
+    SELECT AVG(rating) as overall_rating
+    FROM ratings
+    WHERE user_detail_id = ?
+  `;
+
+  db.query(query, [user_detail_id], (err, results) => {
+    if (err) {
+      console.error('Database Error:', err);
+      return res.status(500).json({ message: 'Error while fetching ratings.' });
+    }
+
+    if (!results || results.length === 0 || results[0].overall_rating === null) {
+      return res.status(200).json({
+        message: 'No ratings found.',
+        data: { overall_rating: 0 },
+      });
+    }
+
+    return res.status(200).json({
+      data: { overall_rating: results[0].overall_rating },
+    });
+  });
+});
+app.get('/get-all-success-transaction/:user_detail_id', async (req, res) => {
+  const { user_detail_id } = req.params;
+
+  // Query to count all transactions with 'Success' status for the given user_detail_id
+  const query = `
+    SELECT COUNT(*) as success_count
+    FROM transactions
+    WHERE partner_id = ? AND transaction_status = 'Success'
+  `;
+
+  db.query(query, [user_detail_id], (err, results) => {
+    if (err) {
+      console.error('Database Error:', err);
+      return res.status(500).json({ message: 'Error while fetching success transactions.' });
+    }
+
+    return res.status(200).json({
+      data: { success_count: results[0].success_count },
+    });
+  });
+});
+app.get('/get-all-failed-transaction/:user_detail_id', async (req, res) => {
+  const { user_detail_id } = req.params;
+
+  // Query to count all transactions with 'Failed' status for the given user_detail_id
+  const query = `
+    SELECT COUNT(*) as failed_count
+    FROM transactions
+    WHERE partner_id = ? AND transaction_status = 'Failed'
+  `;
+
+  db.query(query, [user_detail_id], (err, results) => {
+    if (err) {
+      console.error('Database Error:', err);
+      return res.status(500).json({ message: 'Error while fetching failed transactions.' });
+    }
+
+    return res.status(200).json({
+      data: { failed_count: results[0].failed_count },
+    });
+  });
+});
+app.post('/approve-cash-request', (req, res) => {
+
+  const { individual_id, partner_id, transaction_id, transaction_status, approved_at } = req.body;
+
+  if (!individual_id || !partner_id || !transaction_id || !transaction_status || !approved_at) {
+    return res.status(400).json({ message: "Missing required fields." });
+  }
+
+  const updatedAt = new Date().toISOString();
+  const updateTransactionQuery = `
+    UPDATE transactions
+    SET 
+      partner_id = ?, 
+      transaction_status = ?, 
+      approved_at = ?, 
+      updated_at = ?
+    WHERE id = ?
+  `;
+  const updateTransactionValues = [partner_id, transaction_status, approved_at, updatedAt, transaction_id];
+  db.query(updateTransactionQuery, updateTransactionValues, (updateError, updateResult) => {
+
+    if (updateError) {
+      return res.status(500).json({ message: "Failed to update the transaction.", error: updateError });
+    }
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(404).json({ message: "Transaction not found." });
+    }
+
+    const notificationMessage = `${individual_id} Request was approved with partner with the ${partner_id}.`;
+    const insertNotificationQuery = `
+      INSERT INTO notifications (store_id, individual_id, notification, updated_at, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+    const notificationValues = [ partner_id, individual_id, notificationMessage, updatedAt, approved_at ];
+
+    db.query(insertNotificationQuery, notificationValues, (notificationError, notificationResult) => {
+      if (notificationError) {
+        console.error("Database Error (Insert Notification):", notificationError);
+        return res.status(500).json({ message: "Failed to save the notification.", error: notificationError });
+      }
+      return res.status(200).json({
+        message: "Transaction approved and notification saved successfully.",
+        transaction_id,
+      });
+    });
+  });
+});
+
 
 // paypal functionality
 app.post('/paypal', (req, res) => {
@@ -603,6 +838,318 @@ app.post('/success', (req, res) => {
   });
 });
 app.get('/cancel', (req, res) => res.send('Payment was cancelled.'));
+
+// WEB
+app.post("/web-login", async(req, res) => {
+  try {
+    const {email, password} = req.body;
+    db.query("SELECT * FROM users_table u INNER JOIN admin_details a ON u.user_id = a.user_id WHERE u.user_email = ?", [email], async (err, result) => {
+      if(err) {
+        console.log(err);
+        return res.status(500).json({message: err, data:{}});
+      }
+      const x = await bcrypt.compare(password, result[0].user_pass);
+      if(x) {
+        return res.status(200).json({message: '', data: {...result[0], user_pass: ''}})
+      } else {
+        return res.status(500).json({message: '', data: ''});
+      }
+      
+    });
+
+  } catch(e) {
+    console.log(e);
+    // return res.status(500).json({message: e, data: {}});
+  }
+});
+app.post('/web-verification-code', async (req, res) => {
+  try {
+    const {email} = req.body;
+    const pin = Math.floor(1000 + Math.random() * 9000);
+
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port:465,
+      secure: true,
+      auth: {
+        user: "cjvicro@gmail.com",
+        pass: "ztbepsrmnypjjvyt"
+      }
+    });
+
+    const mailOptions = {
+      to: email,
+      subject: 'Sending Email using Node JS!',
+      text: "Welcome! Your verification code is " + pin
+    }
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if(error) {
+        return res.status(500).json({message: error, data: undefined});
+      } else {
+        return res.status(200).json({message: 'Success!', data: pin});
+      }
+    });
+
+    
+
+  } catch(e) {
+    return res.status(500).json({message:e.message, data: undefined});
+  }
+});
+app.post("/web-signup", async (req, res) => {
+  try {
+
+    const {name, email, password} = req.body;
+
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+
+    db.query("INSERT INTO users_table (user_phone_no, user_mpin, user_email, user_pass, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?)",[
+      '',
+      '',
+      email,
+      hash,
+      new Date(),
+      new Date()
+    ], (err, result) => {
+      if(err) throw new Error(err);
+      
+      const ut = result.insertId;
+      db.query("INSERT INTO admin_details (admin_name, admin_type, user_id, updated_at, created_at) VALUES (?, ?, ?, ?, ?)", 
+        [name, 'Admin', ut, new Date(), new Date()]
+      , (err, result) => {
+        if(err) throw new Error("There was an error inserting into admin details");
+        
+        db.query("SELECT admin_name, admin_type, user_id FROM admin_details WHERE user_id = ?",[ut], (err, result) => {
+          if(err) throw new Error("There was an error looking for the admin details");
+
+          return res.status(200).json({message:'Successfully registered!', data: result[0]});
+        })
+
+      })
+      
+    });
+
+    
+  } catch(e) {
+    return res.status(500).json({message: e.message, data: undefined});
+  }
+});
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Directory where files will be saved
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
+
+app.post("/file-upload", upload.single('file'), async (req, res) => {
+  try {
+    return res.status(200).json({message:'Success!', data: req.file.filename});
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'There was an error applying!'});
+  }
+});
+
+app.get('/file/:filename', async (req, res) => {
+  const filePath = path.join(__dirname, 'uploads', req.params.filename);
+  return res.sendFile(filePath, (err) => {
+    if(err) {
+      return res.status(404).json({message:'File not found!'});
+    }
+  })
+});
+
+app.get('/transactions', async (req, res) => {
+  try {
+    db.query('SELECT * FROM transactions', (err, result) => {
+      if(err) {
+        console.log(err);
+
+        return res.status(500).json({message: err, data: []});
+      }
+
+      return res.status(200).json({message:'Success', data: result});
+    })
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:e, data: []});
+  }
+});
+
+app.patch('/verification', async (req, res) => {
+  try {
+    const body = req.body;
+
+    db.query(`UPDATE partnership_application SET ${body.column} = ? WHERE partner_application_id = ?`,
+      [body.value, body.partner_application_id],
+      (err, result) => {
+        if(err) {
+          return res.status(500).json({message: err});
+        }
+
+        return res.status(200).json({message: 'Success!'});
+      }
+    )
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message: 'Unsuccessful!'});
+  }
+});
+
+app.get('/get-admins', async (req, res) => {
+  try {
+    db.query(`SELECT * FROM admin_details`, (err, result) => {
+      if(err) {
+        console.log(err);
+        return res.status(500).json({message: err, data: []});
+      }
+      
+      console.log(result);
+      return res.status(200).json({message: 'Success', data: result});
+    })
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'Unsuccessful', data: []});
+  }
+});
+
+app.patch('/add-admins', async (req, res) => {
+  try {
+    const body = req.body;
+    console.log(body);
+    db.query(`UPDATE admin_details SET admin_type = ? WHERE admin_id = ?`,[body.department, body.admin_id],
+      (err, result) => {
+        if(err) {
+          console.log(err);
+          return res.status(500).json({message: 'Failed!'});
+        }
+
+        return res.status(200).json({message:'Success Update!'});
+      }
+    )
+
+
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message: e});
+  }
+});
+
+app.get('/partner-application-list', async (req, res) => {
+  try {
+    db.query(`SELECT * FROM partnership_application ORDER BY partner_application_id desc`, (err, info) => {
+      if(err) {
+        console.log(err);
+        return res.status(500).json({message: err, data: []});
+      }
+
+      return res.status(200).json({message: 'Successful!', data: info});
+    });
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message: e, data: []});
+  }
+});
+
+app.post("/partner-application", upload.single('file'), async (req, res) => {
+  try {
+    const body = req.body;
+    console.log(body);
+    db.query(`INSERT INTO partnership_application (
+      user_id, 
+      legal_name,
+      partnership_type, 
+      phone_no, 
+      email, 
+      legal_address, 
+      city, 
+      state, 
+      zip, 
+      business_location,
+      business_city,
+      business_state,
+      business_zip,
+      business_permit,
+      government_id,
+      proof_of_address,
+      business_permit_verify,
+      government_id_verify,
+      proof_of_address_verify,
+      bank,
+      bank_account_id,
+      account_id,
+      card_no,
+      card_holder
+    ) VALUES (
+      ?, 
+      ?,
+      ?, 
+      ?, 
+      ?, 
+      ?, 
+      ?, 
+      ?, 
+      ?, 
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?
+    )`, [
+      body.user_id, 
+      body.legal_name,
+      body.partnership_type, 
+      body.phone_no, 
+      body.email, 
+      body.legal_address, 
+      body.city, 
+      body.state, 
+      body.zip, 
+      body.business_location,
+      body.business_city,
+      body.business_state,
+      body.business_zip,
+      body.business_permit,
+      body.government_id,
+      body.proof_of_address,
+      0,
+      0,
+      0,
+      body.bank,
+      body.bank_account_id,
+      body.account_id,
+      body.card_no,
+      body.card_holder
+    ], async (err, result) => {
+      if(err) {
+        console.log(err);
+        return res.status(500).json({message:'There was an error in the application!'});
+      }
+
+      return res.status(200).json({message:'Successful Application!'});
+    });
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'There was an error applying!'});
+  }
+});
 
 // Start the server
 const PORT = 3000;

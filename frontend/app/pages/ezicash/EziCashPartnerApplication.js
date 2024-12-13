@@ -12,25 +12,11 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import { useNavigation } from "@react-navigation/native";
 import DropdownComponent from "../../components/DropdownComponent";
+import * as FileSystem from 'expo-file-system';
 
 const EziCashPartnerApplication = ({route}) => {
   const navigation = useNavigation();
-  const {mobileNumber} = route.params || {};
-  const [formData, setFormData] = useState({
-    user_phone_no: mobileNumber,
-    first_name: "John",
-    middle_name: "Sample",
-    last_name: "Doe",
-    birthdate: new Date(), // Default to the current date
-    email: "johndoe@gmail.com",
-    nationality: "Nationality",
-    main_source: "Main Source of Funds",
-    province: "Province",
-    city: "City/Municipality",
-    barangay: "Barangay",
-    zipcode: "ZipCode",
-    HasNoMiddleName: false,
-  });
+  const {formData} = route.params || {};
 
   const [applyData, setApplyData] = useState({
     legal_name: "",
@@ -50,41 +36,84 @@ const EziCashPartnerApplication = ({route}) => {
     government_id: null,
     proof_of_address: null,
     bank: "",
-    bank_account_id: "",
+    bank_account_id: "bank",
     account_id: "",
     card_no: "",
     card_holder: "",
   })
-
-  const data = [
-    { label: 'Item 1', value: '1' },
-    { label: 'Item 2', value: '2' },
-    { label: 'Item 3', value: '3' },
-    { label: 'Item 4', value: '4' },
-    { label: 'Item 5', value: '5' },
-    { label: 'Item 6', value: '6' },
-    { label: 'Item 7', value: '7' },
-    { label: 'Item 8', value: '8' },
-  ];
-
-  const nationality = [
-    { label: 'Filipino', value: 'Filipino' },
-  ]
-
-  const fundSource = [
-    { label: 'Job', value: 'Job' },
-    { label: 'Allowance', value: 'Allowance' },
-    
-  ]
 
   // Handle input changes
   const handleInputChange = (field, value) => {
     setApplyData({ ...applyData, [field]: value });
   };
 
+  function sendXmlHttpRequest(data) {
+    const xhr = new XMLHttpRequest();
+  
+    return new Promise((resolve, reject) => {
+      xhr.onreadystatechange = e => {
+        if (xhr.readyState !== 4) {
+          return;
+        }
+
+        console.log(xhr.responseText);
+  
+        if (xhr.status === 200) {
+          resolve(JSON.parse(xhr.responseText));
+        } else {
+          reject("Request Failed");
+        }
+      };
+      xhr.open("POST", process.env.base_url + "/file-upload");
+      xhr.send(data);
+    });
+  }
+
   // Navigate to ConfirmAccount
-  const handleNext = () => {
-    navigation.navigate("ConfirmAccount", { formData: {...formData, birthdate: formData.birthdate.toLocaleDateString()} });
+  const handleNext = async (e) => {
+    try {
+      const errFields = [];
+      console.log(applyData)
+      for( const [key, value] of Object.entries(applyData)) {
+        if(typeof applyData[key] === 'string' && value === "") {
+          errFields.push(key);
+        }
+      }
+      if(errFields.length > 0) {
+        alert("Error in fields " + errFields.join(", "));
+        return;
+      }
+      const [business, id, proof] = await Promise.all(['business','id','proof'].map(async key => {
+        if(files[key]) {
+          const fd = new FormData();
+          fd.append('file', {
+            uri: files[key].uri,        // File URI
+            name: '_'+ formData.user_detail_id +'_' + files[key].name,      // File name
+            type: files[key].type || 'application/octet-stream', // File MIME type (fallback to 'application/octet-stream')
+          });
+
+          const res = await sendXmlHttpRequest(fd);
+          return res.data;
+        }
+      }));
+
+      const res = await fetch(process.env.base_url + '/partner-application', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({...applyData, business_permit: business, government_id: id, proof_of_address: proof, user_id: formData.user_id})
+      });
+
+      if(res.ok) {
+        navigation.navigate("SuccessfulApplication", { formData });
+      }
+      
+    } catch(e) {
+      console.error(e);
+
+    }
+
   };
 
   const toggleBusinessAddress = () => {
@@ -94,18 +123,29 @@ const EziCashPartnerApplication = ({route}) => {
     }));
   };
 
-  const [files, setFiles] = useState({
+  const [fileNames, setFileNames] = useState({
     business: 'No file selected',
     id: 'No file selected',
     proof: 'No file selected'
-  })
+  });
+
+  const [files, setFiles] = useState({
+    business: null,
+    id: null,
+    proof: null
+  });
+  
   const openDocument = async (key) => {
     const file = await DocumentPicker.getDocumentAsync();
-    console.log(file);
-    setFiles(prev => ({
+    setFileNames(prev => ({
       ...prev,
       [key]: file.assets[0].name
-    }))
+    }));
+
+    setFiles(prev => ({
+      ...prev,
+      [key]: {...file.assets[0]}
+    }));
   }
 
   return (
@@ -129,7 +169,7 @@ const EziCashPartnerApplication = ({route}) => {
 
           <Text className='text-base text-gray-400 mb-2'>Partnership Type</Text>
           <View className='mb-4'>
-            <DropdownComponent setState={(value) => handleInputChange("partnership_type", value)} data={
+            <DropdownComponent formKey={"partnership_type"} setState={setApplyData} data={
               [
                 {label: "Individual", value: "Individual"},
                 {label: "Store", value: "Store"}
@@ -152,7 +192,7 @@ const EziCashPartnerApplication = ({route}) => {
           <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
             <TextInput
               className='border border-gray-300 rounded-md p-4 bg-white'
-              placeholder="Last Name"
+              placeholder="Email Address"
               value={applyData.email}
               onChangeText={(value) => handleInputChange("email", value)}
             />
@@ -188,8 +228,8 @@ const EziCashPartnerApplication = ({route}) => {
                 <TextInput
                   className='border border-gray-300 rounded-md p-4 bg-white'
                   placeholder="Province"
-                  value={applyData.province}
-                  onChangeText={(value) => handleInputChange("province", value)}
+                  value={applyData.state}
+                  onChangeText={(value) => handleInputChange("state", value)}
                 />
               </TouchableOpacity>
             </View>
@@ -199,8 +239,8 @@ const EziCashPartnerApplication = ({route}) => {
             <TextInput
               className='border border-gray-300 rounded-md p-4 bg-white'
               placeholder="Zip Code"
-              value={applyData.zipcode}
-              onChangeText={(value) => handleInputChange("zipcode", value)}
+              value={applyData.zip}
+              onChangeText={(value) => handleInputChange("zip", value)}
             />
           </View>
 
@@ -232,8 +272,8 @@ const EziCashPartnerApplication = ({route}) => {
                 <TextInput
                   className='border border-gray-300 rounded-md p-4 bg-white'
                   placeholder="City"
-                  value={applyData.city}
-                  onChangeText={(value) => handleInputChange("city", value)}
+                  value={applyData.business_city}
+                  onChangeText={(value) => handleInputChange("business_city", value)}
                 />
               </TouchableOpacity>
             </View>
@@ -243,9 +283,9 @@ const EziCashPartnerApplication = ({route}) => {
               <TouchableOpacity style={[styles.shadow, {width: 165}]} className='rounded-md mb-2'>
                 <TextInput
                   className='border border-gray-300 rounded-md p-4 bg-white'
-                  placeholder="Province"
-                  value={applyData.province}
-                  onChangeText={(value) => handleInputChange("province", value)}
+                  placeholder="State"
+                  value={applyData.business_state}
+                  onChangeText={(value) => handleInputChange("business_state", value)}
                 />
               </TouchableOpacity>
             </View>
@@ -255,8 +295,8 @@ const EziCashPartnerApplication = ({route}) => {
             <TextInput
               className='border border-gray-300 rounded-md p-4 bg-white'
               placeholder="Zip Code"
-              value={applyData.zipcode}
-              onChangeText={(value) => handleInputChange("zipcode", value)}
+              value={applyData.business_zip}
+              onChangeText={(value) => handleInputChange("business_zip", value)}
             />
           </View>
 
@@ -265,7 +305,7 @@ const EziCashPartnerApplication = ({route}) => {
             <TouchableOpacity className='w-full bg-white rounded-lg' onPress={() => openDocument("business")}>
               <Text className='relative text-primary font-semibold text-lg text-left p-4 flex-row text items-start justify-start'>
                 <Text className='text-xs p-2 '>Upload File</Text>
-                <Text className='text-xs ml-4'>{files.business}</Text>
+                <Text className='text-xs ml-4'>{fileNames.business}</Text>
               </Text>
             </TouchableOpacity>
           </Text>
@@ -275,7 +315,7 @@ const EziCashPartnerApplication = ({route}) => {
             <TouchableOpacity className='w-full bg-white rounded-lg' onPress={() => openDocument("id")}>
               <Text className='relative text-primary font-semibold text-lg text-left p-4 flex-row text items-start justify-start'>
                 <Text className='text-xs p-2 '>Upload File</Text>
-                <Text className='text-xs ml-4'>{files.id}</Text>
+                <Text className='text-xs ml-4'>{fileNames.id}</Text>
               </Text>
             </TouchableOpacity>
           </Text>
@@ -285,7 +325,7 @@ const EziCashPartnerApplication = ({route}) => {
             <TouchableOpacity className='w-full bg-white rounded-lg' onPress={() => openDocument("proof")}>
               <Text className='relative text-primary font-semibold text-lg text-left p-4 flex-row text items-start justify-start'>
                 <Text className='text-xs p-2 '>Upload File</Text>
-                <Text className='text-xs ml-4'>{files.proof}</Text>
+                <Text className='text-xs ml-4'>{fileNames.proof}</Text>
               </Text>
             </TouchableOpacity>
           </Text>

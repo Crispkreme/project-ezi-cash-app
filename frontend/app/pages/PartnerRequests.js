@@ -8,13 +8,59 @@ const PartnerRequests = ({ route, navigation }) => {
   const { formData } = route.params;
   const wLabels = {...formData};
   const navigator = useNavigation();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [transactionData, setTransactionData] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [todayTransactions, setTodayTransactions] = useState([]);
   const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
 
-  const handleConfirm = async (service, payment) => {
-    navigator.navigate("PartnerLocate", {formData,payment: payment, partner: {...formData, legal_name: `${formData.first_name} ${formData.middle_name} ${formData.last_name}`}});
+  const handleConfirm = async (transactionDetails, formData) => {
+    // Prepare payload for the request
+    const payload = {
+      individual_id: transactionDetails.user_id,
+      partner_id: formData.user_detail_id,
+      transaction_id: transactionDetails.id,
+      transaction_status: "Approved",
+      approved_at: new Date().toISOString(),
+    };
+  
+    try {
+      // Make the API call
+      const response = await fetch(`${process.env.base_url}/approve-cash-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (response.ok) {
+        setIsModalVisible(false);
+        alert("Request approved successfully.");
+  
+        const legalName = `${formData.first_name || ''} ${formData.middle_name || ''} ${formData.last_name || ''}`.trim();
+  
+        navigator.navigate("PartnerLocate", {
+          formData,
+          payment: transactionDetails.amount,
+          partner: {
+            ...formData,
+            legal_name: legalName,
+          },
+        });
+      } else {
+        // Handle errors from the server
+        const errorData = await response.json();
+        console.error("Error:", errorData);
+        alert(errorData.message || "Failed to approve the payment request. Please try again.");
+      }
+    } catch (error) {
+      // Handle network or unexpected errors
+      console.error("Network Error:", error);
+      alert("Failed to approve the payment request. Please check your connection and try again.");
+    }
   };
+  
   const viewProfile = () => {
     navigator.navigate("Profile", {formData});
   }
@@ -27,14 +73,15 @@ const PartnerRequests = ({ route, navigation }) => {
   const viewTransactions = () => {
     navigator.navigate("PartnerTransactions", {formData});
   }
-
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const acceptRequest = () => setIsModalVisible(prev => !prev);
+  const acceptRequest = (transaction) => {
+    setTransactionData(transaction);
+    setIsModalVisible(prev => !prev);
+  }
 
   useEffect(() => {
     const fetchTransaction = async () => {
       try {
-        const response = await fetch(`${process.env.base_url}/get-transaction`, {
+        const response = await fetch(`${process.env.base_url}/get-request`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -43,15 +90,16 @@ const PartnerRequests = ({ route, navigation }) => {
 
         if (!response.ok) {
           const responseText = await response.text();
-          alert("Error", `Server returned: ${responseText}`);
+          alert('Error', `Server returned: ${responseText}`);
           return;
         }
 
         const parsedResponse = await response.json();
 
-        if (parsedResponse.data && parsedResponse.data.length > 0) {
+        if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
           setTransactions(parsedResponse.data);
         } else {
+          setTransactions([]); // Ensure transactions is an empty array if no data is found
           alert('No transactions found.');
         }
       } catch (error) {
@@ -59,16 +107,18 @@ const PartnerRequests = ({ route, navigation }) => {
         alert('Error', 'An error occurred while fetching transactions.');
       }
     };
-  
+
     fetchTransaction();
   }, []);
   const groupTransactionsByDate = (transactions) => {
+    if (!transactions || transactions.length === 0) return {};
+
     const grouped = {};
     const today = new Date().toDateString();
 
     transactions.forEach((transaction) => {
       const transactionDate = new Date(transaction.date).toDateString();
-      const groupKey = transactionDate === today ? "Today" : transactionDate;
+      const groupKey = transactionDate === today ? 'Today' : transactionDate;
 
       if (!grouped[groupKey]) {
         grouped[groupKey] = [];
@@ -77,7 +127,7 @@ const PartnerRequests = ({ route, navigation }) => {
     });
     return grouped;
   };
-  const groupedTransactions = groupTransactionsByDate(transactions);
+  const groupedTransactions = groupTransactionsByDate(transactions) || {};
 
   return (
     <ImageBackground style={{flex: 1}} source={require("../../public/image/background.png")}>
@@ -104,10 +154,10 @@ const PartnerRequests = ({ route, navigation }) => {
               <View key={groupKey}>
                 <View
                   style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    width: "100%",
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    width: '100%',
                   }}
                 >
                   <Text
@@ -117,77 +167,43 @@ const PartnerRequests = ({ route, navigation }) => {
                     {groupKey}
                   </Text>
                 </View>
-                {transactionGroups.map((group) => (
-                  <View
-                    key={group.date}
-                    style={{ flexDirection: "column" }}
-                    className="gap-2 mb-8"
-                  >
-                    {group.transactions.map((transaction) => {
-                    const transactionIcon =
-                      transaction.service === "Cash In"
-                        ? require("../../public/icn/cashin.png")
-                        : require("../../public/icn/cashout.png");
+                {transactionGroups.map((transaction) => {
+                  const transactionIcon =
+                    transaction.service === 'Cash In'
+                      ? require('../../public/icn/cashin.png')
+                      : require('../../public/icn/cashout.png');
 
-                      return (
-                        <TouchableOpacity
-                          key={transaction.id}
-                          style={[
-                            __gstyles__.shadow,
-                            { justifyContent: "space-between", width: "100%" },
-                          ]}
-                          className="flex-row p-2 rounded-full py-4 px-4"
-                          // onPress={() => viewServiceManagement(transaction)}
-                        >
-                          <View className="flex-row items-center">
-                            <Image source={transactionIcon} />
-                            <Text>
-                              <Text className="text-base">{transaction.name} {"\n"}</Text>
-                              <Text className="text-xs">{transaction.service}</Text>
-                            </Text>
-                          </View>
+                  return (
+                    <TouchableOpacity
+                      key={`${transaction.id}-${transaction.date}`}
+                      style={[
+                        __gstyles__.shadow,
+                        { justifyContent: 'space-between', width: '100%' },
+                      ]}
+                      className="flex-row p-2 rounded-full py-4 px-4"
+                    >
+                      <View className="flex-row items-center">
+                        <Image source={transactionIcon} />
+                        <Text>
+                          <Text className="text-base">{transaction.name} {'\n'}</Text>
+                          <Text className="text-xs">{transaction.service}</Text>
+                        </Text>
+                      </View>
 
-                          <View style={{ flexDirection: "row" }}>
-                            <Text>
-                              <Text className="text-lg font-bold text-right">
-                                {transaction.amount} {"\n"}
-                              </Text>
-                              <Text className="text-xs">
-                                {transaction.bank || "Unknown Bank"} {"\n"}
-                              </Text>
-                              <Text className="text-xs">
-                                {new Date(transaction.date).toLocaleString()} {"\n"}
-                              </Text>
-                            </Text>
-
-                            <View
-                              style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 6,
-                              }}
-                            >
-                              <TouchableOpacity
-                                onPress={() => acceptRequest(transaction)}
-                                style={__gstyles__.shadow}
-                                className="p-2 rounded-full"
-                              >
-                                <Image source={require("../../public/icn/accept.png")} />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                onPress={() => rejectRequest(transaction)}
-                                style={__gstyles__.shadow}
-                                className="p-2 rounded-full"
-                              >
-                                <Image source={require("../../public/icn/reject.png")} />
-                              </TouchableOpacity>
-                            </View>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                ))}
+                      <View style={{ flexDirection: 'row' }}>
+                        <Text>
+                          <Text className="text-lg font-bold text-right">
+                            {transaction.amount} {'\n'}
+                          </Text>
+                          <Text className="text-xs">{transaction.bank || 'Paypal'} {'\n'}</Text>
+                          <Text className="text-xs">
+                            {new Date(transaction.date).toLocaleString()} {'\n'}
+                          </Text>
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             ))}
           </View>
@@ -226,11 +242,15 @@ const PartnerRequests = ({ route, navigation }) => {
                 <Text className="font-bold text-base">Are you sure you want to approve this request?</Text>
 
                 <View className="gap-4 flex-row px-4 mb-4">
-                  <Pressable style={{maxWidth: 100}} className="w-full bg-primary rounded-lg" onPress={() => handleConfirm("Cash In", {type: "E-wallet", balance: 0, service: "Cash In", amount: 500, bank: "Paypal"})}>
+                  <Pressable
+                    style={{ maxWidth: 100 }}
+                    className="w-full bg-primary rounded-lg"
+                    onPress={() => handleConfirm(transactionData, formData)}
+                  >
                     <Text className="p-4 text-center text-white font-bold">Ok</Text>
                   </Pressable>
                   <Pressable
-                    style={{maxWidth: 100}}
+                    style={{ maxWidth: 100 }}
                     className="w-full p-4 border border-primary bg-white rounded-lg"
                     onPress={() => setIsModalVisible(false)}
                   >
@@ -239,7 +259,7 @@ const PartnerRequests = ({ route, navigation }) => {
                 </View>
               </View>
             </View>
-          </Modal>
+          </Modal>;
         </View>
       </View>
     </ImageBackground>
