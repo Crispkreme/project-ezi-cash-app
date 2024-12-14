@@ -26,7 +26,7 @@ const WaitingApproval = () => {
 
       if (responseData.data) {
         setTransactionStatus(responseData.data.transaction_status);
-        setTransactionData(responseData.data); // Save the transaction data
+        setTransactionData(responseData.data);
       }
 
     } catch (error) {
@@ -45,7 +45,7 @@ const WaitingApproval = () => {
 
   useEffect(() => {
     if (transactionStatus === 'Approved' && transactionData) {
-      
+
       setIsLoading(false);
 
       navigator.navigate("PartnerLocate", {

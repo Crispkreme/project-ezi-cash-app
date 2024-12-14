@@ -225,10 +225,10 @@ app.post("/payment-transaction", async (req, res) => {
   const { user_detail_id, service } = formData;
   const { amount } = payment;
   const { store_id } = partner;
-  
+  const total_amount = parseFloat(amount) + 15;
   const defaults = {
     bank: "Paypal",
-    total_amount: 0,
+    total_amount: total_amount,
     balance: 0,
     transaction_status: "Pending",
     payer_id: null,
@@ -851,7 +851,9 @@ app.get("/get-user-message", async (req, res) => {
 
 // paypal functionality
 app.post('/paypal', (req, res) => {
-  const { first_name, middle_name, last_name, payment: { service, total_amount }} = req.body;
+
+  const { service, amount, total_amount } = req.body.transactionData;
+  const { name, phone, balance, address, user_id } = req.body.formData;
 
   const create_payment_json = {
     intent: 'sale',
@@ -879,7 +881,7 @@ app.post('/paypal', (req, res) => {
           currency: 'USD',
           total: parseFloat(total_amount).toFixed(2),
         },
-        description: `${first_name} ${middle_name} ${last_name} has ${service} with a total amount of $${parseFloat(total_amount).toFixed(2)}`,
+        description: `${name} has ${service} with a total amount of $${parseFloat(total_amount).toFixed(2)}`,
       },
     ],
   };
@@ -901,6 +903,7 @@ app.post('/paypal', (req, res) => {
     }
   });
 });
+
 app.post('/success', (req, res) => {
   const { PayerID, paymentId, data } = req.body;
 
