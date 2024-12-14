@@ -1,16 +1,19 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ImageBackground } from "react-native";
+import { Rating } from "react-native-ratings";
 import { __gstyles__ } from "../globalStylesheet";
 
 const PartnerTransactions = ({ route, navigation }) => {
+
   const { formData } = route.params;
-  
   const wLabels = {...formData};
   const navigator = useNavigation();
-  const [transactions, setTransactions] = useState([]);
-  const [todayTransactions, setTodayTransactions] = useState([]);
-  const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
+  const [allTransaction, setAllTransaction] = useState([]);
+  const [allRating, setAllRating ] = useState([]);
+  const [allSuccessTransaction, setAllSuccessTransaction ] = useState([]);
+  const [allFailedTransaction, setAllFailedTransaction ] = useState([]);
+  const currentMonth = new Date().toLocaleString('default', { month: 'long' });
 
   const handleConfirm = async () => {
     navigator.navigate("SetMPIN");
@@ -30,201 +33,231 @@ const PartnerTransactions = ({ route, navigation }) => {
   const viewTransactions = () => {
     navigator.navigate("PartnerTransactions", {formData});
   }
-  const viewServiceManagement = (transaction) => {
-    navigator.navigate("PartnerServiceManagement", { formData, transaction });
+  const viewCommissionFeeStatements = () => {
+    navigator.navigate("PartnerCommissionFeeStatements", {formData});
+  }
+
+  const fetchAllTransactions = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.base_url}/get-total-transaction/${formData?.user_detail_id || ""}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      const data = await response.json();
+  
+      if (Array.isArray(data) && data.length > 0) {
+        setAllTransaction(data[0]);
+      } else {
+        console.warn("No transactions found");
+        setAllTransaction({});
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      alert("An error occurred while fetching transactions.");
+    }
+  };
+  const fetchStoreRating = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.base_url}/get-store-rating/${formData?.user_detail_id || ""}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      const data = await response.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        setAllRating(data[0]);
+      } else {
+        console.warn("No transactions found");
+        setAllRating({});
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      alert("An error occurred while fetching transactions.");
+    }
+  };
+  const fetchCountSuccessTransaction = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.base_url}/get-all-success-transaction/${formData?.user_detail_id || ""}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      const data = await response.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        setAllSuccessTransaction(data[0]);
+      } else {
+        console.warn("No transactions found");
+        setAllSuccessTransaction({});
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      alert("An error occurred while fetching transactions.");
+    }
+  };
+  const fetchCountFailedTransaction = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.base_url}/get-all-failed-transaction/${formData?.user_detail_id || ""}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      const data = await response.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        setAllFailedTransaction(data[0]);
+      } else {
+        console.warn("No transactions found");
+        setAllFailedTransaction({});
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      alert("An error occurred while fetching transactions.");
+    }
   };
 
   useEffect(() => {
-    const fetchTransaction = async () => {
-      try {
-        const response = await fetch(`${process.env.base_url}/get-transaction`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          const responseText = await response.text();
-          alert("Error", `Server returned: ${responseText}`);
-          return;
-        }
-
-        const parsedResponse = await response.json();
-
-        if (parsedResponse.data && parsedResponse.data.length > 0) {
-          setTransactions(parsedResponse.data);
-        } else {
-          alert('No transactions found.');
-        }
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
-        alert('Error', 'An error occurred while fetching transactions.');
-      }
-    };
-  
-    fetchTransaction();
+    fetchAllTransactions();
+    fetchStoreRating();
+    fetchCountFailedTransaction();
+    fetchCountSuccessTransaction();
   }, []);
-  const groupTransactionsByDate = (transactions) => {
-    const grouped = {};
-    const today = new Date().toDateString();
-
-    transactions.forEach((transaction) => {
-      const transactionDate = new Date(transaction.date).toDateString();
-      const groupKey = transactionDate === today ? "Today" : transactionDate;
-
-      if (!grouped[groupKey]) {
-        grouped[groupKey] = [];
-      }
-      grouped[groupKey].push(transaction);
-    });
-    return grouped;
-  };
-  const groupedTransactions = groupTransactionsByDate(transactions);
 
   return (
     <ImageBackground style={{flex: 1}} source={require("../../public/image/background.png")}>
       <View>
         <View style={[styles.header]} className={`flex-row items-center justify-between p-8`}>
+            
           <Text className='self-start mt-24'>
+            <Text className="text-white">{new Date().toDateString()} {"\n"}</Text>
             <Text style={styles.text} className='z-50 text-white font-bold'>
               <Text style={{fontSize: 26}}>Hi eZiCash Partner,{"\n"}</Text>
             </Text>
             <Text style={{fontSize: 20}} className=' mt-1 text-white'>
-              {formData.first_name} {formData.middle_name} {formData.last_name}
+              {formData.name}
             </Text>
           </Text>
           <Image source={require("../../public/icn/notification-icn.png")}/>
         </View>
-        
-        <View className={`flex-row items-start gap-4 p-8`}>
-          <TouchableOpacity onPress={viewServiceManagement} style={{maxWidth: 70}} >
-            <View style={{width: 70, height: 70}} className='bg-white p-2 rounded-xl justify-center items-center'>
-              <Image source={require("../../public/icn/service-management-icn.png")}/>
-            </View>
-            <Text className='text-white text-xs mt-4 font-bold'>Service {"\n"} Management</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{maxWidth: 70, }} >
-            <View style={{width: 70, height: 70}} className='bg-white p-2 rounded-xl justify-center items-center'>
-              <Image source={require("../../public/icn/analytics-icn.png")}/>
-            </View>
-            <Text className='text-white text-xs mt-4 font-bold'>Analytics</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{maxWidth: 70}} >
-            <View style={{width: 70, height: 70}} className='bg-white p-2 rounded-xl justify-center items-center'>
-              <Image source={require("../../public/icn/service-management-icn.png")}/>
-            </View>
-            <Text className='text-white text-xs mt-4 font-bold'>Commission Fee Statements</Text>
-          </TouchableOpacity>
-        </View>
       </View>
-
       <View style={[styles.container, {borderTopStartRadius: 20, borderTopEndRadius: 20}]}>
-
         <ScrollView>
-          <View
-            style={[
-              styles.header,
-              {
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                width: "100%",
-              },
-            ]}
-          >
-            <Text
-              style={{ maxWidth: 300 }}
-              className="text-primary font-semibold text-xl"
-            >
-              Recent Transactions
-            </Text>
-            <TouchableOpacity>
-              <Text
-                style={{ maxWidth: 300 }}
-                className="text-primary font-semibold text-sm px-6 py-2"
-              >
-                See All
+          <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
+            <Text style={{maxWidth: 300}} className=' text-primary font-semibold text-xl'>Analytics</Text>
+            <TouchableOpacity style={__gstyles__.shadow}>
+              <Text style={{maxWidth: 300}} className='  text-primary font-semibold text-sm px-6 py-2'>Monthly</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{flexDirection: 'row'}} className='gap-8 mb-8'>
+            <TouchableOpacity style={[__gstyles__.shadow, {maxWidth: 105, width: 105}]} className='p-2 rounded-xl border border-primary'>
+              <Text style={{fontSize: 28}} className='text-primary p-4 text-center font-bold'>{allSuccessTransaction.success_count || 0}</Text>
+              <Text className='text-gray-400 text-xs'>
+                Total number of Success Service
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[__gstyles__.shadow, {maxWidth: 105, width: 105}]} className='p-2 rounded-xl border border-primary'>
+              <Text style={{fontSize: 28}} className='text-primary p-4 text-center font-bold'>{allFailedTransaction.failed_count || 0}</Text>
+              <Text className='text-gray-400 text-xs'>
+                Canceled Services
               </Text>
             </TouchableOpacity>
           </View>
 
-          {Object.entries(groupedTransactions).map(([groupKey, transactionGroups]) => (
-            <View key={groupKey}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  width: "100%",
-                }}
-              >
-                <Text style={{ maxWidth: 300 }} className="text-gray-400 font-semibold text-xl">
-                  {groupKey}
-                </Text>
-              </View>
+          {/* Earnings */}
+          <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
+            <Text style={{maxWidth: 300}} className=' text-primary font-semibold text-xl'>Earnings</Text>
+            <TouchableOpacity style={__gstyles__.shadow}>
+              <Text style={{maxWidth: 300}} className='  text-primary font-semibold text-sm px-6 py-2'>{currentMonth}</Text>
+            </TouchableOpacity>
+          </View>
 
-              {transactionGroups.map((group) => (
-                <View key={group.date} style={{ flexDirection: "column" }} className="gap-2 mb-8">
-                  {group.transactions.map((transaction) => {
+          <View style={{flexDirection: 'row'}} className='gap-2 mb-8'>
+            <TouchableOpacity style={[__gstyles__.shadow, {maxWidth: 105, width: 105}]} className='px-2 py-4 rounded-xl border border-primary justify-between'>
+              <Text className='text-primary text-base p-2 text-center'>₱ {allTransaction?.earnings || "0.00"}</Text>
+              <Text className='text-gray-400 text-xs text-right'>
+                Paypal
+                <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-                    const transactionIcon =
-                    transaction.service === "Cash In"
-                      ? require("../../public/icn/cashin.png")
-                      : require("../../public/icn/cashout.png");
+          {/* Total Earnings */}
+          <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
+            <Text style={{maxWidth: 300}} className=' text-primary font-semibold text-xl'>Total Earnings</Text>
+          </View>
 
-                    return(
-                      <TouchableOpacity
-                        key={`${transaction.id}-${transaction.date}`}
-                        style={[
-                          __gstyles__.shadow,
-                          { justifyContent: "space-between", width: "100%" },
-                        ]}
-                        className="flex-row p-2 rounded-full py-4 px-4"
-                        onPress={() => viewServiceManagement(transaction)}
-                      >
-                        <View className="flex-row items-center">
-                          <Image source={transactionIcon} />
-                          <Text>
-                            <Text className="text-base">
-                              {transaction.name} {"\n"}
-                            </Text>
-                            <Text className="text-xs">{transaction.service}</Text>
-                          </Text>
-                        </View>
-                        <View style={{ flexDirection: "row" }}>
-                          <Text>
-                            <Text className="text-lg font-bold text-right">
-                              {transaction.amount} {"\n"}
-                            </Text>
-                            <Text className="text-xs">
-                              {transaction.bank || "Paypal"} {"\n"}
-                            </Text>
-                            <Text className="text-xs">
-                              {new Date(transaction.date).toLocaleString()} {"\n"}
-                            </Text>
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    )
-                  })}
-                </View>
-              ))}
-            </View>
-          ))}
+          <View style={{flexDirection: 'row'}} className='gap-2 mb-8'>
+            <TouchableOpacity style={[__gstyles__.shadow, {maxWidth: 150, width: 150}]} className='px-2 py-4 rounded-xl border border-primary justify-between'>
+              <Text className='text-primary text-base p-2 text-center'>₱ {allTransaction?.earnings || "0.00"}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Commission Fees */}
+          <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
+            <Text style={{maxWidth: 300}} className=' text-primary font-semibold text-xl'>Commission Fees</Text>
+            <TouchableOpacity style={__gstyles__.shadow}>
+              <Text style={{maxWidth: 300}} className='  text-primary font-semibold text-sm px-6 py-2'>{currentMonth}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className='gap-2 mb-8'>
+            <TouchableOpacity onPress={viewCommissionFeeStatements} style={[__gstyles__.shadow]} className='px-2 py-4 rounded-xl border border-primary'>
+              <Text className='text-primary text-2xl p-2 text-center'>₱ {allTransaction?.comission || "0.00"}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Reviews */}
+
+          <View style={[styles.header, {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}]}>
+            <Text style={{maxWidth: 300}} className=' text-primary font-semibold text-xl'>Reviews</Text>
+          </View>
+
+          <View className='gap-2 mb-8'>
+            <TouchableOpacity style={[__gstyles__.shadow]} className='px-2 py-4 rounded-xl border border-primary'>
+              <Text className='text-primary text-2xl p-2 text-center'>
+                <Text><Rating imageSize={20} type='custom' ratingColor="white" startingValue={2} ratingImage={require("../../public/icn/star-icn.png")} ratingCount={1}/></Text>
+                <Text className='text-primary text-2xl p-2 text-center'> {allRating.overall_rating || 0}</Text>
+                <Text className='text-primary text-base p-2 text-center'> Avg. Customer Ratings</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+
         </ScrollView>
-
         <View style={styles.footer} className='py-2 flex-row gap-4'>
           
-          <TouchableOpacity style={styles.footerBtnContainer} className='relative' onPress={viewDashboard}>
+          <View style={styles.footerBtnContainer} className='relative' onPress={viewDashboard}>
             <Image className='' alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
-          </TouchableOpacity>
+          </View>
 
-          <View style={styles.footerBtnContainer} className='flex-start'  onPress={viewTransactions}>
+          <TouchableOpacity style={styles.footerBtnContainer} className='flex-start'  onPress={viewTransactions}>
             <Image alt="cash out" source={require("../../public/icn/transactions-icn.png")}></Image>
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Transactions</Text>
-          </View>
+          </TouchableOpacity>
 
           <TouchableOpacity style={styles.footerBtnContainer} className='flex-start' onPress={viewRequests}>
             <Image alt="cash out" source={require("../../public/icn/settings-icn.png")}></Image>

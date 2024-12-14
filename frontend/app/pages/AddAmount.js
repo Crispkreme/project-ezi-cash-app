@@ -18,6 +18,7 @@ const AddAmount = ({ route, navigation }) => {
       formData,
       amount: state.amount,
     });
+
   };
   
   const handleNext = () => {
@@ -58,7 +59,7 @@ const AddAmount = ({ route, navigation }) => {
           </View>
           <TextInput
             className=' p-4 border-b border-black mb-4 text-lg'
-            placeholder="Enter your mobile number"
+            placeholder="Enter your amount"
             value={state.amount}
             onChangeText={(am) => setState(prev => ({...prev, amount: am}))}
             keyboardType="phone-pad"
