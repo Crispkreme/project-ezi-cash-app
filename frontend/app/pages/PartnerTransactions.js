@@ -21,17 +21,17 @@ const PartnerTransactions = ({ route, navigation }) => {
   const handleNext = () => {
     navigator.navigate("EWallet", {formData});
   };
+  const viewTransactions = () => {
+    navigator.navigate("PartnerTransactions", {formData});
+  }
   const viewProfile = () => {
-    navigator.navigate("Profile", {formData});
+    navigator.navigate("ProfileProfile", {formData});
   }
   const viewDashboard = () => {
     navigator.navigate("PartnerDashboard", {formData});
   }
   const viewRequests = () => {
     navigator.navigate("PartnerRequests", {formData});
-  }
-  const viewTransactions = () => {
-    navigator.navigate("PartnerTransactions", {formData});
   }
   const viewCommissionFeeStatements = () => {
     navigator.navigate("PartnerCommissionFeeStatements", {formData});

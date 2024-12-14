@@ -18,18 +18,6 @@ const PartnerDashboard = ({ route, navigation }) => {
   const handleNext = () => {
     navigator.navigate("EWallet", {formData});
   };
-  const viewProfile = () => {
-    navigator.navigate("Profile", {formData});
-  }
-  const viewDashboard = () => {
-    navigator.navigate("PartnerDashboard", {formData});
-  }
-  const viewRequests = () => {
-    navigator.navigate("PartnerRequests", {formData});
-  }
-  const viewTransactions = () => {
-    navigator.navigate("PartnerTransactions", {formData});
-  }
   const viewServiceManagement = (transaction) => {
     navigator.navigate("PartnerServiceManagement", { formData, transaction });
   };
@@ -39,6 +27,18 @@ const PartnerDashboard = ({ route, navigation }) => {
   const viewAnalytics = (transaction) => {
     navigator.navigate("PartnerTransactions", { formData, transaction });
   };
+  const viewProfile = () => {
+    navigator.navigate("ProfileProfile", {formData});
+  }
+  const viewDashboard = () => {
+    navigator.navigate("PartnerDashboard", {formData});
+  }
+  const viewTransactions = () => {
+    navigator.navigate("PartnerTransactions", {formData});
+  }
+  const viewRequests = () => {
+    navigator.navigate("PartnerRequests", {formData});
+  }
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -220,8 +220,7 @@ const PartnerDashboard = ({ route, navigation }) => {
           ))}
         </ScrollView>
 
-        <View style={styles.footer} className='py-2 flex-row gap-4'>
-          
+        <View style={styles.footer} className='py-2 flex-row gap-4'> 
           <TouchableOpacity style={styles.footerBtnContainer} className='relative' onPress={viewDashboard}>
             <Image className='' alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
             <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>

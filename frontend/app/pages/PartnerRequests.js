@@ -15,16 +15,16 @@ const PartnerRequests = ({ route, navigation }) => {
   const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
 
   const viewProfile = () => {
-    navigator.navigate("Profile", {formData});
+    navigator.navigate("ProfileProfile", {formData});
   }
   const viewDashboard = () => {
     navigator.navigate("PartnerDashboard", {formData});
   }
-  const viewRequests = () => {
-    navigator.navigate("PartnerRequests", {formData});
-  }
   const viewTransactions = () => {
     navigator.navigate("PartnerTransactions", {formData});
+  }
+  const viewRequests = () => {
+    navigator.navigate("PartnerRequests", {formData});
   }
   const acceptRequest = (transaction) => {
     setTransactionData(transaction);

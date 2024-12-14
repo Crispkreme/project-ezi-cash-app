@@ -574,12 +574,12 @@ app.post('/save-business-hours', (req, res) => {
     res.json({ message: 'Business hours saved successfully.' });
   });
 });
-app.get('/get-total-transaction/:user_detail_id', async (req, res) => {
+app.get('/get-total-transaction/:partner_id', async (req, res) => {
 
-  const { user_detail_id } = req.params;
-  const query = `SELECT * FROM partner_wallets WHERE user_detail_id = ?`;
+  const { partner_id } = req.params;
+  const query = `SELECT * FROM partner_wallets WHERE partner_id = ?`;
 
-  db.query(query, [user_detail_id], (err, results) => {
+  db.query(query, [partner_id], (err, results) => {
 
     if (err) {
       console.error('Database Error:', err);
