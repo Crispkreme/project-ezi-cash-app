@@ -575,12 +575,12 @@ app.post('/save-business-hours', (req, res) => {
     res.json({ message: 'Business hours saved successfully.' });
   });
 });
-app.get('/get-total-transaction/:user_detail_id', async (req, res) => {
+app.get('/get-total-transaction/:partner_id', async (req, res) => {
 
-  const { user_detail_id } = req.params;
-  const query = `SELECT * FROM partner_wallets WHERE user_detail_id = ?`;
+  const { partner_id } = req.params;
+  const query = `SELECT * FROM partner_wallets WHERE partner_id = ?`;
 
-  db.query(query, [user_detail_id], (err, results) => {
+  db.query(query, [partner_id], (err, results) => {
 
     if (err) {
       console.error('Database Error:', err);
@@ -1293,6 +1293,77 @@ app.post("/partner-application", upload.single('file'), async (req, res) => {
   } catch(e) {
     console.log(e);
     return res.status(500).json({message:'There was an error applying!'});
+  }
+});
+
+app.get('/get-users', async (req, res) => {
+  try {
+
+    db.query('SELECT * FROM users_table a INNER JOIN user_details b ON a.user_id = b.user_id', (err, result) => {
+      if(err) {
+        return res.status(500).json({message: err, data: []});
+      }
+
+      return res.status(200).json({message: 'Successful!', data: result});
+    });
+  } catch(e) {
+    return res.status(500).json({message:'Unsuccessful!', data: []});
+  }
+});
+
+app.get('/get-customers', async (req, res) => {
+  try {
+    db.query('SELECT * FROM users_table WHERE partner_type = ? AND user_email = ?', ['', ''], 
+      (err, result) => {
+        if(err) {
+          return res.status(500).json({message:'Unsuccessful!', data: []});
+        }
+
+        return res.status(200).json({message:'Successful!', data: result});
+      }
+    )
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'Unsuccessful', data: []});
+  }
+});
+
+app.get('/get-transactions', async (req, res) => {
+  try {
+    db.query('SELECT a.service, a.amount, a.created_at FROM transactions a INNER JOIN partnership_application b ON a.partner_id = b.partnership_application_id INNER JOIN user_details_id c ON a.user_id = c.user_id',
+      (err, result) => {
+        if(err) {
+          return res.status(500).json({message: err, data: []});
+        }
+
+        return res.status(200).json({message: 'Successful', data: result});
+      }
+    )
+  } catch(e) {
+    return res.status(500).json({message: 'Unsuccessful!'});
+  }
+});
+
+app.get('/get-partners-dashboard', async (req, res) => {
+  try {
+    db.query('SELECT a.partner_application_id, a.legal_name, b.partner_type, a.business_permit_verify, a.government_id_verify, a.proof_of_address_verify, a.updated_at, a.created_at FROM partnership_application a INNER JOIN users_table b ON a.user_id = b.user_id', (err, partner_applications) => {
+      if(err) {
+        return res.status(500).json({message: 'Unsuccessful ' + err, data: undefined});
+      }
+
+      db.query('SELECT * FROM partner_wallets a INNER JOIN partnership_application b ON a.partner_id = b.partner_application_id INNER JOIN transactions c ON a.partner_id = c.partner_id',
+        (err, trans) => {
+          if(err) {
+            return res.status(500).json({message: 'Unsuccessful! ' + err, data: undefined});
+          }
+
+          return res.status(200).json({message: 'Successful', data: {partners: partner_applications, transactions: trans}})
+        }
+      )
+    })
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'Unsuccessful!' + e, data: undefined});
   }
 });
 
