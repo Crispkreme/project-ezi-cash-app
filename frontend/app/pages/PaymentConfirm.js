@@ -57,12 +57,10 @@ const PaymentConfirm = ({ route, navigation }) => {
       console.error("Error during handleConfirm:", error);
       alert("An error occurred. Please try again.");
     }
-  };
-  
+  }; 
   const handleNext = () => {
     navigator.navigate("Partner", { formData,  partner: {name: "Nicole Ayessa Alcover"}});
   };
-
   const toggleConfirmCheckbox = () => setState(prev => ({...prev, accepted: !prev.accepted}));
 
   return (
