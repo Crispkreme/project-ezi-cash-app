@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
+import * as Location from 'expo-location';
 
 const PartnerLocate = ({ route }) => {
   
@@ -33,6 +34,7 @@ const PartnerLocate = ({ route }) => {
 
   const getLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
+    alert(status);
 
     if (status != 'granted') {
       return;
@@ -77,8 +79,8 @@ const PartnerLocate = ({ route }) => {
     return points;
   };
   const getDirection = async () => {
+    
     if (curMarker.latitude === 0) getLocation();
-
     const start = { lat: curMarker.latitude, lng: curMarker.longitude }
     const end = { lat: 10.31423656557551, lng: 123.90543601653494 }
     const directionsApiUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&key=${process.env.google_maps_api_key}`;
@@ -165,7 +167,7 @@ const PartnerLocate = ({ route }) => {
       const { approvalUrl } = body;
 
       if (approvalUrl) {
-        navigator.navigate("PayPalWebView", { uri: approvalUrl, data: body });
+        navigator.navigate("FinishTransaction", { uri: approvalUrl, data: body, formData: formData });
       } else {
         alert("Approval URL not found in the server response.");
       }
@@ -176,6 +178,7 @@ const PartnerLocate = ({ route }) => {
   };
 
   useEffect(() => {
+    getDirection();
     fetchMessages();
     setInit(true);
   }, []);
@@ -212,8 +215,8 @@ const PartnerLocate = ({ route }) => {
 
             <Polyline
               coordinates={routeCoordinates}
-              strokeColor="#0000FF"
-              strokeWidth={6}
+              strokeColor="#00113f"
+              strokeWidth={3}
             />
           </MapView>
         ) : (
