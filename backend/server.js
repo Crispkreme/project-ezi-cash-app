@@ -484,7 +484,7 @@ app.get("/get-request", async (req, res) => {
       user_details.user_detail_id
     FROM transactions
     INNER JOIN user_details ON transactions.user_id = user_details.user_detail_id
-    WHERE transactions.transaction_status = ''
+    WHERE transactions.transaction_status = 'Pending'
     ORDER BY transactions.created_at DESC;
   `;
 
