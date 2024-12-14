@@ -165,6 +165,7 @@ const getUserData = async (userId) => {
   });
 };
 
+// Auth
 const otps = new Map();
 app.post('/otp', (req, res) => {
   let { mobileNumber } = req.body;
@@ -329,7 +330,6 @@ app.post("/payment-transaction", async (req, res) => {
     return res.status(500).json({ message: "An unexpected error occurred.", error: error.message });
   }
 });
-
 app.post("/login", async (req, res) => {
   
   const { phone, pin } = req.body;
@@ -365,7 +365,7 @@ app.post("/login", async (req, res) => {
   });
 });
 
-// get all partners
+// TRANSACTIONS
 app.get("/get-partners", async (req, res) => {
   try {
     const now = new Date();
@@ -403,7 +403,6 @@ app.get("/get-partners", async (req, res) => {
         console.error("Database Error:", err);
         return res.status(500).json({ message: "Error while fetching business hours." });
       }
-      console.log("partnerss newrabat", results);
       if (!results || results.length === 0) {
         return res.status(404).json({
           message: "No open businesses found.",
@@ -780,7 +779,41 @@ app.post('/send-message', (req, res) => {
     });
   });
 });
+app.get("/get-user-transaction", async (req, res) => {
+  const { transactionId } = req.query;
 
+  try {
+    const query = `
+      SELECT * 
+      FROM transactions
+      WHERE id = ?
+      LIMIT 1;
+    `;
+
+    db.query(query, [transactionId], (err, results) => {
+      if (err) {
+        console.error("Database Error:", err);
+        return res.status(500).json({ message: "Error while fetching transaction." });
+      }
+
+      if (!results || results.length === 0) {
+        return res.status(404).json({
+          message: "Transaction not found.",
+          data: [],
+        });
+      }
+
+      const transaction = results[0];
+      res.status(200).json({
+        message: "Transaction fetched successfully.",
+        data: transaction,
+      });
+    });
+  } catch (err) {
+    console.error('Unexpected Error:', err);
+    res.status(500).json({ message: 'An unexpected error occurred.' });
+  }
+});
 
 // paypal functionality
 app.post('/paypal', (req, res) => {
@@ -1163,32 +1196,7 @@ app.post("/partner-application", upload.single('file'), async (req, res) => {
       account_id,
       card_no,
       card_holder
-    ) VALUES (
-      ?, 
-      ?,
-      ?, 
-      ?, 
-      ?, 
-      ?, 
-      ?, 
-      ?, 
-      ?, 
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?
-    )`, [
+    ) VALUES (?, ?,?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )`, [
       body.user_id, 
       body.legal_name,
       body.partnership_type, 
