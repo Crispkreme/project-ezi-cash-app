@@ -13,7 +13,7 @@ import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 const PartnerLocate = ({ route }) => {
   
   const { formData, transactionData } = route.params;
-  
+
   const navigator = useNavigation();
   const [init, setInit] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -147,23 +147,23 @@ const PartnerLocate = ({ route }) => {
         formData,
         transactionData,
       };
-  
+
       const response = await fetch(`${process.env.base_url}/paypal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-  
+
       const body = await response.json();
       console.log("Server Response:", body);
-  
+
       if (!response.ok) {
         alert(body.message || "Failed to process payment.");
         return;
       }
-  
+
       const { approvalUrl } = body;
-  
+
       if (approvalUrl) {
         navigator.navigate("PayPalWebView", { uri: approvalUrl, data: body });
       } else {
@@ -220,9 +220,11 @@ const PartnerLocate = ({ route }) => {
           <Text> Loading ... </Text>
         )}
       </View>
-      <Text className="text-primary font-semibold text-xl pt-8">eZiCash Partners Nearby</Text>
-      <Text className="text-primary text-xl font-semibold mb-4">Chat</Text>
 
+      <View style={styles.header}>
+        <Text className="text-primary text-xl font-semibold mb-4">Chat</Text>
+      </View>
+      
       <View className="flex-1 bg-white p-4 rounded-lg shadow border border-gray-300">
         <FlatList
           data={messages}
