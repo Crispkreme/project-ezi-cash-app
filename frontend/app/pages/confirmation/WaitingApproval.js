@@ -6,10 +6,11 @@ import AntDesign from "react-native-vector-icons/AntDesign";
 const WaitingApproval = () => {
   const route = useRoute();
   const { formData, transactionId } = route.params;
-  
+
   const navigator = useNavigation();
   const [isLoading, setIsLoading] = useState(true);
   const [transactionStatus, setTransactionStatus] = useState(null);
+  const [transactionData, setTransactionData] = useState(null);
 
   // Fetch the transaction details
   const fetchTransaction = async () => {
@@ -22,11 +23,12 @@ const WaitingApproval = () => {
       });
 
       const responseData = await response.json();
-      console.log("response", responseData);
 
       if (responseData.data) {
         setTransactionStatus(responseData.data.transaction_status);
+        setTransactionData(responseData.data); // Save the transaction data
       }
+
     } catch (error) {
       console.error('Error fetching transaction:', error);
       alert('Error', 'An error occurred while fetching transactions.');
@@ -41,12 +43,17 @@ const WaitingApproval = () => {
     return () => clearInterval(intervalId);
   }, [transactionId]);
 
-  // Stop loading and show success icon when the transaction is approved
   useEffect(() => {
-    if (transactionStatus === 'Approved') {
+    if (transactionStatus === 'Approved' && transactionData) {
+      
       setIsLoading(false);
+
+      navigator.navigate("PartnerLocate", {
+        formData,
+        transactionData,
+      });
     }
-  }, [transactionStatus]);
+  }, [transactionStatus, transactionData, navigator, formData]);
 
   return (
     <View style={styles.container}>

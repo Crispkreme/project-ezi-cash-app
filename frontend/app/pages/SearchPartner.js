@@ -21,9 +21,6 @@ const SearchPartner = ({ route, navigation }) => {
     init: false
   });
 
-  const handleConfirm = async () => {
-    navigator.navigate("SetMPIN", { formData });
-  };
   const getLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
 
@@ -84,18 +81,6 @@ const SearchPartner = ({ route, navigation }) => {
     const points = decodePolyline(route.overview_polyline.points);
     setRouteCoordinates(points);
   }
-  const handlePress = (item) => {
-    navigator.navigate("Partner", {
-      formData,
-      partner: {
-        amount,
-        legal_name: item.store_name,
-        address: `79 Cabreros St ${item.barangay}, ${item.city}`,
-        type: item.partner_type,
-        store_id: item.partner_id,
-      },
-    });
-  };
   const onRegionChange = (region) => {
     setMap(region);
   }
@@ -109,6 +94,22 @@ const SearchPartner = ({ route, navigation }) => {
     latitude: 0, 
     longitude: 0,
   });
+
+  const handleConfirm = async () => {
+    navigator.navigate("SetMPIN", { formData });
+  };
+  const handlePress = (item) => {
+    navigator.navigate("Partner", {
+      formData,
+      partner: {
+        amount,
+        legal_name: item.store_name,
+        address: `79 Cabreros St ${item.barangay}, ${item.city}`,
+        type: item.partner_type,
+        store_id: item.partner_id,
+      },
+    });
+  };
 
   useEffect(() => {
     console.log("init");

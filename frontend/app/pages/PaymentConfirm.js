@@ -6,7 +6,6 @@ import HighHeader from "../components/HighHeader";
 
 const PaymentConfirm = ({ route, navigation }) => {
   const { formData, partner, payment, key } = route.params;
-
   const wLabels = {...formData};
   const navigator = useNavigation();
   const [state, setState] = useState({
