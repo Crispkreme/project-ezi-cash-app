@@ -222,7 +222,7 @@ app.get("/check-phone", async (req, res) => {
 app.post("/payment-transaction", async (req, res) => {
 
   const { formData, payment, partner } = req.body;
-  const { user_id, service } = formData;
+  const { user_detail_id, service } = formData;
   const { amount } = payment;
   const { store_id } = partner;
   
@@ -243,7 +243,7 @@ app.post("/payment-transaction", async (req, res) => {
       FROM transactions 
       WHERE user_id = ? AND transaction_status = 'Pending' AND service = ?
     `;
-    const [pendingResult] = await db.promise().query(checkPendingQuery, [user_id, service]);
+    const [pendingResult] = await db.promise().query(checkPendingQuery, [user_detail_id, service]);
     const pendingCount = pendingResult[0]?.pendingCount || 0;
 
     if (pendingCount > 0) {
@@ -258,7 +258,7 @@ app.post("/payment-transaction", async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const transactionParams = [
-      user_id,
+      user_detail_id,
       store_id,
       payment.type,
       defaults.bank,
@@ -345,7 +345,7 @@ app.post("/login", async (req, res) => {
       try {
 
         const userData = await getUserData(result[0].user_id);
-        console.log("userData", userData);
+        
         if (!userData) {
         return res.status(404).json({ message: 'User details not found.' });
         }
@@ -751,9 +751,9 @@ app.get("/get-transaction-request/:user_detail_id", async (req, res) => {
   }
 });
 app.post('/send-message', (req, res) => {
-  const { store_id, individual_id, message } = req.body;
+  const { sender_id, receiver_id, message } = req.body;
 
-  if (!store_id || !individual_id || !message) {
+  if (!sender_id || !receiver_id || !message) {
     return res.status(400).json({ message: "Missing required fields." });
   }
 
@@ -761,11 +761,11 @@ app.post('/send-message', (req, res) => {
   const updatedAt = new Date().toISOString();
 
   const insertMessageQuery = `
-    INSERT INTO messages (store_id, individual_id, message, created_at, updated_at)
+    INSERT INTO messages (sender_id, receiver_id, message, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?)
   `;
   
-  const messageValues = [store_id, individual_id, message, createdAt, updatedAt];
+  const messageValues = [sender_id, receiver_id, message, createdAt, updatedAt];
 
   db.query(insertMessageQuery, messageValues, (insertError, insertResult) => {
     if (insertError) {
@@ -776,6 +776,11 @@ app.post('/send-message', (req, res) => {
     res.status(200).json({
       message: "Message sent successfully.",
       message_id: insertResult.insertId,
+      sender_id,
+      receiver_id,
+      message,
+      created_at: createdAt,
+      updated_at: updatedAt
     });
   });
 });
@@ -804,6 +809,7 @@ app.get("/get-user-transaction", async (req, res) => {
       }
 
       const transaction = results[0];
+
       res.status(200).json({
         message: "Transaction fetched successfully.",
         data: transaction,
@@ -812,6 +818,34 @@ app.get("/get-user-transaction", async (req, res) => {
   } catch (err) {
     console.error('Unexpected Error:', err);
     res.status(500).json({ message: 'An unexpected error occurred.' });
+  }
+});
+app.get("/get-user-message", async (req, res) => {
+  const { user_id, partner_id } = req.query;
+
+  try {
+    const query = `
+      SELECT * 
+      FROM messages
+      WHERE 
+        (sender_id = ? AND receiver_id = ?) 
+        OR 
+        (sender_id = ? AND receiver_id = ?)
+    `;
+
+    db.query(query, [user_id, partner_id, partner_id, user_id], (err, results) => {
+      if (err) {
+        console.error("Database Error:", err);
+        return res.status(500).json({ message: "Error while fetching messages." });
+      }
+
+      res.status(200).json({
+        data: results,
+      });
+    });
+  } catch (err) {
+    console.error("Unexpected Error:", err);
+    res.status(500).json({ message: "An unexpected error occurred." });
   }
 });
 
