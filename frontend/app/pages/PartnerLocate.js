@@ -11,7 +11,9 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 
 const PartnerLocate = ({ route }) => {
+  
   const { formData, transactionData } = route.params;
+
   const navigator = useNavigation();
   const [init, setInit] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -42,7 +44,6 @@ const PartnerLocate = ({ route }) => {
       longitude: location.coords.longitude
     });
   }
-
   const decodePolyline = (encoded) => {
     let points = [];
     let index = 0;
@@ -75,7 +76,6 @@ const PartnerLocate = ({ route }) => {
 
     return points;
   };
-
   const getDirection = async () => {
     if (curMarker.latitude === 0) getLocation();
 
@@ -105,7 +105,6 @@ const PartnerLocate = ({ route }) => {
       console.error("Error fetching messages:", error);
     }
   };
-
   const sendMessage = async () => {
     if (newMessage.trim() === "") return;
 
@@ -142,16 +141,42 @@ const PartnerLocate = ({ route }) => {
       console.error("Error sending message:", error);
     }
   };
+  const handleConfirm = async () => {
+    try {
+      const payload = {
+        formData,
+        transactionData,
+      };
+
+      const response = await fetch(`${process.env.base_url}/paypal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const body = await response.json();
+      console.log("Server Response:", body);
+
+      if (!response.ok) {
+        alert(body.message || "Failed to process payment.");
+        return;
+      }
+
+      const { approvalUrl } = body;
+
+      if (approvalUrl) {
+        navigator.navigate("PayPalWebView", { uri: approvalUrl, data: body });
+      } else {
+        alert("Approval URL not found in the server response.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
 
   useEffect(() => {
-    const fetchMessagesInterval = setInterval(() => {
-      fetchMessages();
-    }, 2000);
-  
-    return () => clearInterval(fetchMessagesInterval);
-  }, [transactionData]);
-
-  useEffect(() => {
+    fetchMessages();
     setInit(true);
   }, []);
 
@@ -195,9 +220,11 @@ const PartnerLocate = ({ route }) => {
           <Text> Loading ... </Text>
         )}
       </View>
-      <Text className="text-primary font-semibold text-xl pt-8">eZiCash Partners Nearby</Text>
-      <Text className="text-primary text-xl font-semibold mb-4">Chat</Text>
 
+      <View style={styles.header}>
+        <Text className="text-primary text-xl font-semibold mb-4">Chat</Text>
+      </View>
+      
       <View className="flex-1 bg-white p-4 rounded-lg shadow border border-gray-300">
         <FlatList
           data={messages}
@@ -244,12 +271,7 @@ const PartnerLocate = ({ route }) => {
       <View className="py-4 mt-6">
         <TouchableOpacity
           className="bg-primary p-4 rounded-lg"
-          onPress={() =>
-            navigator.navigate("FinishTransaction", {
-              formData,
-              transactionData,
-            })
-          }
+          onPress={handleConfirm}
         >
           <Text className="text-white text-center font-bold">Arrived</Text>
         </TouchableOpacity>
