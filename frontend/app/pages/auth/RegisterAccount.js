@@ -18,15 +18,15 @@ const RegisterAccount = ({route}) => {
   console.log(mobileNumber);
   const [formData, setFormData] = useState({
     user_phone_no: mobileNumber,
-    first_name: "John",
-    middle_name: "Sample",
-    last_name: "Doe",
+    first_name: "",
+    middle_name: "",
+    last_name: "",
     birthdate: new Date(), // Default to the current date
-    email: "johndoe@gmail.com",
-    nationality: "Nationality",
-    main_source: "Main Source of Funds",
+    email: "",
+    nationality: "",
+    main_source: "",
     province: "",
-    city: "City/Municipality",
+    city: "",
     barangay: "",
     zipcode: "",
     HasNoMiddleName: false,
@@ -1707,7 +1707,7 @@ const RegisterAccount = ({route}) => {
   useEffect(() => {
     if(formData.province !== "") {
       const [cities] = municipalities.filter( m => m.value === formData.province);
-      const citiesMap = cities.cities.map(c => ({label: c.label, value: c.value}));
+      const citiesMap = cities.cities.map(c => ({label: c.label, value: c.value, zipCode: c.zipCode[0].code}));
       setSelectionData(prev => ({...prev, cities: citiesMap, citiesData: cities }));
     }
   },[formData.province]);
@@ -1715,8 +1715,14 @@ const RegisterAccount = ({route}) => {
   useEffect(() => {
     if(selectionData.citiesData && selectionData.citiesData.cities.length > 0) {
       const [barangays] = selectionData.citiesData.cities.filter( b => b.value === formData.city);
-      const barangaysMap = barangays.barangays.map(c => ({label: c.label, value: c.value}));
+      const barangaysMap = barangays.barangays.map(c => ({label: c.label, value: c.label}));
+      console.log(barangaysMap);
       setSelectionData(prev => ({...prev, barangays: barangaysMap, barangaysData: barangays }))
+    }
+
+    if(formData.city !== '') {
+      const t = selectionData.cities.filter(c => c.value === formData.city);
+      setFormData(prev => ({...prev, zipcode: String(t[0].zipCode)}));
     }
   },[formData.city]);
 
@@ -1759,14 +1765,49 @@ const RegisterAccount = ({route}) => {
   // Handle Date Picker Change
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
+    if(new Date().toDateString() === new Date(selectedDate).toDateString()) {
+      alert('Cannot select same day!');
+    }
+
+    if(new Date().getTime() < new Date(selectedDate).getTime()) {
+      alert('Your birthdate must be before today!');
+    }
+
     if (selectedDate) {
+      console.log(selectedDate);
       setFormData({ ...formData, birthdate: selectedDate });
     }
   };
 
   // Navigate to ConfirmAccount
   const handleNext = () => {
-    navigation.navigate("ConfirmAccount", { formData: {...formData, birthdate: formData.birthdate.toLocaleDateString()} });
+    const keys = [];
+    let bdayerr ='';
+    Object.entries(formData).forEach(([key, value]) => {
+      if(typeof value === 'string' && value === '') {
+        keys.push(key);
+      }
+
+      if(key === 'birthdate') {
+        const last_login = new Date(value);
+        const curDate = new Date();
+        const diffTime = Math.abs(curDate.getTime() - last_login.getTime());
+        const diffDay = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const diffMonth = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30));
+        const diffYear = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30 * 12));
+
+        if(diffYear < 18) {
+          bdayerr = 'You must be be above 18 to register! '
+        }
+      }
+    });
+
+    if(keys.length > 0) {
+      alert('There are some missing fields! ' + keys.join(", ") + '\n\n\n ' + bdayerr);
+      return;
+    }
+
+    navigation.navigate("ConfirmAccount", { formData: {...formData} });
   };
 
   return (

@@ -34,7 +34,7 @@ export default function PartnerManagement() {
             id: p.user_id, 
             type: p.partnership_type, 
             name: p.legal_name, 
-            address: p.legal_address + p.business_state, 
+            address: p.business_zip + ' ' + p.business_city + ' ' + p.business_state, 
             email: p.email, 
             contact: p.phone_no,
             is_suspended: p.is_suspended === 0 ? false : true,

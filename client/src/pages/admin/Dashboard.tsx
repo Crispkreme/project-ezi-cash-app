@@ -68,10 +68,10 @@ export default function Dashboard() {
         let commissions = 0;
         let collected = 0;
         transactions.forEach(t => {
-          commissions += t.comission;
+          commissions += (t.amount * .03) * .4
           const curDate = new Date();
-          if(curDate.toDateString() === new Date(t.created_at).toDateString()) {
-            collected += t.commission;
+          if(curDate.getMonth() === new Date(t.created_at).getMonth()) {
+            collected += (t.amount * .03) * .4;
           }
         });
 
@@ -84,13 +84,9 @@ export default function Dashboard() {
         });
         
         const sortedAct = newUsers.sort((a,b) => {
-          console.log(a.date.getTime())
-          console.log(b.date.getTime())
 
           return Number(b.date.getTime()) - Number(a.date.getTime());
         });
-        console.log(sortedAct);
-        console.log(newUsers);
         setActivities([...newUsers]);
       }
     }
