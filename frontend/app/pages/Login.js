@@ -55,18 +55,29 @@ const Login = ({route}) => {
       } else {
 
         try {
-          const response = await fetch(process.env.base_url + "/otp", {
+          const otpResponse = await fetch(process.env.base_url + "/otp", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ mobileNumber: mobileNumber }),
-          });
-    
-          if (response.ok) {
-            const data = await response.json();
+          }); 
+
+          if (otpResponse.ok) {
+            const data = await otpResponse.json();
             const otp = data.otp;
-    
+            
+            const smsResponse = await fetch(process.env.base_url + "/send-sms-otp", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ mobileNumber: mobileNumber, otp: otp }), // Include both mobileNumber and otp
+            });
+            
+            const smsData = await smsResponse.json();
+            console.log("SMS Response:", smsData);
+
             alert("OTP sent successfully!");
     
             navigation.navigate("RegisterOTP", {
