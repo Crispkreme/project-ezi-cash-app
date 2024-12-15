@@ -43,7 +43,7 @@ db.connect((err) => {
 app.post('/register', async (req, res) => {
   const { user_phone_no, first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, HasNoMiddleName, MPIN } = req.body;
 
-  console.log(req.body);
+  console.log(birthdate);
 
   // Validate required fields
   if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name || !birthdate || !email || !nationality || !main_source || !province || !city || !barangay || !zipcode || !MPIN ) {
@@ -138,6 +138,7 @@ const getUserData = async (userId) => {
   return new Promise((resolve, reject) => {
     const query = `
       SELECT 
+        ut.user_id,
         ud.user_detail_id,
         CONCAT(ud.first_name, ' ', IFNULL(ud.middle_name, ''), ' ', ud.last_name) AS name,
         ut.partner_type,
@@ -1151,7 +1152,44 @@ app.patch('/verification', async (req, res) => {
           return res.status(500).json({message: err});
         }
 
-        return res.status(200).json({message: 'Success!'});
+        db.query('SELECT user_id, business_permit_verify, government_id_verify, proof_of_address_verify, partnership_type, partner_application_id FROM partnership_application WHERE partner_application_id = ?', [body.partner_application_id],
+          (err, verification) => {
+            if(err) {
+              console.log(err);
+              return res.status(500).json({message: 'Unsuccessful!'});
+            }
+            const dt = verification[0];
+            if(dt.business_permit_verify === 1 && dt.government_id_verify === 1 && dt.proof_of_address_verify === 1) {
+              db.query('UPDATE users_table SET partner_type = ? WHERE user_id = ?',[dt.partnership_type, dt.user_id], 
+                (err, _) => {
+                  console.log(_);
+                  if(err) {
+                    console.log(err);
+                    return res.status(500).json({message:'Unsuccessful!'});
+                  }
+
+                  db.query('INSERT INTO partner_wallets (partner_id, earnings, transaction_fees, comission, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?) ',
+                    [dt.partner_application_id, 0, 0, 0, new Date(), new Date()], 
+                    (err, _) => {
+                      if(err) {
+                        console.log(err);
+                        return res.status(500).json({message: 'Unsuccessful!'});
+                      }
+
+                      console.log('Success!');
+                      return res.status(200).json({message: 'Success updated the partner type!'});
+                    }
+                  )
+                  
+                }
+              )
+            } else {
+              console.log('not yet updated');
+              return res.status(200).json({message: 'Success!'});
+            }
+            
+          }
+        )
       }
     )
   } catch(e) {
@@ -1283,6 +1321,26 @@ app.get("/get-finances", async (req, res) => {
   }
 });
 
+app.get('/partner-check/:user_id', async (req, res) => {
+  try {
+
+    db.query('SELECT COUNT(*) as exist FROM partnership_application WHERE user_id = ? ', [req.params.user_id],
+      (err, _) => {
+        if(err) {
+          console.log(err);
+          return res.status(400)
+        }
+        
+        console.log(_);
+        return res.status(200).json({message:'Success!', data: _[0]});
+      }
+    )
+  } catch(e) {
+
+    return res.status(500).json({message: 'Unsuccessful!'});
+  }
+});
+
 app.post("/partner-application", upload.single('file'), async (req, res) => {
   try {
     const body = req.body;
@@ -1318,7 +1376,7 @@ app.post("/partner-application", upload.single('file'), async (req, res) => {
       body.partnership_type, 
       body.phone_no, 
       body.email, 
-      body.legal_address, 
+      '', 
       body.city, 
       body.state, 
       body.zip, 

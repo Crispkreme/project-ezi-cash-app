@@ -19,7 +19,6 @@ const monthsLabel = ["January", "February", "March", "April", "May", "June", "Ju
 export default function FinanceDashboard() {
 
   const [finances, setFinances] = useState({
-    earnings: 0,
     commissions: 0
   });
 
@@ -32,17 +31,15 @@ export default function FinanceDashboard() {
       if(res.ok) {
         const body = await res.json();
         
-        const dt = [...body.data.result];
         const tr = [...body.data.transactions];
-        let comm = 0;
-        let earnings = 0;
         const months: Array<number> = [];
-        dt.forEach(p => {
-          comm += p.comission;
-          earnings += p.earnings;
-        });
 
+        let commMonth = 0;
         tr.forEach( trs => {
+          
+          if(new Date(trs.created_at).getMonth() === new Date().getMonth()) {
+            commMonth += (trs.amount * .03) * .4
+          }
           months.push(new Date(trs.created_at).getMonth());
         })
         const t = [...new Set(months.sort((a,b) => a - b))];
@@ -64,8 +61,7 @@ export default function FinanceDashboard() {
         setTrans(transactions);
 
         setFinances({
-          commissions: comm,
-          earnings: earnings
+          commissions: commMonth,
         })
       }
     }
@@ -101,13 +97,6 @@ export default function FinanceDashboard() {
                   <span className="roboto-medium text-sm ">Total Revenue Generated</span>
                   <h1 className="flex text-4xl items-center gap-4 roboto-bold">
                    ₱ {finances.commissions.toLocaleString()}
-                  </h1>
-                </div>
-
-                <div className="flex gap-2 flex-col items-center shadow-xl border border-gray-200 px-8 py-4 rounded-2xl">
-                  <span className="roboto-medium text-sm ">Total Revenue Generated</span>
-                  <h1 className="flex text-4xl items-center gap-4 roboto-bold">
-                   {finances.earnings.toLocaleString()}
                   </h1>
                 </div>
               </div>

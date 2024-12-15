@@ -23,10 +23,10 @@ const ConfirmAccount = ({ route, navigation }) => {
         {Object.entries(formData).map(([key, value]) => (
           key !== "HasNoMiddleName" && (
             <View key={key}>
-              {key === "FirstName" && <Text className='text-xl mb-6'>PERSONAL INFORMATION</Text>}
+              {key === "first_name" && <Text className='text-xl mb-6'>PERSONAL INFORMATION</Text>}
               <Text style={styles.key} className='text-lg font-light text-gray-300'>{String(String(key).replaceAll("_"," ")).charAt(0).toUpperCase() + String(String(key).replaceAll("_"," ")).slice(1)}:</Text>
-              <Text className='mb-4 text-gray-600'>{key !== "Birthdate" ? value : value}</Text>
-              {key === "Province" && <Text className='text-xl mb-6 mt-4'>CURRENT ADDRESS</Text>}
+              <Text className='mb-4 text-gray-600'>{key !== "birthdate" ? value : new Date(value).toDateString()}</Text>
+              {key === "province" && <Text className='text-xl mb-6 mt-4'>CURRENT ADDRESS</Text>}
             </View>
           )
         ))}

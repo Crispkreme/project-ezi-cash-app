@@ -36,6 +36,7 @@ const SetMPIN = ({ route, navigation }) => {
     if(isReset) {
       navigator.navigate("ResetMPINSuccessful", {formData});
     } else {
+      console.log(formData);
 
       const status = await fetch(process.env.base_url + '/register', {
         method: 'POST',
@@ -51,7 +52,7 @@ const SetMPIN = ({ route, navigation }) => {
 
       console.log(body.data);
 
-      navigator.navigate("Dashboard", {formData});
+      navigator.navigate("Dashboard", {formData: body.data});
     }
     
   };
