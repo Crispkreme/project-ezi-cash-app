@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 const paypal = require('paypal-rest-sdk');
 const multer = require('multer');
 const fs = require('fs');
+const { Vonage } = require('@vonage/server-sdk')
 
 const app = express();
 const nodemailer = require('nodemailer');
@@ -17,6 +18,11 @@ paypal.configure({
   'mode': 'sandbox',
   'client_id': 'AWRQNwYAQWpS59fjvbtupQcCKxvLIfvywjgKWpI3e_J-cvQg9yIOGW7-1DPOzIqxBsAUi-zU0r0L12B7',
   'client_secret': 'EG5czQetmcA7JlD2n04wivNvuX7xLxoEO2AYcbPfJfQWiZmQilfBvaCOCgbVkngxh8F309q4ht_o3oiO',
+});
+
+const vonage = new Vonage({
+  apiKey: "4e2a6b4d",
+  apiSecret: "FTf3i6bjKBr7opby"
 });
 
 // Middleware
@@ -169,10 +175,9 @@ const getUserData = async (userId) => {
 // Auth
 const otps = new Map();
 app.post('/otp', (req, res) => {
+
   let { mobileNumber } = req.body;
-  console.log(mobileNumber);
   mobileNumber = String(mobileNumber).replace("+63","");
-  console.log(mobileNumber);
 
   if (!mobileNumber) {
     return res.status(400).json({ error: 'Mobile number is required' });
@@ -203,6 +208,33 @@ app.post('/otp', (req, res) => {
     message: 'OTP sent successfully',
     otp,
   });
+});
+const formatPhoneNumber = (number) => {
+  const trimmedNumber = number.replace(/\D/g, "");
+  if (trimmedNumber.startsWith("63")) {
+    return trimmedNumber;
+  }
+  return "63" + trimmedNumber.replace(/^0/, "");
+};
+app.post('/send-sms-otp', async (req, res) => {
+  const { mobileNumber, otp } = req.body;
+ 
+  if (!mobileNumber || !otp) {
+    return res.status(400).json({ message: 'Mobile number are required.' });
+  }
+
+  try {
+    const from = "Vonage APIs";
+    const to = formatPhoneNumber(mobileNumber);
+    const text = `Welcome to Ezicash App! This is your OTP: ${otp}`;
+
+    const response = await vonage.sms.send({ to, from, text });
+    console.log("response", response);
+    res.status(200).json({ message: 'SMS sent successfully!', response });
+  } catch (error) {
+    console.error('Error sending SMS:', error);
+    res.status(500).json({ message: 'Failed to send SMS.', error: error.message });
+  }
 });
 app.get("/check-phone", async (req, res) => {
   const {phone} = req.query || {};
@@ -485,7 +517,7 @@ app.get("/get-request", async (req, res) => {
       user_details.user_detail_id
     FROM transactions
     INNER JOIN user_details ON transactions.user_id = user_details.user_detail_id
-    WHERE transactions.transaction_status = ''
+    WHERE transactions.transaction_status = 'Pending'
     ORDER BY transactions.created_at DESC;
   `;
 
