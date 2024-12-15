@@ -1,30 +1,79 @@
 import AdminLayout from "../../layout/AdminLayout";
-import search from '../../assets/search.png';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import stats from '../../assets/stats.png';
 import edit from '../../assets/edit.png';
 
+interface userDt {
+  id: number, 
+  type: string, 
+  name: string, 
+  address: string, 
+  email: string, 
+  contact: string
+}
+
+interface deptDt {
+  id: number, 
+  name: string, 
+  dept: string, 
+  lastlogin: string, 
+  date_added: Date
+}
+
 export default function UserManagement() {
 
-  const user = [
-    {id: 1, type: 'Partner', name: 'Nicole Ayessa Alcover', address: '79 Cabreros St Cebu City, Cebu', email: 'ayessaalc@gmail.com', contact: '09273622933'},
-    {id: 2, type: 'Customer', name: 'Jeanette Alcover', address: 'Carcar City, Cebu', email: 'jeanette123@gmail.com', contact: '09273622933'},
-    {id: 3, type: 'Partner', name: 'Shynne Canada', address: 'Sambag 1, Urgello Cebu City', email: 'shyjhye@gmail.com', contact: '09273622933'},
-    {id: 4, type: 'Customer', name: 'Nicole Ayessa Alcover', address: '79 Cabreros St Cebu City, Cebu', email: 'ayessaalc@gmail.com', contact: '09273622933'},
-    {id: 5, type: 'Customer', name: 'Nicole Ayessa Alcover', address: '79 Cabreros St Cebu City, Cebu', email: 'ayessaalc@gmail.com', contact: '09273622933'},
-    {id: 1, type: 'Partner', name: 'Nicole Ayessa Alcover', address: '79 Cabreros St Cebu City, Cebu', email: 'ayessaalc@gmail.com', contact: '09273622933'},
-    {id: 2, type: 'Partner', name: 'Jeanette Alcover', address: 'Carcar City, Cebu', email: 'jeanette123@gmail.com', contact: '09273622933'},
-    {id: 3, type: 'Customer', name: 'Shynne Canada', address: 'Sambag 1, Urgello Cebu City', email: 'shyjhye@gmail.com', contact: '09273622933'},
-    {id: 4, type: 'Customer', name: 'Nicole Ayessa Alcover', address: '79 Cabreros St Cebu City, Cebu', email: 'ayessaalc@gmail.com', contact: '09273622933'},
-    {id: 5, type: 'Partner', name: 'Nicole Ayessa Alcover', address: '79 Cabreros St Cebu City, Cebu', email: 'ayessaalc@gmail.com', contact: '09273622933'},
-  ]
+  const [user, setUsers] = useState<Array<userDt>>([]);
+  const [dept, setDept] = useState<Array<deptDt>>([]);
 
-  const dept = [
-    {id: 1, name: 'Jaeglaiys Iwayan', dept: 'Parnter Management Team', lastlogin: '5 minutes ago', date_added: new Date()},
-    {id: 2, name: 'Jeanie Mae', dept: 'Finance Team', lastlogin: '5 minutes ago', date_added: new Date()},
-    {id: 3, name: 'Nicole Ayessa Alcover', dept: 'Parnter Management Team', lastlogin: '5 minutes ago', date_added: new Date()},
-    {id: 4, name: 'Shynne Canada', dept: 'Finance Team', lastlogin: '5 minutes ago', date_added: new Date()},
-  ]
+  useEffect(() => {
+    const getDt = async () => {
+      const res = await fetch('/api/get-users');
+      const res1 = await fetch("/api/get-admins");
+
+      if(res.ok && res1.ok) {
+        const body = await res.json();
+        const body1 = await res1.json();
+        
+        const dt = [...body.data];
+        const admindt = [...body1.data];
+
+        const temp = dt.map(d => {
+          return {
+            id: 1, 
+            type: d.partner_type !== "" ? "Partner" : "Customer", 
+            name: d.first_name + ' ' + d.middle_name + ' ' + d.last_name, 
+            address: d.barangay + ' ' + d.city + ' ' + d.province,
+            email: d.email, 
+            contact: '0' + d.user_phone_no
+          }
+        });
+
+        const deptTemp = admindt.map(a => {
+
+          const last_login = new Date(a.updated_at);
+          const curDate = new Date();
+          const diffTime = Math.abs(curDate.getTime() - last_login.getTime());
+          const diffDay = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          const diffHour = Math.floor(diffTime / (1000 * 60 * 60));
+          const diffMinute = Math.floor(diffTime / (1000 * 60));
+          return {
+            id: a.admin_id, 
+            name: a.admin_name, 
+            dept: a.admin_type, 
+            lastlogin: diffDay > 0 ? `${diffDay} days ago` : diffHour > 0 && diffDay === 0 ? `${diffHour} hours ago` : `${diffMinute} minutes ago` , 
+            date_added: new Date(a.created_at)
+          }
+        })
+
+        setUsers(temp);
+        setSearchRes(temp);
+        setSearchDept(deptTemp);
+        setDept(deptTemp);
+      }
+    }
+
+    getDt();
+  },[]);
 
   const [search, setSearch] = useState('');
   const [searchRes, setSearchRes] = useState([...user]);

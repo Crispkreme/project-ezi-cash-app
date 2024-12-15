@@ -118,14 +118,15 @@ export default function Verification() {
         },
         body: JSON.stringify(dt)
       });
-  
+      
+      const b = await res.json();
+
       if(!res.ok) {
-        alert("There was an error loading!");
+        alert(b.message);
+        window.location.href = '/login';
         setLoading(false);
         return;
       }
-  
-      const b = await res.json();
       const set = await setData(b.data);
 
       if(set) {
