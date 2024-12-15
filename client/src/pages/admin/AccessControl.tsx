@@ -15,6 +15,11 @@ interface admin {
 export default function AccessControl() {
 
   const [users, setUsers] = useState<Array<admin>>([]);
+  const [details, setDetails] = useState({
+    admin: {id: 1, department: 'Admin', value: 'Admin', subText:'The Admin have complete control of the workspace', staff: 0},
+    partnermanagement: {id: 2, department: 'Partner Mangement Team', value: 'Partner Management', subText:"Overseeing partnerships that expand Ezicash's reach and services.", staff: 0},
+    finance: {id: 3, department: 'Finance Team', value: 'Finance Team', subText:"Managing Ezicash's financial health and ensuring its financial sustainability", staff: 0},
+  });
   
   useEffect(() => {
     const getDt = async () => {
@@ -23,31 +28,42 @@ export default function AccessControl() {
       if(res.ok) {
         const body = await res.json();
         setUsers([...body.data]);
+        setSelected(body.data[0] || -1);
+
+        console.log(body.data);
+        const dt = [...body.data];
+        
+        let admin = 0;
+        let partnermanagement = 0;
+        let finance = 0;
+
+        dt.forEach(d => {
+          if(d.admin_type === 'Admin') admin += 1;
+          if(d.admin_type === 'Partner Management') partnermanagement += 1;
+          if(d.admin_type === 'Finance') finance += 1;
+        });
+
+        setDetails(prev => ({
+          admin: {...prev.admin, staff: admin},
+          partnermanagement: {...prev.partnermanagement, staff: partnermanagement},
+          finance: {...prev.finance, staff: finance},
+        }))
       }
     }
 
     getDt();
   },[]);
-
-  const activities = [
-    {id: 1, department: 'Admin', subText:'The Admin have complete control of the workspace', staff: 5},
-    {id: 2, department: 'Project Partner Team', subText:"Overseeing partnerships that expand Ezicash's reach and services.", staff: 5},
-    {id: 3, department: 'Finance Team', subText:"Managing Ezicash's financial health and ensuring its financial sustainability", staff: 5},
-
-  ]
-
-  const [staff, setStaff] = useState({
-    name: '',
-    email:'',
-    contact_no: '',
-    dept: ''
-  })
   
   const [state, setState] = useState(false);
   const [selected, setSelected] = useState(-1);
   const [department, setDepartment] = useState("Admin");
 
-  const toggleModal = () => setState(prev => !prev);
+  const toggleModal = (e:React.MouseEvent<HTMLButtonElement>) => {
+    const t = e.currentTarget;
+    const n = t.name.split("-")[1];
+    setDepartment(n);
+    setState(prev => !prev);
+  }
 
   const onSelect = (e: React.ChangeEvent<HTMLSelectElement>) => setSelected(Number(e.currentTarget.value));
   const departmentSelect = (e: React.ChangeEvent<HTMLSelectElement>) => setDepartment(e.currentTarget.value);
@@ -67,7 +83,7 @@ export default function AccessControl() {
     
     if(res.ok) {
       alert('Admin added!');
-      toggleModal();
+      setState(prev => !prev);
     }
   }
 
@@ -90,16 +106,16 @@ export default function AccessControl() {
               </span>
             </div>
             {
-              activities.map((a, idx) => {
+              Object.entries(details).map(([key, a]) => {
                 return (
-                  <div key={idx} className="px-16 py-8 grid grid-cols-3 w-full border border-gray-200 justify-between">
+                  <div key={key} className="px-16 py-8 grid grid-cols-3 w-full border border-gray-200 justify-between">
                     <div>
                       <span className="flex justify-start items-center text-lg roboto-medium">{a.department}</span>
                       <span className="roboto-light text-sm">{a.subText}</span>
                     </div>
                     <span className="flex justify-center items-center text-lg roboto-medium">{a.staff} Staffs</span>
                     <span className="flex justify-end items-center roboto-regular text-right text-primary">
-                      <button onClick={toggleModal} className="shadow-lg px-4 py-2 rounded-lg text-primary roboto-medium">+ Add Staff</button>
+                      <button onClick={toggleModal} name={`key-${a.value}`} className="shadow-lg px-4 py-2 rounded-lg text-primary roboto-medium">+ Add Staff</button>
                     </span>
                   </div>
                 )
@@ -110,24 +126,19 @@ export default function AccessControl() {
         <Modal open={state} close={() => {
           setState(false)
         }}>
-          <section className="min-w-max bg-white relative -top-16">
+          <section className="min-w-max bg-white relative -top-48">
             <div className="bg-[#d4d4d4] robot-bold px-4 py-2 text-2xl pr-96">Add New Staff<div className="pr-64"></div></div>
             <div className="bg-white p-4 ">
               <div>
                 <h1 className="text-xl roboto-medium">Department</h1>
-                <select value={department} onChange={departmentSelect} className="mt-4 mb-12 px-4 py-2 bg-white border border-gray-400 rounded-md" name="dept" id="dept">
-                  <option disabled className="disabled:text-gray-400" value="">Department/Team</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Finance Team">Finance Team</option>
-                  <option value="Partner Management">Partner Management Team</option>
-                </select>
+                <input value={department} className="mt-2 mb-12 px-4 py-2 bg-white border border-gray-400 rounded-md" type="text" disabled name="" id="" />
               </div>
               <div>
                 <h1 className="text-xl roboto-medium">Staff Information</h1>
                 <div className="flex gap-6">
-                  <div className="mt-2">
+                  <div className="mt-2 flex flex-col gap-1 w-full">
                     <span className="leading-tight roboto-light">Name</span>
-                    <select onChange={onSelect} className="mt-2 mb-12 px-4 py-2 bg-white border border-gray-400 rounded-md" name="dept" id="dept">
+                    <select onChange={onSelect} className="w-full mt-2 mb-12 px-4 py-2 bg-white border border-gray-400 rounded-md" name="dept" id="dept">
                       <option disabled className="disabled:text-gray-400" value={-1}>Users</option>
                       {
                         users.map( u => {
@@ -136,9 +147,7 @@ export default function AccessControl() {
                       }
                     </select>
                   </div>
-                  <Form className="w-full" title="Phone Number" formKey="contact_no" setState={setStaff}/>
                 </div>
-                <Form title="Email" formKey="email" className="w-1/2" setState={setStaff}/>
               </div>
               <div className="w-full flex justify-end items-center gap-4 pt-16 pb-8">
                 <button onClick={toggleModal} className="py-1 px-4 w-1/4 rounded-full bg-[#d4d4d4]">Cancel</button>

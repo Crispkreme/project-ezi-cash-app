@@ -926,7 +926,17 @@ app.post("/web-login", async(req, res) => {
       }
       const x = await bcrypt.compare(password, result[0].user_pass);
       if(x) {
-        return res.status(200).json({message: '', data: {...result[0], user_pass: ''}})
+        db.query('UPDATE users_table SET updated_at = ? WHERE user_email = ?', [new Date(), email],
+          (err, _) => {
+            if(err) {
+              console.error(err);
+              return res.status(500).json({message: err, data:{}});
+            }
+
+            return res.status(200).json({message: '', data: {...result[0], user_pass: ''}})
+          }
+        )
+        
       } else {
         console.log('Wrong Password!');
         return res.status(500).json({message: 'Wrong Password', data: 'Wrong Password'});
@@ -1082,7 +1092,7 @@ app.patch('/verification', async (req, res) => {
 
 app.get('/get-admins', async (req, res) => {
   try {
-    db.query(`SELECT * FROM admin_details`, (err, result) => {
+    db.query(`SELECT * FROM admin_details a INNER JOIN users_table b ON a.user_id = b.user_id`, (err, result) => {
       if(err) {
         console.log(err);
         return res.status(500).json({message: err, data: []});
