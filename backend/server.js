@@ -13,6 +13,7 @@ const { Vonage } = require('@vonage/server-sdk')
 const app = express();
 const nodemailer = require('nodemailer');
 const path = require('path');
+const allowedStatuses = ["Approved", "Rejected"];
 
 paypal.configure({
   'mode': 'sandbox',
@@ -699,27 +700,29 @@ app.get('/get-all-failed-transaction/:user_detail_id', async (req, res) => {
     });
   });
 });
-app.post('/approve-cash-request', (req, res) => {
-
+app.post("/approve-cash-request", (req, res) => {
   const { individual_id, partner_id, transaction_id, transaction_status, approved_at } = req.body;
 
   if (!individual_id || !partner_id || !transaction_id || !transaction_status || !approved_at) {
     return res.status(400).json({ message: "Missing required fields." });
   }
 
+  if (!allowedStatuses.includes(transaction_status)) {
+    return res.status(400).json({ message: "Invalid transaction status." });
+  }
+
   const updatedAt = new Date().toISOString();
   const updateTransactionQuery = `
     UPDATE transactions
     SET 
-      partner_id = ?, 
       transaction_status = ?, 
       approved_at = ?, 
       updated_at = ?
     WHERE id = ?
   `;
-  const updateTransactionValues = [partner_id, transaction_status, approved_at, updatedAt, transaction_id];
-  db.query(updateTransactionQuery, updateTransactionValues, (updateError, updateResult) => {
+  const updateTransactionValues = [transaction_status, approved_at, updatedAt, transaction_id];
 
+  db.query(updateTransactionQuery, updateTransactionValues, (updateError, updateResult) => {
     if (updateError) {
       return res.status(500).json({ message: "Failed to update the transaction.", error: updateError });
     }
@@ -728,12 +731,12 @@ app.post('/approve-cash-request', (req, res) => {
       return res.status(404).json({ message: "Transaction not found." });
     }
 
-    const notificationMessage = `${individual_id} Request was approved with partner with the ${partner_id}.`;
+    const notificationMessage = `Request from ${individual_id} was approved by partner ${partner_id}.`;
     const insertNotificationQuery = `
       INSERT INTO notifications (store_id, individual_id, notification, updated_at, created_at)
       VALUES (?, ?, ?, ?, ?)
     `;
-    const notificationValues = [ partner_id, individual_id, notificationMessage, updatedAt, approved_at ];
+    const notificationValues = [partner_id, individual_id, notificationMessage, updatedAt, approved_at];
 
     db.query(insertNotificationQuery, notificationValues, (notificationError, notificationResult) => {
       if (notificationError) {
