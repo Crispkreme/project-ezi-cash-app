@@ -441,25 +441,24 @@ app.get("/get-partners", async (req, res) => {
     const currentDay = dayNames[now.getDay()];
     const currentDate = now.toISOString().split("T")[0];
     const currentTime = now.toTimeString().split(" ")[0];
-
     const query = `
       SELECT 
         b.*, 
         ut.*, 
-        CONCAT(ud.first_name, ' ', IFNULL(ud.middle_name, ''), ' ', ud.last_name) AS store_name, 
-        ud.barangay, 
-        ud.city
+        pa.legal_name AS store_name, 
+        pa.business_state, 
+        pa.business_city
       FROM 
         business_hours b
       INNER JOIN 
-        user_details ud 
-        ON b.partner_id = ud.user_detail_id
+        partnership_application pa 
+        ON b.partner_id = pa.partner_application_id
       INNER JOIN 
         users_table ut 
-        ON ud.user_id = ut.user_id
+        ON pa.user_id = ut.user_id
       WHERE 
         b.isOpen = 1
-        AND ut.partner_type IN ('Partner', 'Store')
+        AND ut.partner_type IN ('Individual', 'Store')
         AND b.day = ?
         AND b.business_date = ?
         AND b.open_at <= ?
@@ -477,6 +476,8 @@ app.get("/get-partners", async (req, res) => {
           data: [],
         });
       }
+
+      console.log(results);
 
       res.status(200).json({
         message: "Open businesses retrieved successfully.",
@@ -1357,6 +1358,31 @@ app.patch("/suspend-partner", async (req, res) => {
   }
 });
 
+app.patch("/reset-password", async (req, res) => {
+  try {
+    const { password, email } = req.body;
+    console.log(req.body); 
+    
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+
+    db.query('UPDATE users_table SET user_pass = ? WHERE user_email = ?', [hash, email], 
+      (err, result) => {
+        if(err) {
+          console.log(err);
+          return res.status(500).json({message: 'Unsuccessful!'});
+        }
+
+        return res.status(200).json({message: 'Successful!'});
+      }
+    )
+
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'Unsuccessful!'});
+  }
+});
+
 app.get('/get-transactions', async (req, res) => {
   try {
     db.query('SELECT * FROM transactions a INNER JOIN user_details b ON a.user_id = b.user_id INNER JOIN partnership_application c ON a.partner_id = c.partner_application_id', (err, result) => {
@@ -1552,10 +1578,6 @@ app.get('/get-partners-dashboard', async (req, res) => {
 
 io.on('connection', (socket) => {
   console.log('New connection', socket.id);
-
-  socket.on('message', (msg) => {
-    console.log('Recieved');
-  });
 
   socket.on('approve-request', (message) => {
     console.log(message);

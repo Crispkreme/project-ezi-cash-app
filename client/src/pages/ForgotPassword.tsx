@@ -2,17 +2,39 @@ import { useState } from "react";
 import CredentialTitle from "../components/CredentialTitle";
 import Form from "../components/Form";
 import CredentialLayout from "../layout/CredentialLayout";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { CircleNotch } from "@phosphor-icons/react";
 
 export default function ForgotPassword() {
 
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
   });
+  const [loading,setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const changeHandle = (formKey: string, value: string) => {
     setFormData(prev => ({...prev, [formKey]: value}));
+  }
+
+  const submit = async () => {
+    setLoading(true);
+    const res = await fetch("/api/web-verification-code", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({email: formData.email})
+    });
+    if(!res.ok) return;
+    const b = await res.json();
+
+    sessionStorage.setItem('verification-code',b.data);
+    sessionStorage.setItem('reset','true');
+    sessionStorage.setItem('user-login', JSON.stringify(formData));
+    setLoading(false);
+    navigate("/verification");
   }
 
   return (
@@ -27,7 +49,10 @@ export default function ForgotPassword() {
           </div>
           <form className="flex flex-col justify-end gap-2">
             <Form type="email" title="Email Address" formKey="email" setState={changeHandle}/>
-            <input className="text-white bg-primary py-2 rounded-md mt-16" type="submit" value="Continue" />
+            <button disabled={loading} onClick={submit} className="text-white flex items-center gap-2 justify-center bg-primary py-2 rounded-md mt-8">
+              {loading && <CircleNotch size={20} className="animate-spin"/>}
+              Continue
+            </button>
           </form>
         </section>
       </div>

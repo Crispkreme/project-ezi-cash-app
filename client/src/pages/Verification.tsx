@@ -69,6 +69,7 @@ export default function Verification() {
 
     const code = sessionStorage.getItem('verification-code');
     const registration = sessionStorage.getItem('registration');
+    const reset = sessionStorage.getItem('reset');
     const p = pin.join("");
     
     if(p.length !== 4) {
@@ -135,9 +136,11 @@ export default function Verification() {
         window.location.href = `/${t}/dashboard`;
       }
       
+    } else if(code === p && reset === 'true'){
+      navigate("/reset")
     }
     
-  }
+  } 
 
   const cancel = () => navigate("/login");
   const resend = async (e:React.MouseEvent<HTMLButtonElement>) => {

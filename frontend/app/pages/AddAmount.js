@@ -25,13 +25,15 @@ const AddAmount = ({ route, navigation }) => {
           curFormData,
           transactionId: [...body.data][0].id
         });
+      } else {
+        navigator.navigate("SearchPartner", {
+          curFormData,
+          amount: state.amount,
+        });
       }
+
       return;
     }
-    navigator.navigate("SearchPartner", {
-      curFormData,
-      amount: state.amount,
-    });
 
   };
   
