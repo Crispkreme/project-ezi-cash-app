@@ -139,14 +139,13 @@ const SearchPartner = ({ route, navigation }) => {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch partners");
+          alert("No business partner available");
         }
 
         const result = await response.json();
         setPartner(result.data);
       } catch (error) {
         console.error("Error fetching partners:", error);
-        Alert.alert("Error", "An error occurred while fetching partners.");
       } finally {
         setIsLoading(false);
       }
