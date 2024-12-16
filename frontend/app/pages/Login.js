@@ -144,9 +144,9 @@ const Login = ({route}) => {
               style={{ height:20, width: 23}}
               className={`${value !== '' ? 'bg-white': 'bg-primary'} border border-white rounded-full`}
               value={value}
+              keyboardType='numeric'
               onKeyPress={({nativeEvent}) => textInputOnKeyPress(nativeEvent, index)}
               onChangeText={(text) => handleChange(text, index)}
-              keyboardType="number-pad"
               maxLength={1}
               ref={(el) => (inputs.current[index] = el)} 
             />
