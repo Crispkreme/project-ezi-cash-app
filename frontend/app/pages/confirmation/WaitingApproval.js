@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AntDesign from "react-native-vector-icons/AntDesign";
+import { socket } from "../Main";
 
 const WaitingApproval = () => {
   const route = useRoute();
@@ -14,6 +15,7 @@ const WaitingApproval = () => {
 
   // Fetch the transaction details
   const fetchTransaction = async () => {
+    console.log('got approved');
     try {
       const response = await fetch(`${process.env.base_url}/get-user-transaction?transactionId=${transactionId}`, {
         method: 'GET',
@@ -36,12 +38,10 @@ const WaitingApproval = () => {
   };
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
+    socket.on('recieve-request', () => {
       fetchTransaction();
-    }, 5000);
-
-    return () => clearInterval(intervalId);
-  }, [transactionId]);
+    });
+  }, []);
 
   useEffect(() => {
     if (transactionStatus === 'Approved' && transactionData) {

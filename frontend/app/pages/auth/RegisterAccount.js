@@ -1784,7 +1784,7 @@ const RegisterAccount = ({route}) => {
     const keys = [];
     let bdayerr ='';
     Object.entries(formData).forEach(([key, value]) => {
-      if(typeof value === 'string' && value === '') {
+      if(typeof value === 'string' && value === '' && key !== 'main_source') {
         keys.push(key);
       }
 
@@ -1893,10 +1893,6 @@ const RegisterAccount = ({route}) => {
 
         <View className='mb-4'>
           <DropdownComponent setState={setFormData} data={nationality} placeholder={"Nationality"} formKey={"nationality"}/>
-        </View>
-
-        <View className='mb-4'>
-          <DropdownComponent setState={setFormData} data={fundSource} placeholder={"Main Source of Funds"} formKey={"main_source"}/>
         </View>
 
         <View>

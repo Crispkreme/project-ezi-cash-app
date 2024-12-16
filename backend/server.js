@@ -61,11 +61,9 @@ db.connect((err) => {
 // Register a user
 app.post('/register', async (req, res) => {
   const { user_phone_no, first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, HasNoMiddleName, MPIN } = req.body;
-
-  console.log(birthdate);
-
+  console.log(req.body);
   // Validate required fields
-  if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name || !birthdate || !email || !nationality || !main_source || !province || !city || !barangay || !zipcode || !MPIN ) {
+  if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name || !birthdate || !email || !nationality || !province || !city || !barangay || !zipcode || !MPIN ) {
     return res.status(400).json({ message: 'Please provide all required fields.' });
   }
 
@@ -114,7 +112,7 @@ app.post('/register', async (req, res) => {
 
               try {
                 const data = await getUserData(userId);
-
+                console.log(data);
                 if (data.data !== -1) {
                   const userDetailId = data.user_detail_id;
 
@@ -374,6 +372,24 @@ app.post("/payment-transaction", async (req, res) => {
   } catch (error) {
     console.error("Server Error:", error);
     return res.status(500).json({ message: "An unexpected error occurred.", error: error.message });
+  }
+});
+
+app.get('/get-pending-transaction/:user_id', async (req, res) => {
+  try {
+
+    db.query('SELECT * FROM transactions WHERE user_id = ? AND transaction_status = ?', [req.params.user_id, 'Pending'],
+      (err, result) => {
+        if(err) {
+          console.log(err);
+          return res.status(500).json({message:'Unsuccessful'});
+        }
+        console.log(req.params.user_id)
+        return res.status(200).json({message: 'Successful!', data: result});
+      }
+    )
+  } catch(e) {
+    return res.status(500).json({message: 'Unsuccessful!'});
   }
 });
 app.post("/login", async (req, res) => {
@@ -1537,6 +1553,7 @@ io.on('connection', (socket) => {
 
   socket.on('approve-request', (message) => {
     console.log(message);
+    io.emit('recieve-request', message);
   });
 
   socket.on('disconnect', () => {

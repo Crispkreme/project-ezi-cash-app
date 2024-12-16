@@ -27,53 +27,11 @@ const PartnerRequests = ({ route, navigation }) => {
   const viewRequests = () => {
     navigator.navigate("PartnerRequests", {formData});
   }
-  const acceptRequest = async (transaction) => {
-    try {
-      setTransactionData(transaction);
-      setIsModalVisible((prev) => !prev);
-      console.log("transaction", transaction);
-  
-      if (!formData?.user_detail_id) {
-        throw new Error("Partner ID is missing in formData.");
-      }
-  
-      const payload = {
-        individual_id: transaction.user_detail_id,
-        partner_id: formData.user_detail_id,
-        transaction_id: transaction.id,
-        transaction_status: "Approved",
-        approved_at: new Date().toISOString(),
-      };
-  
-      const response = await fetch(`${process.env.base_url}/approve-cash-request`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        alert("Transaction approved successfully.");
-        socket.emit('approve-request', 'hello world');
-        console.log(data.message);
 
-        navigator.navigate("ApprovedRequest", {
-          formData,
-          transaction
-        });
-
-      } else {
-        const errorData = await response.json();
-        console.error("Error:", errorData);
-        alert(errorData.message || "Failed to approve the transaction.");
-      }
-    } catch (error) {
-      console.error("Error connecting to the server:", error);
-      alert("Error connecting to the server. Please check your network.");
-    }
-  };
+  const openRequest = (transaction) => {
+    setTransactionData(transaction);
+    setIsModalVisible((prev) => !prev);
+  }
   
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -138,6 +96,7 @@ const PartnerRequests = ({ route, navigation }) => {
     };
     
     try {
+      socket.emit('approve-request', 'hello world');
       const response = await fetch(`${process.env.base_url}/approve-cash-request`, {
         method: "POST",
         headers: {
@@ -243,7 +202,7 @@ const PartnerRequests = ({ route, navigation }) => {
                           }}
                         >
                           <TouchableOpacity
-                            onPress={() => acceptRequest(transaction)}
+                            onPress={() => openRequest(transaction)}
                             style={__gstyles__.shadow}
                             className="p-2 rounded-full"
                           >
