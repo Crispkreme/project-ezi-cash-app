@@ -401,9 +401,10 @@ app.post("/login", async (req, res) => {
 app.get("/get-partners", async (req, res) => {
   try {
     const now = new Date();
-    const currentDate = now.toISOString().split("T")[0];
+    
     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const currentDay = dayNames[now.getDay()];
+    const currentDate = now.toISOString().split("T")[0];
     const currentTime = now.toTimeString().split(" ")[0];
 
     const query = `
