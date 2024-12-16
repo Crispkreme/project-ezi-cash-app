@@ -139,7 +139,7 @@ const SearchPartner = ({ route, navigation }) => {
         });
 
         if (!response.ok) {
-          alert("No business partner available");
+          alert("No available business partner");
         }
 
         const result = await response.json();
