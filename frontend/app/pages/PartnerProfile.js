@@ -2,24 +2,16 @@ import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import NavigationBar from "../components/NavigationBar";
 
-const ProfileProfile = ({ route, navigation }) => {
+const PartnerProfile = ({ route, navigation }) => {
   const { formData } = route.params;
 
   const wLabels = {...formData};
   const navigator = useNavigation();
 
-  const viewTransactions = () => {
-    navigator.navigate("PartnerTransactions", {formData});
-  }
-  const viewProfile = () => {
-    navigator.navigate("ProfileProfile", {formData});
-  }
-  const viewDashboard = () => {
-    navigator.navigate("PartnerDashboard", {formData});
-  }
-  const viewRequests = () => {
-    navigator.navigate("PartnerRequests", {formData});
+  const logOut = () => {
+    navigator.navigate("Main");
   }
 
   return (
@@ -44,7 +36,7 @@ const ProfileProfile = ({ route, navigation }) => {
             />
           </View>
 
-          <TouchableOpacity onPress={handleNext} className='flex-row justify-between items-center p-2 px-8'>
+          <TouchableOpacity className='flex-row justify-between items-center p-2 px-8'>
             <View>
               <Text className='text-base text-primary'>
                   E-Wallets
@@ -125,23 +117,7 @@ const ProfileProfile = ({ route, navigation }) => {
         </View>
 
         <View style={styles.header}>
-          <Text className='text-primary font-semibold text-xl pt-8'>Oppurtinity</Text>
-        </View>
-
-        <View>
-          <TouchableOpacity onPress={applyEziCash} className='flex-row justify-between items-center p-2 px-8'>
-            <View>
-              <Text className='text-base text-primary'>
-                  Be an eZiCash Partner
-              </Text>
-            </View>
-            <MaterialIcons
-              name="navigate-next"
-              size={24}
-              className='text-primary'
-              style={styles.buttonIcon}
-            />
-          </TouchableOpacity>
+          <Text className='text-primary font-semibold text-xl pt-8'>Opportunity</Text>
         </View>
 
         <View className='px-4'>
@@ -153,33 +129,27 @@ const ProfileProfile = ({ route, navigation }) => {
           />
         </View>
 
+        <TouchableOpacity onPress={logOut} className='flex-row justify-between items-center p-2 px-8'>
+          <View>
+            <Text className='text-base text-primary'>
+                Logout
+            </Text>
+          </View>
+          <MaterialIcons
+            name="navigate-next"
+            size={24}
+            className='text-primary'
+            style={styles.buttonIcon}
+          />
+        </TouchableOpacity>
+
       </ScrollView>
-      <View style={styles.footer} className='py-2 flex-row gap-4'>
-        <TouchableOpacity style={styles.footerBtnContainer} className='relative' onPress={viewDashboard}>
-          <Image className='' alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.footerBtnContainer} className='flex-start' onPress={viewTransactions}>
-          <Image alt="cash out" source={require("../../public/icn/transactions-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Transactions</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.footerBtnContainer} onPress={viewRequests}>
-          <Image alt="cash out" source={require("../../public/icn/settings-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Requests</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.footerBtnContainer} className='flex-start'  onPress={viewProfile}>
-          <Image alt="cash out" source={require("../../public/icn/profile-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      <NavigationBar formData={formData} partnerType={formData.partner_type} />
     </View>
   );
 };
 
-export default ProfileProfile;
+export default PartnerProfile;
 
 const styles = StyleSheet.create({
   container: {

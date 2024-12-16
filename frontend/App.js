@@ -48,6 +48,7 @@ import PartnerLocate from './app/pages/PartnerLocate';
 import PartnerServiceManagement from './app/pages/PartnerServiceManagement';
 import SuccessfulApplication from './app/pages/ezicash/SuccessfulApplication';
 import ApplicationStatus from './app/pages/ezicash/ApplicationStatus';
+import PartnerProfile from './app/pages/PartnerProfile';
 
 const Stack = createStackNavigator({
   screens: {
@@ -186,6 +187,12 @@ const Stack = createStackNavigator({
     },
     Profile: {
       screen: Profile,
+      options: {
+        header:() => <DashboardHeader profile={true} />
+      }
+    },
+    PartnerProfile: {
+      screen: PartnerProfile,
       options: {
         header:() => <DashboardHeader profile={true} />
       }
