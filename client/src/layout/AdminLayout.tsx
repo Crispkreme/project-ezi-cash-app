@@ -3,6 +3,9 @@ import dashboardLogo from '../assets/dashboard-logo.png';
 import headerLogo from '../assets/header-logo.png';
 import notification from '../assets/notification.png';
 import settings from '../assets/settings.png';
+import { io } from 'socket.io-client';
+import { useEffect } from 'react';
+export const socket = io("http://localhost:3000");
 
 export default function AdminLayout({children}: {children: React.ReactElement}) {
 
@@ -40,6 +43,21 @@ export default function AdminLayout({children}: {children: React.ReactElement}) 
 
   const dt = sessionStorage.getItem('session');
   const parsed = JSON.parse(String(dt));
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('I am connected!');
+      socket.emit('message', 'asd');
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Disconnected from server");
+    });
+
+    () => {
+      socket.disconnect();
+    }
+  },[]);
   
   return (
     <main className="flex min-h-screen text-white">

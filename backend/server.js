@@ -10,10 +10,22 @@ const multer = require('multer');
 const fs = require('fs');
 const { Vonage } = require('@vonage/server-sdk')
 
+const http = require('http');
+const {Server} = require('socket.io');
+
 const app = express();
 const nodemailer = require('nodemailer');
 const path = require('path');
 const allowedStatuses = ["Approved", "Rejected"];
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ['GET','POST']
+  }
+});
 
 paypal.configure({
   'mode': 'sandbox',
@@ -517,7 +529,8 @@ app.get("/get-request", async (req, res) => {
       transactions.transaction_status AS status,
       user_details.user_detail_id
     FROM transactions
-    INNER JOIN user_details ON transactions.user_id = user_details.user_detail_id
+    INNER JOIN users_table ON transactions.user_id = users_table.user_id
+    INNER JOIN user_details ON user_details.user_id = users_table.user_id
     WHERE transactions.transaction_status = 'Pending'
     ORDER BY transactions.created_at DESC;
   `;
@@ -1515,8 +1528,24 @@ app.get('/get-partners-dashboard', async (req, res) => {
   }
 });
 
+io.on('connection', (socket) => {
+  console.log('New connection', socket.id);
+
+  socket.on('message', (msg) => {
+    console.log('Recieved');
+  });
+
+  socket.on('approve-request', (message) => {
+    console.log(message);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnect');
+  });
+}); 
+
 // Start the server
 const PORT = 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
