@@ -97,8 +97,8 @@ const Main = () => {
             className="p-4 border-b border-black mb-4 text-lg w-64"
             placeholder="Enter your mobile number"
             value={mobileNumber}
+            keyboardType='numeric'
             onChangeText={(text) => setMobileNumber(text)}
-            keyboardType="phone-pad"
             maxLength={10}
           />
         </View>
