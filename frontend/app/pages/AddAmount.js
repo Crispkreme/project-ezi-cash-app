@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { __gstyles__ } from "../globalStylesheet";
+import * as Location from 'expo-location';
 
 const AddAmount = ({ route, navigation }) => {
   const { formData } = route.params;
@@ -12,18 +13,45 @@ const AddAmount = ({ route, navigation }) => {
     linkedWallet: formData.user_phone_no,
     amount: 0
   });
-  console.log("formData", formData);
+  
+  const [curFormData, setCurFormData] = useState({...formData});
   const handleConfirm = async () => {
+    const res = await fetch(process.env.base_url + "/get-pending-transaction/" + formData.user_id);
+    if(res.ok) {
+      const body = await res.json();
+
+      if([...body.data].length > 0) {
+        navigator.navigate("WaitingApproval", {
+          curFormData,
+          transactionId: [...body.data][0].id
+        });
+      }
+      return;
+    }
     navigator.navigate("SearchPartner", {
-      formData,
+      curFormData,
       amount: state.amount,
     });
 
   };
   
-  const handleNext = () => {
-    alert(5);
-  };
+  const getLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status != 'granted') {
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+
+      const res = await Location.reverseGeocodeAsync({latitude: location.coords.latitude, longitude: location.coords.longitude});
+      
+      setCurFormData(prev => ({...prev, address: res[0].formattedAddress}));
+    } catch(e) {
+      alert(e);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -33,14 +61,14 @@ const AddAmount = ({ route, navigation }) => {
           <Text className='text-primary font-semibold text-xl pt-8'>Currently Linked</Text>
         </View>
 
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={handleNext}>
+        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={getLocation}>
           <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
             <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
               <Image alt="cash in" source={require("../../public/icn/location-icn.png")}></Image>
               <View style={styles.leftSection}>
                 <Text className='font-semibold text-lg text-primary'>Home</Text>
                 <Text className='text-sm text-primary'>
-                  {formData.address},
+                  {curFormData.address},
                 </Text>
               </View>
             </View>
