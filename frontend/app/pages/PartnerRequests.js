@@ -16,7 +16,7 @@ const PartnerRequests = ({ route, navigation }) => {
   const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
 
   const viewProfile = () => {
-    navigator.navigate("ProfileProfile", {formData});
+    navigator.navigate("PartnerProfile", {formData});
   }
   const viewDashboard = () => {
     navigator.navigate("PartnerDashboard", {formData});

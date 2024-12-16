@@ -2,13 +2,13 @@ import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import { __gstyles__ } from "../globalStylesheet";
+import NavigationBar from "../components/NavigationBar";
 
 const Dashboard = ({ route, navigation }) => {
   const { formData } = route.params;
 
   const wLabels = {...formData};
   const navigator = useNavigation();
-
   const handleConfirm = async () => {
     navigator.navigate("SetMPIN");
   };
@@ -21,7 +21,6 @@ const Dashboard = ({ route, navigation }) => {
   const viewProfile = () => {
     navigator.navigate("Profile", {formData});
   }
-
   return (
     <View style={styles.container}>
       
@@ -55,26 +54,7 @@ const Dashboard = ({ route, navigation }) => {
         </TouchableOpacity>
       </ScrollView>
 
-      <View style={styles.footer} className='py-2 flex-row gap-4'>
-        <View style={styles.footerBtnContainer} className='relative' onPress={handleConfirm}>
-          <Image className='' alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
-        </View>
-        <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
-          <Image alt="cash out" source={require("../../public/icn/transactions-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Transactions</Text>
-        </View>
-
-        <TouchableOpacity style={styles.footerBtnContainer} className='flex-start'  onPress={viewProfile}>
-          <Image alt="cash out" source={require("../../public/icn/profile-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Profile</Text>
-        </TouchableOpacity>
-
-        <View style={styles.footerBtnContainer} onPress={handleConfirm}>
-          <Image alt="cash out" source={require("../../public/icn/settings-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Settings</Text>
-        </View>
-      </View>
+      <NavigationBar formData={formData} partnerType={formData.partnerType}/>
     </View>
   );
 };

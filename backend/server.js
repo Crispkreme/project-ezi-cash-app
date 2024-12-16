@@ -161,7 +161,12 @@ const getUserData = async (userId) => {
         ut.partner_type,
         w.balance,
         ut.user_phone_no AS phone,
-        CONCAT(ud.barangay, ', ', ud.city, ', ', ud.province, ', ', ud.zipcode) AS address
+        CONCAT(ud.barangay, ', ', ud.city, ', ', ud.province, ', ', ud.zipcode) AS address,
+        ud.city,
+        ud.province,
+        ud.barangay,
+        ud.zipcode,
+        ut.partner_type
       FROM 
         user_details ud
       JOIN 
