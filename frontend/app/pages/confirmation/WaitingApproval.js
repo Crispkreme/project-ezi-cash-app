@@ -7,7 +7,6 @@ import { socket } from "../Main";
 const WaitingApproval = () => {
   const route = useRoute();
   const { formData, transactionId } = route.params;
-
   const navigator = useNavigation();
   const [isLoading, setIsLoading] = useState(true);
   const [transactionStatus, setTransactionStatus] = useState(null);
@@ -47,9 +46,9 @@ const WaitingApproval = () => {
     if (transactionStatus === 'Approved' && transactionData) {
 
       setIsLoading(false);
-
-      navigator.navigate("PartnerLocate", {
+      navigator.navigate("GoToStore", {
         formData,
+        transactionId,
         transactionData,
       });
     }

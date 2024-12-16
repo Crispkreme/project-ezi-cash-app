@@ -4,10 +4,25 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput 
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { __gstyles__ } from "../globalStylesheet";
+import { socket } from "./Main";
 
 const GoToStore = ({ route }) => {
 
-  const { formData, partner, payment, paymentId, payerId, data } = route.params;
+  // const { formData, partner, payment, paymentId, payerId, data } = route.params;
+  const { formData, transactionId, transactionData } = route.params;
+  useEffect(() => {
+    socket.on('receive-message', (message) => {
+      console.log('i got send message from parnterlocate')
+      if(message.receiver_id == formData.user_detail_id)
+      {
+        alert('asdasdasd');
+      }
+    });
+    // const roomId = transactionId;
+    // socket.emit("join-room", roomId);
+    // console.log(`Joined room: ${roomId}`);
+  }, []);
+
   const wLabels = {...formData};
   const navigator = useNavigation();
 
@@ -59,6 +74,12 @@ const GoToStore = ({ route }) => {
     }
   };
   const sendMessage = async () => {
+    const sentMessage = {
+      sender_id: formData.user_detail_id,
+      receiver_id: transactionData.user_detail_id,
+      message: 'asdasdasd',
+    };
+    socket.emit("send-message", sentMessage);
   };
   const handleNext = () => {
     alert(5);

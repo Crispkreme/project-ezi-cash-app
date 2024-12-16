@@ -389,7 +389,7 @@ app.get('/get-pending-transaction/:user_id', async (req, res) => {
           console.log(err);
           return res.status(500).json({message:'Unsuccessful'});
         }
-        console.log(req.params.user_id)
+        console.log("transactionID:", result);
         return res.status(200).json({message: 'Successful!', data: result});
       }
     )
@@ -823,6 +823,12 @@ app.get("/get-transaction-request/:user_detail_id", async (req, res) => {
 });
 app.post('/send-message', (req, res) => {
   const { sender_id, receiver_id, message } = req.body;
+
+  console.log([
+    {sender_id: sender_id},
+    {receiver_id: receiver_id},
+    {message: message},
+  ]);
 
   if (!sender_id || !receiver_id || !message) {
     return res.status(400).json({ message: "Missing required fields." });
@@ -1556,10 +1562,18 @@ io.on('connection', (socket) => {
   socket.on('message', (msg) => {
     console.log('Recieved');
   });
-
   socket.on('approve-request', (message) => {
     console.log(message);
     io.emit('recieve-request', message);
+  });
+  socket.on("join-room", (roomId) => {
+    console.log('joined room socket', roomId);
+    socket.join(roomId);
+    console.log(`Socket ${socket.id} joined room ${roomId}`);
+  });
+  socket.on("send-message", (message) => {
+    const { sender_id, receiver_id } = message;
+    io.emit("receive-message", message);
   });
 
   socket.on('disconnect', () => {
