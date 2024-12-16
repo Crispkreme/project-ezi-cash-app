@@ -111,7 +111,7 @@ const RegisterOTP = ({ route }) => {
                 value={value}
                 onKeyPress={({ nativeEvent }) => textInputOnKeyPress(nativeEvent, index)}
                 onChangeText={(text) => handleChange(text, index)}
-                keyboardType="number-pad"
+                keyboardType='numeric'
                 maxLength={1}
                 ref={(el) => (inputs.current[index] = el)}
               />

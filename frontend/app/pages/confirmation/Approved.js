@@ -1,7 +1,7 @@
 import React from "react";
 import {
-    View,
-    StyleSheet
+  View,
+  StyleSheet
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AntDesign from "react-native-vector-icons/AntDesign";

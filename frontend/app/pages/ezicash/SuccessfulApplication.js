@@ -9,7 +9,7 @@ const SuccessfulApplication = ({ route, navigation }) => {
   const navigator = useNavigation();
 
   const handleConfirm = async () => {
-    navigator.navigate("ApplicationStatus", {formData});
+    navigator.navigate("Dashboard", {formData});
   };
 
   return (

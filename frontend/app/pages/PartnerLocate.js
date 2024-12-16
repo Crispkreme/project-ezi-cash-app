@@ -1,183 +1,326 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput, Touchable } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet, TextInput,
+  FlatList
+} from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
-import { __gstyles__ } from "../globalStylesheet";
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
+import * as Location from 'expo-location';
 
 const PartnerLocate = ({ route }) => {
-  const { formData, partner, payment } = route.params;
-  console.log(payment);
+  
+  const { formData, transactionData } = route.params;
 
-  const wLabels = {...formData};
   const navigator = useNavigation();
-
-  const [state, setState] = useState({
-    linkedWallet: '09222222',
-    amount: 0
-  });
-
-  const handleConfirm = async () => {
-    navigator.navigate("FinishTransaction", { formData, partner, payment });
-  };
-
-  const handleNext = () => {
-    alert(5);
-  };
-
-  const onRegionChange = (region) => {
-    setMap(region);
-  }
-
   const [init, setInit] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [curMarker, setCurMarker] = useState({
+    latitude: 0, 
+    longitude: 0,
+  });
   const [map, setMap] = useState({
     latitude: 10.31423656557551,
     longitude: 123.90543601653494,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
-  })
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  const getLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+
+    if (status != 'granted') {
+      return;
+    }
+
+    const location = await Location.getCurrentPositionAsync({});
+    setCurMarker({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude
+    });
+  }
+  const decodePolyline = (encoded) => {
+    let points = [];
+    let index = 0;
+    let len = encoded.length;
+    let lat = 0;
+    let lng = 0;
+
+    while (index < len) {
+      let b, shift = 0, result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      let dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      let dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
+      lng += dlng;
+
+      points.push({ latitude: lat / 1E5, longitude: lng / 1E5 });
+    }
+
+    return points;
+  };
+  const getDirection = async () => {
+    if (curMarker.latitude === 0) getLocation();
+
+    const start = { lat: curMarker.latitude, lng: curMarker.longitude }
+    const end = { lat: 10.31423656557551, lng: 123.90543601653494 }
+    const directionsApiUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&key=${process.env.google_maps_api_key}`;
+
+    const res = await fetch(directionsApiUrl);
+    const data = await res.json();
+
+    const route = data.routes[0];
+    const points = decodePolyline(route.overview_polyline.points);
+    setRouteCoordinates(points);
+  };
+
+  const fetchMessages = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.base_url}/get-user-message?partner_id=${transactionData.partner_id}&user_id=${transactionData.user_id}`,
+        { method: "GET", headers: { "Content-Type": "application/json" } }
+      );
+
+      const responseData = await response.json();
+
+      setMessages(responseData.data || []);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  };
+  const sendMessage = async () => {
+    if (newMessage.trim() === "") return;
+
+    const messageData = {
+      sender_id: transactionData.user_id,
+      receiver_id: transactionData.partner_id,
+      message: newMessage.trim(),
+    };
+
+    try {
+      const response = await fetch(`${process.env.base_url}/send-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(messageData),
+      });
+
+      if (response.ok) {
+        const sentMessage = await response.json();
+        setMessages((prev) => [
+          ...prev,
+          {
+            ...sentMessage,
+            sender_id: sentMessage.sender_id,
+            receiver_id: sentMessage.receiver_id,
+            message: sentMessage.message,
+            created_at: sentMessage.created_at,
+          },
+        ]);
+        setNewMessage("");
+      } else {
+        console.error("Failed to send message");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+  const handleConfirm = async () => {
+    try {
+      const payload = {
+        formData,
+        transactionData,
+      };
+
+      const response = await fetch(`${process.env.base_url}/paypal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const body = await response.json();
+      console.log("Server Response:", body);
+
+      if (!response.ok) {
+        alert(body.message || "Failed to process payment.");
+        return;
+      }
+
+      const { approvalUrl } = body;
+
+      if (approvalUrl) {
+        navigator.navigate("PayPalWebView", { uri: approvalUrl, data: body });
+      } else {
+        alert("Approval URL not found in the server response.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
 
   useEffect(() => {
-    console.log("init");
-    setMap({
-      latitude: 10.31423656557551,
-      longitude: 123.90543601653494,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    });
+    fetchMessages();
     setInit(true);
-  },[]);
+  }, []);
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-gray-100 p-4">
+      <View style={{ flex: 1 }}>
+        {init ? (
+          <MapView
+            onMapReady={() => {
+              console.log("Map is ready!");
+            }}
+            style={{ flex: 1, height: 450, width: '100%' }}
+            region={map}
+            provider={PROVIDER_GOOGLE}
+          >
+            <Marker
+              pinColor="red"
+              coordinate={{
+                latitude: 10.31423656557551,
+                longitude: 123.90543601653494,
+              }}
+              title="Partner Location"
+              description="Partner Location"
+            />
+            {curMarker.latitude !== 0 && (
+              <Marker
+                pinColor="red"
+                coordinate={curMarker}
+                title="Your Location"
+                description="Your Location"
+              />
+            )}
+
+            <Polyline
+              coordinates={routeCoordinates}
+              strokeColor="#0000FF"
+              strokeWidth={6}
+            />
+          </MapView>
+        ) : (
+          <Text> Loading ... </Text>
+        )}
+      </View>
+
+      <View style={styles.header}>
+        <Text className="text-primary text-xl font-semibold mb-4">Chat</Text>
+      </View>
       
-      <ScrollView>
-        <View style={{flex: 1}}>
-          {
-            init ? (
-              <MapView
-                onMapReady={() => {
-                  console.log("Map is ready!");
-                  
-                }}
-                  style={{ flex: 1, height: 450, width:500 }}
-                  region={map}
-                  provider={PROVIDER_GOOGLE}
-                >
-                  <Marker 
-                    pinColor="red" 
-                    coordinate={{
-                      latitude: 10.31423656557551, 
-                      longitude: 123.90543601653494
-                    }}
-                    title="asdasd"
-                    description="asdasd"
-                  >
-                    <View style={{flex: 1, height: 50, width: 50}}>
-                      <Image source={require("../../public/icn/pointer.png")}></Image>
-                    </View>
-                  </Marker>
-                </MapView>
-            ) : (
-              <Text>Loading...</Text>
-            )
-          }
-        </View>
-
-        <View style={styles.header}>
-          <Text className='text-primary text-left font-semibold text-xl pt-8'>Chat</Text>
-        </View>
-
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300'>
-          <View className=' p-2 px-4'>
-            <View className='gap-2'>
-              <View style={styles.leftSection}>
-                <Text className='font-semibold bg-primary self-start rounded-full text-lg text-primary'>E-Wallet</Text>
-                <Text className='text-sm'>Ezicash Partner</Text>
-              </View>
-              <View className='text-right'>
-                <Text className='font-semibold bg-gray-400 text-gray-400 self-end rounded-full text-lg'>E-Wallet</Text>
-                <Text className='text-sm text-right'>You</Text>
+      <View className="flex-1 bg-white p-4 rounded-lg shadow border border-gray-300">
+        <FlatList
+          data={messages}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <View
+              className={`flex mb-2 ${
+                item.sender_id === transactionData.user_id
+                  ? "items-end"
+                  : "items-start"
+              }`}
+            >
+              <View
+                className={`max-w-[70%] px-4 py-2 rounded-lg ${
+                  item.sender_id === transactionData.user_id
+                    ? "bg-green-100"
+                    : "bg-red-100"
+                }`}
+              >
+                <Text className="text-sm">{item.message}</Text>
               </View>
             </View>
-          </View>
-          <View className='flex-row'>
-            <TextInput
-              className='w-full p-4 mt-4 mb-4 text-sm bg-gray-200'
-              placeholder="Send message"
-              value={state.amount}
-              onChangeText={(am) => setState(prev => ({...prev, amount: am}))}
-              keyboardType="phone-pad"
-              maxLength={10}
-            />
-            <MaterialIcons
-              name="send"
-              size={16}
-              className=' absolute right-4 top-8'
-              style={styles.buttonIcon}
-            />
-          </View>
-        </TouchableOpacity>
+          )}
+          contentContainerStyle={{ paddingBottom: 10 }}
+          showsVerticalScrollIndicator={false}
+        />
 
-        <View className='py-4 mx-auto self-center bottom-4 w-full'>
-          <TouchableOpacity className='bg-primary p-4 rounded-lg' onPress={handleConfirm}>
-            <Text className='font-bold text-white text-center w-full'>Arrived</Text>
+        <View className="flex flex-row items-center mt-4">
+          <TextInput
+            className="flex-1 p-4 bg-gray-200 rounded-lg text-sm"
+            placeholder="Type a message..."
+            value={newMessage}
+            onChangeText={setNewMessage}
+          />
+          <TouchableOpacity
+            className="ml-2 p-2 rounded-full"
+            onPress={sendMessage}
+          >
+            <MaterialIcons name="send" size={24} color="bg-blue-500" />
           </TouchableOpacity>
         </View>
-      </ScrollView>
-      
+      </View>
+
+      <View className="py-4 mt-6">
+        <TouchableOpacity
+          className="bg-primary p-4 rounded-lg"
+          onPress={handleConfirm}
+        >
+          <Text className="text-white text-center font-bold">Arrived</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
-
 export default PartnerLocate;
 
 const styles = StyleSheet.create({
   container: {
-      flex: 1,
-      padding: 20,
-      backgroundColor: "#f9f9f9",
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#f9f9f9",
   },
   header: {
-      marginBottom: 20,
-  },
-  headerText: {
-      fontSize: 24,
-      fontWeight: "bold",
-      marginBottom: 10,
-  },
-  button: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 8,
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-},
+  },
+  inputContainer: {
+    position: "relative",
+  },
+  sendButton: {
+    position: "absolute",
+    right: 12,
+    top: "50%",
+    transform: [{ translateY: -12 }],
+    padding: 5,
+    backgroundColor: "transparent",
+  },
   buttonIcon: {
-      marginLeft: 10,
+    marginLeft: 10,
   },
   footerBtnContainer: {
-    justifyContent: 'center', 
-    alignItems: 'center'
+    justifyContent: "center",
+    alignItems: "center",
   },
-  footerBtnLabel : {
+  footerBtnLabel: {
     maxWidth: 100,
-    fontSize: 10
+    fontSize: 10,
   },
   footer: {
-    justifyContent: 'space-between',
-    paddingHorizontal: 20
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
   },
   resendText: {
-      fontSize: 16,
-      color: "#007BFF",
-      textDecorationLine: "underline",
-      marginVertical: 5,
+    fontSize: 16,
+    color: "#007BFF",
+    textDecorationLine: "underline",
+    marginVertical: 5,
   },
 });

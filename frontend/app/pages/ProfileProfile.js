@@ -2,38 +2,24 @@ import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { __gstyles__ } from "../globalStylesheet";
 
-const Profile = ({ route, navigation }) => {
+const ProfileProfile = ({ route, navigation }) => {
   const { formData } = route.params;
 
   const wLabels = {...formData};
   const navigator = useNavigation();
 
-  const handleConfirm = async () => {
-    navigator.navigate("SetMPIN");
-  };
-  
-  const handleNext = () => {
-    navigator.navigate("EWallet", {formData});
-  };
-
-  const backHome = () => {
-    navigator.navigate("Dashboard", {formData});
+  const viewTransactions = () => {
+    navigator.navigate("PartnerTransactions", {formData});
   }
-
-  const applyEziCash = async () => {
-    const res = await fetch(`${process.env.BASE_URL}/partner-check/` + formData.user_id);
-    if(res.ok) {
-      const body = await res.json();
-      
-      if(body.data.exist === 1) {
-        navigator.navigate("ApplicationStatus", { formData });
-      } else {
-        navigator.navigate("EziCashPartnerApplication", {formData});
-      }
-    }
-    
+  const viewProfile = () => {
+    navigator.navigate("ProfileProfile", {formData});
+  }
+  const viewDashboard = () => {
+    navigator.navigate("PartnerDashboard", {formData});
+  }
+  const viewRequests = () => {
+    navigator.navigate("PartnerRequests", {formData});
   }
 
   return (
@@ -169,32 +155,31 @@ const Profile = ({ route, navigation }) => {
 
       </ScrollView>
       <View style={styles.footer} className='py-2 flex-row gap-4'>
-        
-        <TouchableOpacity style={styles.footerBtnContainer} className='relative' onPress={backHome}>
+        <TouchableOpacity style={styles.footerBtnContainer} className='relative' onPress={viewDashboard}>
           <Image className='' alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
           <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
         </TouchableOpacity>
 
-        <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
+        <TouchableOpacity style={styles.footerBtnContainer} className='flex-start' onPress={viewTransactions}>
           <Image alt="cash out" source={require("../../public/icn/transactions-icn.png")}></Image>
           <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Transactions</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
+        <TouchableOpacity style={styles.footerBtnContainer} onPress={viewRequests}>
+          <Image alt="cash out" source={require("../../public/icn/settings-icn.png")}></Image>
+          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Requests</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.footerBtnContainer} className='flex-start'  onPress={viewProfile}>
           <Image alt="cash out" source={require("../../public/icn/profile-icn.png")}></Image>
           <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Profile</Text>
-        </View>
-
-        <View style={styles.footerBtnContainer} onPress={handleConfirm}>
-          <Image alt="cash out" source={require("../../public/icn/settings-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Settings</Text>
-        </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-export default Profile;
+export default ProfileProfile;
 
 const styles = StyleSheet.create({
   container: {

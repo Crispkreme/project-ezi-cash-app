@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { __gstyles__ } from "../globalStylesheet";
+import * as Location from 'expo-location';
 
 const AddAmount = ({ route, navigation }) => {
   const { formData } = route.params;
@@ -12,40 +13,45 @@ const AddAmount = ({ route, navigation }) => {
     linkedWallet: formData.user_phone_no,
     amount: 0
   });
-
-  const handleConfirm = async () => {
-    try {
-      const response = await fetch(`${process.env.base_url}/payment-transaction`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({...formData, amount: state.amount})
-      });
   
-      if (!response.ok) {
-        const errorBody = await response.json();
-        alert(errorBody.message);
+  const [curFormData, setCurFormData] = useState({...formData});
+  const handleConfirm = async () => {
+    const res = await fetch(process.env.base_url + "/get-pending-transaction/" + formData.user_id);
+    if(res.ok) {
+      const body = await res.json();
+
+      if([...body.data].length > 0) {
+        navigator.navigate("WaitingApproval", {
+          curFormData,
+          transactionId: [...body.data][0].id
+        });
+      }
+      return;
+    }
+    navigator.navigate("SearchPartner", {
+      curFormData,
+      amount: state.amount,
+    });
+
+  };
+  
+  const getLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status != 'granted') {
         return;
       }
-  
-      const body = await response.json();
 
-      navigator.navigate("SearchPartner", {
-        formData,
-        amount: state.amount,
-        store: body.data,
-      });
+      const location = await Location.getCurrentPositionAsync({});
 
-    } catch (error) {
-      console.error("Error during handleConfirm:", error);
-      alert("An error occurred. Please try again.");
+      const res = await Location.reverseGeocodeAsync({latitude: location.coords.latitude, longitude: location.coords.longitude});
+      
+      setCurFormData(prev => ({...prev, address: res[0].formattedAddress}));
+    } catch(e) {
+      alert(e);
     }
-  };
-  
-  const handleNext = () => {
-    alert(5);
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -55,14 +61,14 @@ const AddAmount = ({ route, navigation }) => {
           <Text className='text-primary font-semibold text-xl pt-8'>Currently Linked</Text>
         </View>
 
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={handleNext}>
+        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={getLocation}>
           <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
             <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
               <Image alt="cash in" source={require("../../public/icn/location-icn.png")}></Image>
               <View style={styles.leftSection}>
                 <Text className='font-semibold text-lg text-primary'>Home</Text>
                 <Text className='text-sm text-primary'>
-                  {formData.address},
+                  {curFormData.address},
                 </Text>
               </View>
             </View>
@@ -81,7 +87,7 @@ const AddAmount = ({ route, navigation }) => {
           </View>
           <TextInput
             className=' p-4 border-b border-black mb-4 text-lg'
-            placeholder="Enter your mobile number"
+            placeholder="Enter your amount"
             value={state.amount}
             onChangeText={(am) => setState(prev => ({...prev, amount: am}))}
             keyboardType="phone-pad"

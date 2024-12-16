@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text, TextInput,
@@ -11,12 +11,21 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import Logo from "../../public/svg/logo.jsx";
 import DropdownComponent from "../components/DropdownComponent.js";
+import {io} from 'socket.io-client';
+
+export const socket = io(process.env.base_url);
 
 const Main = () => {
   const navigation = useNavigation();
   const [mobileNumber, setMobileNumber] = useState("");
   const [zone, setZone] = useState("+63");
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('connected!');
+    });
+  },[]);
 
   const handleNext = () => {
     if (mobileNumber.length !== 10) {
@@ -88,8 +97,8 @@ const Main = () => {
             className="p-4 border-b border-black mb-4 text-lg w-64"
             placeholder="Enter your mobile number"
             value={mobileNumber}
+            keyboardType='numeric'
             onChangeText={(text) => setMobileNumber(text)}
-            keyboardType="phone-pad"
             maxLength={10}
           />
         </View>

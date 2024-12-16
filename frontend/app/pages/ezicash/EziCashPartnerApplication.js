@@ -23,10 +23,9 @@ const EziCashPartnerApplication = ({route}) => {
     partnership_type: "",
     phone_no: "",
     email: "",
-    legal_address: "",
-    city: "",
-    state: "",
-    zip: "",
+    city: formData.city,
+    state: formData.province,
+    zip: formData.zipcode,
     same_business_address: false,
     business_location: "",
     business_city: "",
@@ -192,57 +191,11 @@ const EziCashPartnerApplication = ({route}) => {
           <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
             <TextInput
               className='border border-gray-300 rounded-md p-4 bg-white'
-              placeholder="Email Address"
+              placeholder="Business Email Address"
               value={applyData.email}
               onChangeText={(value) => handleInputChange("email", value)}
             />
           </TouchableOpacity>
-          
-
-          <Text className='text-sm text-gray-400 mb-2'>Legal Address</Text>
-          <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
-            <TextInput
-              className='border border-gray-300 rounded-md p-4 bg-white'
-              placeholder="Legal Address"
-              value={applyData.legal_address}
-              onChangeText={(value) => handleInputChange("legal_address", value)}
-            />
-          </TouchableOpacity>
-          
-          <View className='flex-row justify-between'>
-            <View>
-              <Text className='text-sm text-gray-400 mb-2'>City</Text>
-              <TouchableOpacity style={[styles.shadow, {width: 165}]} className='rounded-md mb-2'>
-                <TextInput
-                  className='border border-gray-300 rounded-md p-4 bg-white'
-                  placeholder="City"
-                  value={applyData.city}
-                  onChangeText={(value) => handleInputChange("city", value)}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <View>
-              <Text className='text-sm text-gray-400 mb-2'>State / Province</Text>
-              <TouchableOpacity style={[styles.shadow, {width: 165}]} className='rounded-md mb-2'>
-                <TextInput
-                  className='border border-gray-300 rounded-md p-4 bg-white'
-                  placeholder="Province"
-                  value={applyData.state}
-                  onChangeText={(value) => handleInputChange("state", value)}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={{width: 165}} className='mb-4'>
-            <Text className='text-sm text-gray-400 mb-2'>Postal / Zip Code</Text>
-            <TextInput
-              className='border border-gray-300 rounded-md p-4 bg-white'
-              placeholder="Zip Code"
-              value={applyData.zip}
-              onChangeText={(value) => handleInputChange("zip", value)}
-            />
-          </View>
 
           <View className='mb-4'>
             <Text className='flex-row justify-between mb-2'>

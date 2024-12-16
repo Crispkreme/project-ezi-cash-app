@@ -1,19 +1,46 @@
 import AdminLayout from "../../layout/AdminLayout";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+interface activitiesDt {
+  service: string,
+  payment: number, 
+  partner: string, 
+  customer: string, 
+  date: Date, 
+  time: Date, 
+  fee: number
+}
 
 export default function TransactionsOverview() {
 
-  const activities = [
-    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash Out',payment: 500, partner: 'Victor Chiong', customer: 'Karen Gonzales', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash Out',payment: 500, partner: 'Marvin Ramos', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Karen Gonzales', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash Out',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Karen Gonzales', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash In',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-    {service: 'Cash Out',payment: 500, partner: 'Nicole Ayessa Alcover', customer: 'Jhyra Shynne Canada', date: new Date(), time: new Date(), fee: 15},
-  ]
+  const [activities, setActivities] = useState<Array<activitiesDt>>([])
+  useEffect(() => {
+    const getDt = async () => {
+      const res = await fetch('/api/get-transactions');
+      if(res.ok) {
+        const body = await res.json();
+        const dt = [...body.data];
+
+        const temp = dt.map(t => {
+          
+          return {
+            service: t.service,
+            payment: t.amount, 
+            partner: t.legal_name, 
+            customer: t.first_name + ' ' + t.middle_name + ' ' + t.last_name,
+            date: new Date(t.created_at), 
+            time: new Date(t.created_at), 
+            fee: 15
+          }
+        });
+
+        setActivities(temp);
+        setSearchAct(temp);
+      }
+    }
+
+    getDt();
+  },[]);
 
   const [search, setSearch] = useState('');
   const [searchAct, setSearchAct] = useState([...activities]);

@@ -13,24 +13,13 @@ const SearchPartner = ({ route, navigation }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [partner, setPartner] = useState([]);
   const navigator = useNavigation();
-
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [init, setInit] = useState(false);
   const [state, setState] = useState({
     linkedWallet: '09222222',
     amount: 0,
     init: false
   });
-
-  useEffect(() => {
-    if(!state.init) {
-      setState(prev => ({...prev, init: true}));
-    } else {
-      alert(search);
-    }
-  },[key]);
-
-  const handleConfirm = async () => {
-    navigator.navigate("SetMPIN", { formData });
-  };
 
   const getLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -46,7 +35,6 @@ const SearchPartner = ({ route, navigation }) => {
     })
     
   }
-
   const decodePolyline = (encoded) => {
     let points = [];
     let index = 0;
@@ -79,9 +67,6 @@ const SearchPartner = ({ route, navigation }) => {
 
     return points;
   };
-
-  const [routeCoordinates, setRouteCoordinates] = useState([]);
-
   const getDirection = async () => {
     if(curMarker.latitude === 0) getLocation();
 
@@ -96,25 +81,9 @@ const SearchPartner = ({ route, navigation }) => {
     const points = decodePolyline(route.overview_polyline.points);
     setRouteCoordinates(points);
   }
-
-  const handlePress = (item) => {
-    navigator.navigate("Partner", {
-      formData,
-      partner: {
-        amount,
-        legal_name: item.store_name,
-        address: `79 Cabreros St ${item.barangay}, ${item.city}`,
-        type: item.partner_type,
-        store_id: item.store_id,
-      },
-    });
-  };
-
   const onRegionChange = (region) => {
     setMap(region);
   }
-
-  const [init, setInit] = useState(false);
   const [map, setMap] = useState({
     latitude: 10.31423656557551,
     longitude: 123.90543601653494,
@@ -126,6 +95,22 @@ const SearchPartner = ({ route, navigation }) => {
     longitude: 0,
   });
 
+  const handleConfirm = async () => {
+    navigator.navigate("SetMPIN", { formData });
+  };
+  const handlePress = (item) => {
+    navigator.navigate("Partner", {
+      formData,
+      partner: {
+        amount,
+        legal_name: item.store_name,
+        address: `79 Cabreros St ${item.barangay}, ${item.city}`,
+        type: item.partner_type,
+        store_id: item.partner_id,
+      },
+    });
+  };
+
   useEffect(() => {
     console.log("init");
     setMap({
@@ -136,7 +121,13 @@ const SearchPartner = ({ route, navigation }) => {
     });
     setInit(true);
   },[]);
-
+  useEffect(() => {
+    if(!state.init) {
+      setState(prev => ({...prev, init: true}));
+    } else {
+      alert(search);
+    }
+  },[key]);
   useEffect(() => {
     const fetchPartner = async () => {
       try {
@@ -152,19 +143,18 @@ const SearchPartner = ({ route, navigation }) => {
         }
 
         const result = await response.json();
-  
         setPartner(result.data);
-        setIsLoading(false);
       } catch (error) {
         console.error("Error fetching partners:", error);
         Alert.alert("Error", "An error occurred while fetching partners.");
+      } finally {
         setIsLoading(false);
       }
     };
 
     fetchPartner();
   }, []);
-  
+
   return (
     <View style={styles.container}>
       
@@ -219,9 +209,9 @@ const SearchPartner = ({ route, navigation }) => {
         </View>
 
         <View>
-          {partner.length > 0 ? (
+          {Array.isArray(partner) && partner.length > 0 ? (
             partner.map((item, index) => (
-              <View key={index}>
+              <View key={item.business_hour_id || index}>
                 <TouchableOpacity
                   style={[__gstyles__.shadow]}
                   className="bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300"
@@ -260,7 +250,7 @@ const SearchPartner = ({ route, navigation }) => {
                   </View>
                 </TouchableOpacity>
 
-                {index !== store.length - 1 && (
+                {index !== partner.length - 1 && (
                   <View
                     className="mb-4 border-gray-500"
                     style={{

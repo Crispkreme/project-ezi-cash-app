@@ -2,7 +2,6 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import Entypo from "react-native-vector-icons/Entypo";
-import AntDesign from "react-native-vector-icons/AntDesign";
 import { __gstyles__ } from "../globalStylesheet";
 
 const EWallet = ({ route, navigation }) => {
@@ -42,7 +41,7 @@ const EWallet = ({ route, navigation }) => {
               <Image alt="cash in" source={require("../../public/icn/linked-icn.png")}></Image>
               <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
               <View style={styles.leftSection}>
-                <Text className='font-semibold text-lg text-primary'>E-Wallet</Text>
+                <Text className='font-semibold text-lg text-primary'>Paypal</Text>
                 <Text className='text-sm text-primary'>
                     {state.linkedWallet.substring(0,2)}*******{state.linkedWallet[state.linkedWallet.length - 1]}
                 </Text>
@@ -50,44 +49,6 @@ const EWallet = ({ route, navigation }) => {
             </View>
             <Entypo
               name="dots-three-vertical"
-              size={16}
-              className='text-primary'
-              style={styles.buttonIcon}
-            />
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.header}>
-          <Text className='text-primary font-semibold text-xl pt-8'>Add E-Wallet</Text>
-        </View>
-
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={linkEWallet}>
-          <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
-            <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
-              <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
-              <View style={styles.leftSection}>
-                <Text className='font-semibold text-lg text-primary'>E-Wallet</Text>
-              </View>
-            </View>
-            <AntDesign
-              name="pluscircleo"
-              size={16}
-              className='text-primary'
-              style={styles.buttonIcon}
-            />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300' onPress={linkEWallet}>
-          <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
-            <View className='gap-2' style={{flexDirection: 'row', alignItems: 'center'}}>
-              <Image alt="cash in" source={require("../../public/icn/e-wallet-icn.png")}></Image>
-              <View style={styles.leftSection}>
-                <Text className='font-semibold text-lg text-primary'>E-Wallet</Text>
-              </View>
-            </View>
-            <AntDesign
-              name="pluscircleo"
               size={16}
               className='text-primary'
               style={styles.buttonIcon}

@@ -8,15 +8,34 @@ const cookieParser = require('cookie-parser');
 const paypal = require('paypal-rest-sdk');
 const multer = require('multer');
 const fs = require('fs');
+const { Vonage } = require('@vonage/server-sdk')
+
+const http = require('http');
+const {Server} = require('socket.io');
 
 const app = express();
 const nodemailer = require('nodemailer');
 const path = require('path');
+const allowedStatuses = ["Approved", "Rejected"];
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ['GET','POST']
+  }
+});
 
 paypal.configure({
   'mode': 'sandbox',
   'client_id': 'AWRQNwYAQWpS59fjvbtupQcCKxvLIfvywjgKWpI3e_J-cvQg9yIOGW7-1DPOzIqxBsAUi-zU0r0L12B7',
   'client_secret': 'EG5czQetmcA7JlD2n04wivNvuX7xLxoEO2AYcbPfJfQWiZmQilfBvaCOCgbVkngxh8F309q4ht_o3oiO',
+});
+
+const vonage = new Vonage({
+  apiKey: "4e2a6b4d",
+  apiSecret: "FTf3i6bjKBr7opby"
 });
 
 // Middleware
@@ -42,11 +61,9 @@ db.connect((err) => {
 // Register a user
 app.post('/register', async (req, res) => {
   const { user_phone_no, first_name, middle_name, last_name, birthdate, email, nationality, main_source, province, city, barangay, zipcode, HasNoMiddleName, MPIN } = req.body;
-
   console.log(req.body);
-
   // Validate required fields
-  if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name || !birthdate || !email || !nationality || !main_source || !province || !city || !barangay || !zipcode || !MPIN ) {
+  if ( !user_phone_no || !first_name || (!HasNoMiddleName && !middle_name) || !last_name || !birthdate || !email || !nationality || !province || !city || !barangay || !zipcode || !MPIN ) {
     return res.status(400).json({ message: 'Please provide all required fields.' });
   }
 
@@ -95,7 +112,7 @@ app.post('/register', async (req, res) => {
 
               try {
                 const data = await getUserData(userId);
-
+                console.log(data);
                 if (data.data !== -1) {
                   const userDetailId = data.user_detail_id;
 
@@ -138,12 +155,18 @@ const getUserData = async (userId) => {
   return new Promise((resolve, reject) => {
     const query = `
       SELECT 
+        ut.user_id,
         ud.user_detail_id,
         CONCAT(ud.first_name, ' ', IFNULL(ud.middle_name, ''), ' ', ud.last_name) AS name,
         ut.partner_type,
         w.balance,
         ut.user_phone_no AS phone,
-        CONCAT(ud.barangay, ', ', ud.city, ', ', ud.province, ', ', ud.zipcode) AS address
+        CONCAT(ud.barangay, ', ', ud.city, ', ', ud.province, ', ', ud.zipcode) AS address,
+        ud.city,
+        ud.province,
+        ud.barangay,
+        ud.zipcode,
+        ut.partner_type
       FROM 
         user_details ud
       JOIN 
@@ -165,12 +188,12 @@ const getUserData = async (userId) => {
   });
 };
 
+// Auth
 const otps = new Map();
 app.post('/otp', (req, res) => {
+
   let { mobileNumber } = req.body;
-  console.log(mobileNumber);
   mobileNumber = String(mobileNumber).replace("+63","");
-  console.log(mobileNumber);
 
   if (!mobileNumber) {
     return res.status(400).json({ error: 'Mobile number is required' });
@@ -202,6 +225,33 @@ app.post('/otp', (req, res) => {
     otp,
   });
 });
+const formatPhoneNumber = (number) => {
+  const trimmedNumber = number.replace(/\D/g, "");
+  if (trimmedNumber.startsWith("63")) {
+    return trimmedNumber;
+  }
+  return "63" + trimmedNumber.replace(/^0/, "");
+};
+app.post('/send-sms-otp', async (req, res) => {
+  const { mobileNumber, otp } = req.body;
+ 
+  if (!mobileNumber || !otp) {
+    return res.status(400).json({ message: 'Mobile number are required.' });
+  }
+
+  try {
+    const from = "Vonage APIs";
+    const to = formatPhoneNumber(mobileNumber);
+    const text = `Welcome to Ezicash App! This is your OTP: ${otp}`;
+
+    const response = await vonage.sms.send({ to, from, text });
+    console.log("response", response);
+    res.status(200).json({ message: 'SMS sent successfully!', response });
+  } catch (error) {
+    console.error('Error sending SMS:', error);
+    res.status(500).json({ message: 'Failed to send SMS.', error: error.message });
+  }
+});
 app.get("/check-phone", async (req, res) => {
   const {phone} = req.query || {};
   db.query("SELECT user_phone_no FROM users_table WHERE user_phone_no= ?", phone, 
@@ -219,17 +269,15 @@ app.get("/check-phone", async (req, res) => {
   });
 });
 app.post("/payment-transaction", async (req, res) => {
-  const { 
-    user_detail_id: user_id, 
-    partner_type: type, 
-    service, 
-    amount, 
-    partner_id: store_id = null 
-  } = req.body;
 
+  const { formData, payment, partner } = req.body;
+  const { user_detail_id, service } = formData;
+  const { amount } = payment;
+  const { store_id } = partner;
+  const total_amount = parseFloat(amount) + 15;
   const defaults = {
     bank: "Paypal",
-    total_amount: 0,
+    total_amount: total_amount,
     balance: 0,
     transaction_status: "Pending",
     payer_id: null,
@@ -244,7 +292,7 @@ app.post("/payment-transaction", async (req, res) => {
       FROM transactions 
       WHERE user_id = ? AND transaction_status = 'Pending' AND service = ?
     `;
-    const [pendingResult] = await db.promise().query(checkPendingQuery, [user_id, service]);
+    const [pendingResult] = await db.promise().query(checkPendingQuery, [user_detail_id, service]);
     const pendingCount = pendingResult[0]?.pendingCount || 0;
 
     if (pendingCount > 0) {
@@ -255,12 +303,13 @@ app.post("/payment-transaction", async (req, res) => {
 
     const insertTransactionQuery = `
       INSERT INTO transactions 
-      (user_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (user_id, partner_id, type, bank, service, amount, total_amount, balance, transaction_status, payer_id, payment_id, created_at, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const transactionParams = [
-      user_id,
-      type,
+      user_detail_id,
+      store_id,
+      payment.type,
       defaults.bank,
       service,
       amount,
@@ -278,14 +327,13 @@ app.post("/payment-transaction", async (req, res) => {
       return res.status(500).json({ message: "Transaction failed to save!" });
     }
 
-    // Insert into histories
     const insertHistoryQuery = `
       INSERT INTO histories 
       (user_detail_id, service, amount, transaction_status, created_at, updated_at) 
       VALUES (?, ?, ?, ?, ?, ?)
     `;
     const historyParams = [
-      user_id,
+      formData.user_detail_id,
       service,
       amount,
       defaults.transaction_status,
@@ -305,7 +353,7 @@ app.post("/payment-transaction", async (req, res) => {
       VALUES (?, ?, ?, ?)
     `;
     const notificationParams = [
-      user_id,
+      formData.user_id,
       notificationMessage,
       defaults.created_at,
       defaults.updated_at,
@@ -331,6 +379,24 @@ app.post("/payment-transaction", async (req, res) => {
     return res.status(500).json({ message: "An unexpected error occurred.", error: error.message });
   }
 });
+
+app.get('/get-pending-transaction/:user_id', async (req, res) => {
+  try {
+
+    db.query('SELECT * FROM transactions WHERE user_id = ? AND transaction_status = ?', [req.params.user_id, 'Pending'],
+      (err, result) => {
+        if(err) {
+          console.log(err);
+          return res.status(500).json({message:'Unsuccessful'});
+        }
+        console.log(req.params.user_id)
+        return res.status(200).json({message: 'Successful!', data: result});
+      }
+    )
+  } catch(e) {
+    return res.status(500).json({message: 'Unsuccessful!'});
+  }
+});
 app.post("/login", async (req, res) => {
   
   const { phone, pin } = req.body;
@@ -346,7 +412,7 @@ app.post("/login", async (req, res) => {
       try {
 
         const userData = await getUserData(result[0].user_id);
-
+        
         if (!userData) {
         return res.status(404).json({ message: 'User details not found.' });
         }
@@ -366,7 +432,7 @@ app.post("/login", async (req, res) => {
   });
 });
 
-// get all partners
+// TRANSACTIONS
 app.get("/get-partners", async (req, res) => {
   try {
     const now = new Date();
@@ -378,17 +444,25 @@ app.get("/get-partners", async (req, res) => {
     const query = `
       SELECT 
         b.*, 
-        CONCAT(ud.first_name, ' ', ud.middle_name, ' ', ud.last_name) AS store_name, 
+        ut.*, 
+        CONCAT(ud.first_name, ' ', IFNULL(ud.middle_name, ''), ' ', ud.last_name) AS store_name, 
         ud.barangay, 
         ud.city
-      FROM business_hours b
-      INNER JOIN user_details ud ON b.partner_id = ud.user_detail_id
+      FROM 
+        business_hours b
+      INNER JOIN 
+        user_details ud 
+        ON b.partner_id = ud.user_detail_id
+      INNER JOIN 
+        users_table ut 
+        ON ud.user_id = ut.user_id
       WHERE 
         b.isOpen = 1
+        AND ut.partner_type IN ('Partner', 'Store')
         AND b.day = ?
         AND b.business_date = ?
         AND b.open_at <= ?
-        AND b.close_at >= ?
+        AND b.close_at >= ?;
     `;
 
     db.query(query, [currentDay, currentDate, currentTime, currentTime], (err, results) => {
@@ -396,7 +470,6 @@ app.get("/get-partners", async (req, res) => {
         console.error("Database Error:", err);
         return res.status(500).json({ message: "Error while fetching business hours." });
       }
-
       if (!results || results.length === 0) {
         return res.status(404).json({
           message: "No open businesses found.",
@@ -477,8 +550,9 @@ app.get("/get-request", async (req, res) => {
       transactions.transaction_status AS status,
       user_details.user_detail_id
     FROM transactions
-    INNER JOIN user_details ON transactions.user_id = user_details.user_detail_id
-    WHERE transactions.transaction_status = ''
+    INNER JOIN users_table ON transactions.user_id = users_table.user_id
+    INNER JOIN user_details ON user_details.user_id = users_table.user_id
+    WHERE transactions.transaction_status = 'Pending'
     ORDER BY transactions.created_at DESC;
   `;
 
@@ -568,12 +642,12 @@ app.post('/save-business-hours', (req, res) => {
     res.json({ message: 'Business hours saved successfully.' });
   });
 });
-app.get('/get-total-transaction/:user_detail_id', async (req, res) => {
+app.get('/get-total-transaction/:partner_id', async (req, res) => {
 
-  const { user_detail_id } = req.params;
-  const query = `SELECT * FROM partner_wallets WHERE user_detail_id = ?`;
+  const { partner_id } = req.params;
+  const query = `SELECT * FROM partner_wallets WHERE partner_id = ?`;
 
-  db.query(query, [user_detail_id], (err, results) => {
+  db.query(query, [partner_id], (err, results) => {
 
     if (err) {
       console.error('Database Error:', err);
@@ -660,27 +734,29 @@ app.get('/get-all-failed-transaction/:user_detail_id', async (req, res) => {
     });
   });
 });
-app.post('/approve-cash-request', (req, res) => {
-
+app.post("/approve-cash-request", (req, res) => {
   const { individual_id, partner_id, transaction_id, transaction_status, approved_at } = req.body;
 
   if (!individual_id || !partner_id || !transaction_id || !transaction_status || !approved_at) {
     return res.status(400).json({ message: "Missing required fields." });
   }
 
+  if (!allowedStatuses.includes(transaction_status)) {
+    return res.status(400).json({ message: "Invalid transaction status." });
+  }
+
   const updatedAt = new Date().toISOString();
   const updateTransactionQuery = `
     UPDATE transactions
     SET 
-      partner_id = ?, 
       transaction_status = ?, 
       approved_at = ?, 
       updated_at = ?
     WHERE id = ?
   `;
-  const updateTransactionValues = [partner_id, transaction_status, approved_at, updatedAt, transaction_id];
-  db.query(updateTransactionQuery, updateTransactionValues, (updateError, updateResult) => {
+  const updateTransactionValues = [transaction_status, approved_at, updatedAt, transaction_id];
 
+  db.query(updateTransactionQuery, updateTransactionValues, (updateError, updateResult) => {
     if (updateError) {
       return res.status(500).json({ message: "Failed to update the transaction.", error: updateError });
     }
@@ -689,12 +765,12 @@ app.post('/approve-cash-request', (req, res) => {
       return res.status(404).json({ message: "Transaction not found." });
     }
 
-    const notificationMessage = `${individual_id} Request was approved with partner with the ${partner_id}.`;
+    const notificationMessage = `Request from ${individual_id} was approved by partner ${partner_id}.`;
     const insertNotificationQuery = `
       INSERT INTO notifications (store_id, individual_id, notification, updated_at, created_at)
       VALUES (?, ?, ?, ?, ?)
     `;
-    const notificationValues = [ partner_id, individual_id, notificationMessage, updatedAt, approved_at ];
+    const notificationValues = [partner_id, individual_id, notificationMessage, updatedAt, approved_at];
 
     db.query(insertNotificationQuery, notificationValues, (notificationError, notificationResult) => {
       if (notificationError) {
@@ -745,9 +821,9 @@ app.get("/get-transaction-request/:user_detail_id", async (req, res) => {
   }
 });
 app.post('/send-message', (req, res) => {
-  const { store_id, individual_id, message } = req.body;
+  const { sender_id, receiver_id, message } = req.body;
 
-  if (!store_id || !individual_id || !message) {
+  if (!sender_id || !receiver_id || !message) {
     return res.status(400).json({ message: "Missing required fields." });
   }
 
@@ -755,11 +831,11 @@ app.post('/send-message', (req, res) => {
   const updatedAt = new Date().toISOString();
 
   const insertMessageQuery = `
-    INSERT INTO messages (store_id, individual_id, message, created_at, updated_at)
+    INSERT INTO messages (sender_id, receiver_id, message, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?)
   `;
   
-  const messageValues = [store_id, individual_id, message, createdAt, updatedAt];
+  const messageValues = [sender_id, receiver_id, message, createdAt, updatedAt];
 
   db.query(insertMessageQuery, messageValues, (insertError, insertResult) => {
     if (insertError) {
@@ -770,14 +846,84 @@ app.post('/send-message', (req, res) => {
     res.status(200).json({
       message: "Message sent successfully.",
       message_id: insertResult.insertId,
+      sender_id,
+      receiver_id,
+      message,
+      created_at: createdAt,
+      updated_at: updatedAt
     });
   });
 });
+app.get("/get-user-transaction", async (req, res) => {
+  const { transactionId } = req.query;
 
+  try {
+    const query = `
+      SELECT * 
+      FROM transactions
+      WHERE id = ?
+      LIMIT 1;
+    `;
+
+    db.query(query, [transactionId], (err, results) => {
+      if (err) {
+        console.error("Database Error:", err);
+        return res.status(500).json({ message: "Error while fetching transaction." });
+      }
+
+      if (!results || results.length === 0) {
+        return res.status(404).json({
+          message: "Transaction not found.",
+          data: [],
+        });
+      }
+
+      const transaction = results[0];
+
+      res.status(200).json({
+        message: "Transaction fetched successfully.",
+        data: transaction,
+      });
+    });
+  } catch (err) {
+    console.error('Unexpected Error:', err);
+    res.status(500).json({ message: 'An unexpected error occurred.' });
+  }
+});
+app.get("/get-user-message", async (req, res) => {
+  const { user_id, partner_id } = req.query;
+
+  try {
+    const query = `
+      SELECT * 
+      FROM messages
+      WHERE 
+        (sender_id = ? AND receiver_id = ?) 
+        OR 
+        (sender_id = ? AND receiver_id = ?)
+    `;
+
+    db.query(query, [user_id, partner_id, partner_id, user_id], (err, results) => {
+      if (err) {
+        console.error("Database Error:", err);
+        return res.status(500).json({ message: "Error while fetching messages." });
+      }
+
+      res.status(200).json({
+        data: results,
+      });
+    });
+  } catch (err) {
+    console.error("Unexpected Error:", err);
+    res.status(500).json({ message: "An unexpected error occurred." });
+  }
+});
 
 // paypal functionality
 app.post('/paypal', (req, res) => {
-  const { first_name, middle_name, last_name, payment: { service, total_amount }} = req.body;
+
+  const { service, amount, total_amount } = req.body.transactionData;
+  const { name, phone, balance, address, user_id } = req.body.formData;
 
   const create_payment_json = {
     intent: 'sale',
@@ -805,7 +951,7 @@ app.post('/paypal', (req, res) => {
           currency: 'USD',
           total: parseFloat(total_amount).toFixed(2),
         },
-        description: `${first_name} ${middle_name} ${last_name} has ${service} with a total amount of $${parseFloat(total_amount).toFixed(2)}`,
+        description: `${name} has ${service} with a total amount of $${parseFloat(total_amount).toFixed(2)}`,
       },
     ],
   };
@@ -827,6 +973,7 @@ app.post('/paypal', (req, res) => {
     }
   });
 });
+
 app.post('/success', (req, res) => {
   const { PayerID, paymentId, data } = req.body;
 
@@ -919,7 +1066,17 @@ app.post("/web-login", async(req, res) => {
       }
       const x = await bcrypt.compare(password, result[0].user_pass);
       if(x) {
-        return res.status(200).json({message: '', data: {...result[0], user_pass: ''}})
+        db.query('UPDATE users_table SET updated_at = ? WHERE user_email = ?', [new Date(), email],
+          (err, _) => {
+            if(err) {
+              console.error(err);
+              return res.status(500).json({message: err, data:{}});
+            }
+
+            return res.status(200).json({message: '', data: {...result[0], user_pass: ''}})
+          }
+        )
+        
       } else {
         console.log('Wrong Password!');
         return res.status(500).json({message: 'Wrong Password', data: 'Wrong Password'});
@@ -1064,7 +1221,44 @@ app.patch('/verification', async (req, res) => {
           return res.status(500).json({message: err});
         }
 
-        return res.status(200).json({message: 'Success!'});
+        db.query('SELECT user_id, business_permit_verify, government_id_verify, proof_of_address_verify, partnership_type, partner_application_id FROM partnership_application WHERE partner_application_id = ?', [body.partner_application_id],
+          (err, verification) => {
+            if(err) {
+              console.log(err);
+              return res.status(500).json({message: 'Unsuccessful!'});
+            }
+            const dt = verification[0];
+            if(dt.business_permit_verify === 1 && dt.government_id_verify === 1 && dt.proof_of_address_verify === 1) {
+              db.query('UPDATE users_table SET partner_type = ? WHERE user_id = ?',[dt.partnership_type, dt.user_id], 
+                (err, _) => {
+                  console.log(_);
+                  if(err) {
+                    console.log(err);
+                    return res.status(500).json({message:'Unsuccessful!'});
+                  }
+
+                  db.query('INSERT INTO partner_wallets (partner_id, earnings, transaction_fees, comission, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?) ',
+                    [dt.partner_application_id, 0, 0, 0, new Date(), new Date()], 
+                    (err, _) => {
+                      if(err) {
+                        console.log(err);
+                        return res.status(500).json({message: 'Unsuccessful!'});
+                      }
+
+                      console.log('Success!');
+                      return res.status(200).json({message: 'Success updated the partner type!'});
+                    }
+                  )
+                  
+                }
+              )
+            } else {
+              console.log('not yet updated');
+              return res.status(200).json({message: 'Success!'});
+            }
+            
+          }
+        )
       }
     )
   } catch(e) {
@@ -1075,7 +1269,7 @@ app.patch('/verification', async (req, res) => {
 
 app.get('/get-admins', async (req, res) => {
   try {
-    db.query(`SELECT * FROM admin_details`, (err, result) => {
+    db.query(`SELECT * FROM admin_details a INNER JOIN users_table b ON a.user_id = b.user_id`, (err, result) => {
       if(err) {
         console.log(err);
         return res.status(500).json({message: err, data: []});
@@ -1196,6 +1390,26 @@ app.get("/get-finances", async (req, res) => {
   }
 });
 
+app.get('/partner-check/:user_id', async (req, res) => {
+  try {
+
+    db.query('SELECT COUNT(*) as exist FROM partnership_application WHERE user_id = ? ', [req.params.user_id],
+      (err, _) => {
+        if(err) {
+          console.log(err);
+          return res.status(400)
+        }
+        
+        console.log(_);
+        return res.status(200).json({message:'Success!', data: _[0]});
+      }
+    )
+  } catch(e) {
+
+    return res.status(500).json({message: 'Unsuccessful!'});
+  }
+});
+
 app.post("/partner-application", upload.single('file'), async (req, res) => {
   try {
     const body = req.body;
@@ -1225,38 +1439,13 @@ app.post("/partner-application", upload.single('file'), async (req, res) => {
       account_id,
       card_no,
       card_holder
-    ) VALUES (
-      ?, 
-      ?,
-      ?, 
-      ?, 
-      ?, 
-      ?, 
-      ?, 
-      ?, 
-      ?, 
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?
-    )`, [
+    ) VALUES (?, ?,?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )`, [
       body.user_id, 
       body.legal_name,
       body.partnership_type, 
       body.phone_no, 
       body.email, 
-      body.legal_address, 
+      '', 
       body.city, 
       body.state, 
       body.zip, 
@@ -1289,8 +1478,96 @@ app.post("/partner-application", upload.single('file'), async (req, res) => {
   }
 });
 
+app.get('/get-users', async (req, res) => {
+  try {
+
+    db.query('SELECT * FROM users_table a INNER JOIN user_details b ON a.user_id = b.user_id', (err, result) => {
+      if(err) {
+        return res.status(500).json({message: err, data: []});
+      }
+
+      return res.status(200).json({message: 'Successful!', data: result});
+    });
+  } catch(e) {
+    return res.status(500).json({message:'Unsuccessful!', data: []});
+  }
+});
+
+app.get('/get-customers', async (req, res) => {
+  try {
+    db.query('SELECT * FROM users_table WHERE partner_type = ? AND user_email = ?', ['', ''], 
+      (err, result) => {
+        if(err) {
+          return res.status(500).json({message:'Unsuccessful!', data: []});
+        }
+
+        return res.status(200).json({message:'Successful!', data: result});
+      }
+    )
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'Unsuccessful', data: []});
+  }
+});
+
+app.get('/get-transactions', async (req, res) => {
+  try {
+    db.query('SELECT a.service, a.amount, a.created_at FROM transactions a INNER JOIN partnership_application b ON a.partner_id = b.partnership_application_id INNER JOIN user_details_id c ON a.user_id = c.user_id',
+      (err, result) => {
+        if(err) {
+          return res.status(500).json({message: err, data: []});
+        }
+
+        return res.status(200).json({message: 'Successful', data: result});
+      }
+    )
+  } catch(e) {
+    return res.status(500).json({message: 'Unsuccessful!'});
+  }
+});
+
+app.get('/get-partners-dashboard', async (req, res) => {
+  try {
+    db.query('SELECT a.partner_application_id, a.legal_name, b.partner_type, a.business_permit_verify, a.government_id_verify, a.proof_of_address_verify, a.updated_at, a.created_at FROM partnership_application a INNER JOIN users_table b ON a.user_id = b.user_id', (err, partner_applications) => {
+      if(err) {
+        return res.status(500).json({message: 'Unsuccessful ' + err, data: undefined});
+      }
+
+      db.query('SELECT * FROM partner_wallets a INNER JOIN partnership_application b ON a.partner_id = b.partner_application_id INNER JOIN transactions c ON a.partner_id = c.partner_id',
+        (err, trans) => {
+          if(err) {
+            return res.status(500).json({message: 'Unsuccessful! ' + err, data: undefined});
+          }
+
+          return res.status(200).json({message: 'Successful', data: {partners: partner_applications, transactions: trans}})
+        }
+      )
+    })
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'Unsuccessful!' + e, data: undefined});
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('New connection', socket.id);
+
+  socket.on('message', (msg) => {
+    console.log('Recieved');
+  });
+
+  socket.on('approve-request', (message) => {
+    console.log(message);
+    io.emit('recieve-request', message);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnect');
+  });
+}); 
+
 // Start the server
 const PORT = 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

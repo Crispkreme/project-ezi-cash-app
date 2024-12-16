@@ -6,10 +6,8 @@ import HighHeader from "../components/HighHeader";
 
 const PaymentConfirm = ({ route, navigation }) => {
   const { formData, partner, payment, key } = route.params;
-
   const wLabels = {...formData};
   const navigator = useNavigation();
-
   const [state, setState] = useState({
     linkedWallet: '09222222',
     amount: 0,
@@ -27,26 +25,41 @@ const PaymentConfirm = ({ route, navigation }) => {
   },[key]);
 
   const handleConfirm = async () => {
-    navigator.navigate("WaitingApproval", {
-      formData,
-      partner,
-      payment: {
-        type: "E-wallet",
-        balance: 0,
-        service: "Cash In",
-        amount: parseFloat(partner.amount).toFixed(2),
-        total_amount: (parseFloat(partner.amount) + 15).toFixed(2),
-        bank: "Paypal",
-        store_id: partner.store_id,
-        legal_name: partner.legal_name,
-      },
-    });
-  };
+    try {
+      const payload = {
+        formData,
+        payment,
+        partner,
+      };
   
+      const response = await fetch(`${process.env.base_url}/payment-transaction`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (!response.ok) {
+        const errorBody = await response.json();
+        alert(errorBody.message);
+        return;
+      }
+  
+      const body = await response.json();
+      navigator.navigate("WaitingApproval", {
+        formData,
+        transactionId: body.data.transaction_id,
+      });
+
+    } catch (error) {
+      console.error("Error during handleConfirm:", error);
+      alert("An error occurred. Please try again.");
+    }
+  }; 
   const handleNext = () => {
     navigator.navigate("Partner", { formData,  partner: {name: "Nicole Ayessa Alcover"}});
   };
-
   const toggleConfirmCheckbox = () => setState(prev => ({...prev, accepted: !prev.accepted}));
 
   return (

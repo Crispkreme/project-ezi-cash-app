@@ -36,6 +36,7 @@ const SetMPIN = ({ route, navigation }) => {
     if(isReset) {
       navigator.navigate("ResetMPINSuccessful", {formData});
     } else {
+      console.log(formData);
 
       const status = await fetch(process.env.base_url + '/register', {
         method: 'POST',
@@ -51,7 +52,7 @@ const SetMPIN = ({ route, navigation }) => {
 
       console.log(body.data);
 
-      navigator.navigate("Dashboard", {formData});
+      navigator.navigate("Dashboard", {formData: body.data});
     }
     
   };
@@ -89,6 +90,7 @@ const SetMPIN = ({ route, navigation }) => {
             className='border border-gray-300 rounded-md p-4 bg-white'
             letterSpacing={state.mpinShow || state.mpin.length === 0 ? 0 : 5}
             placeholder="Enter MPIN"
+            keyboardType='numeric'
             value={state.mpin}
             maxLength={4}
             secureTextEntry
@@ -101,6 +103,7 @@ const SetMPIN = ({ route, navigation }) => {
           <TextInput
             className='border border-gray-300 rounded-md p-4 bg-white'
             placeholder="Confirm MPIN"
+            keyboardType='numeric'
             letterSpacing={state.confirmMpinShow || state.confirmMpin.length === 0 ? 0 : 5}
             value={state.confirmMpin}
             maxLength={4}

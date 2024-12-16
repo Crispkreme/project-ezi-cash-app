@@ -2,6 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ImageBackground, Modal, Pressable } from "react-native";
 import { __gstyles__ } from "../globalStylesheet";
+import { socket } from "./Main";
 
 const PartnerRequests = ({ route, navigation }) => {
   
@@ -15,22 +16,23 @@ const PartnerRequests = ({ route, navigation }) => {
   const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
 
   const viewProfile = () => {
-    navigator.navigate("Profile", {formData});
+    navigator.navigate("ProfileProfile", {formData});
   }
   const viewDashboard = () => {
     navigator.navigate("PartnerDashboard", {formData});
   }
-  const viewRequests = () => {
-    navigator.navigate("PartnerRequests", {formData});
-  }
   const viewTransactions = () => {
     navigator.navigate("PartnerTransactions", {formData});
   }
-  const acceptRequest = (transaction) => {
-    setTransactionData(transaction);
-    setIsModalVisible(prev => !prev);
+  const viewRequests = () => {
+    navigator.navigate("PartnerRequests", {formData});
   }
 
+  const openRequest = (transaction) => {
+    setTransactionData(transaction);
+    setIsModalVisible((prev) => !prev);
+  }
+  
   useEffect(() => {
     const fetchTransaction = async () => {
       try {
@@ -50,6 +52,7 @@ const PartnerRequests = ({ route, navigation }) => {
         const parsedResponse = await response.json();
 
         if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
+          console.log(parsedResponse);
           setTransactions(parsedResponse.data);
         } else {
           setTransactions([]);
@@ -93,6 +96,7 @@ const PartnerRequests = ({ route, navigation }) => {
     };
     
     try {
+      socket.emit('approve-request', 'hello world');
       const response = await fetch(`${process.env.base_url}/approve-cash-request`, {
         method: "POST",
         headers: {
@@ -198,7 +202,7 @@ const PartnerRequests = ({ route, navigation }) => {
                           }}
                         >
                           <TouchableOpacity
-                            onPress={() => acceptRequest(transaction)}
+                            onPress={() => openRequest(transaction)}
                             style={__gstyles__.shadow}
                             className="p-2 rounded-full"
                           >
@@ -271,7 +275,7 @@ const PartnerRequests = ({ route, navigation }) => {
                 </View>
               </View>
             </View>
-          </Modal>;
+          </Modal>
         </View>
       </View>
     </ImageBackground>

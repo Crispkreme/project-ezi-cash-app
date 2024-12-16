@@ -2,70 +2,58 @@ import React, { useState, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AntDesign from "react-native-vector-icons/AntDesign";
+import { socket } from "../Main";
 
 const WaitingApproval = () => {
   const route = useRoute();
+  const { formData, transactionId } = route.params;
+
   const navigator = useNavigation();
-
-  const { formData = {}, partner = {}, payment = {} } = route.params || {};
-
   const [isLoading, setIsLoading] = useState(true);
+  const [transactionStatus, setTransactionStatus] = useState(null);
+  const [transactionData, setTransactionData] = useState(null);
+
+  // Fetch the transaction details
+  const fetchTransaction = async () => {
+    console.log('got approved');
+    try {
+      const response = await fetch(`${process.env.base_url}/get-user-transaction?transactionId=${transactionId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const responseData = await response.json();
+
+      if (responseData.data) {
+        setTransactionStatus(responseData.data.transaction_status);
+        setTransactionData(responseData.data);
+      }
+
+    } catch (error) {
+      console.error('Error fetching transaction:', error);
+      alert('Error', 'An error occurred while fetching transactions.');
+    }
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
+    socket.on('recieve-request', () => {
+      fetchTransaction();
+    });
   }, []);
 
   useEffect(() => {
-    const initiatePayment = async () => {
-      try {
-        const payload = {
-          ...formData,
-          payment: {
-            type: "E-wallet",
-            balance: 0,
-            service: "Cash In",
-            amount: parseFloat(partner.amount).toFixed(2),
-            total_amount: (parseFloat(partner.amount) + 15).toFixed(2),
-            bank: "Paypal",
-            store_id: partner.store_id,
-            legal_name: partner.legal_name,
-          },
-        };
-  
-        const response = await fetch(`${process.env.base_url}/paypal`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-  
-        const body = await response.json();
-        console.log("Server Response:", body);
-  
-        if (!response.ok) {
-          alert(body.message || "Failed to process payment.");
-          return;
-        }
-  
-        const { approvalUrl } = body;
-  
-        if (approvalUrl) {
-          navigator.navigate("PayPalWebView", { uri: approvalUrl, data: body });
-        } else {
-          alert("Approval URL not found in the server response.");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        alert("An error occurred. Please try again.");
-      }
-    };
-  
-    initiatePayment();
-  }, [formData, partner, navigator]);
-  
+    if (transactionStatus === 'Approved' && transactionData) {
+
+      setIsLoading(false);
+
+      navigator.navigate("PartnerLocate", {
+        formData,
+        transactionData,
+      });
+    }
+  }, [transactionStatus, transactionData, navigator, formData]);
 
   return (
     <View style={styles.container}>
