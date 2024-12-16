@@ -140,6 +140,21 @@ export default function Verification() {
   }
 
   const cancel = () => navigate("/login");
+  const resend = async (e:React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const res = await fetch("/api/web-verification-code", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({email: email})
+    });
+    if(!res.ok) return;
+    const b = await res.json();
+
+    sessionStorage.setItem('verification-code',b.data);
+    alert('Code Resent Successfully!');
+  }
 
   useEffect(() => {
     const reg = sessionStorage.getItem('user-signup') ? sessionStorage.getItem('user-signup') : sessionStorage.getItem('user-login');
@@ -164,7 +179,7 @@ export default function Verification() {
               <input onKeyDown={keyDown} value={pin[2]} onChange={changeHandle} className="inp border border-gray-400 h-16 w-16 p-2 text-center" maxLength={1} type="text" name="slot-2" id="" />
               <input onKeyDown={keyDown} value={pin[3]} onChange={changeHandle} className="inp border border-gray-400 h-16 w-16 p-2 text-center" maxLength={1} type="text" name="slot-3" id="" />
             </div>
-            <span className="roboto-light mt-4">Didn't get the code? <Link className="font-bold" to="/signup">Click to resend</Link></span>
+            <span className="roboto-light mt-4">Didn't get the code? <button className="font-bold" onClick={resend}>Click to resend</button></span>
             <button onClick={verify} className="text-white w-full flex justify-center items-center gap-2 bg-primary py-2 rounded-md mt-16" type="submit">
               {loading && <CircleNotch size={20} className="animate-spin"/>}
               Verify Code
