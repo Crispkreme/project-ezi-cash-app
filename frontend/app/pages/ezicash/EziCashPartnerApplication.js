@@ -105,7 +105,7 @@ const EziCashPartnerApplication = ({route}) => {
       });
 
       if(res.ok) {
-        navigation.navigate("ApplicationStatus", { formData });
+        navigation.navigate("SuccessfulApplication", { formData });
       }
       
     } catch(e) {

@@ -2,6 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ImageBackground, Modal, Pressable } from "react-native";
 import { __gstyles__ } from "../globalStylesheet";
+import { socket } from "./Main";
 
 const PartnerRequests = ({ route, navigation }) => {
   
@@ -55,6 +56,7 @@ const PartnerRequests = ({ route, navigation }) => {
       if (response.ok) {
         const data = await response.json();
         alert("Transaction approved successfully.");
+        socket.emit('approve-request', 'hello world');
         console.log(data.message);
 
         navigator.navigate("ApprovedRequest", {
@@ -92,6 +94,7 @@ const PartnerRequests = ({ route, navigation }) => {
         const parsedResponse = await response.json();
 
         if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
+          console.log(parsedResponse);
           setTransactions(parsedResponse.data);
         } else {
           setTransactions([]);
@@ -313,7 +316,7 @@ const PartnerRequests = ({ route, navigation }) => {
                 </View>
               </View>
             </View>
-          </Modal>;
+          </Modal>
         </View>
       </View>
     </ImageBackground>
