@@ -22,8 +22,18 @@ const Profile = ({ route, navigation }) => {
     navigator.navigate("Dashboard", {formData});
   }
 
-  const applyEziCash = () => {
-    navigator.navigate("EziCashPartnerApplication", {formData});
+  const applyEziCash = async () => {
+    const res = await fetch(`${process.env.BASE_URL}/partner-check/` + formData.user_id);
+    if(res.ok) {
+      const body = await res.json();
+      
+      if(body.data.exist === 1) {
+        navigator.navigate("ApplicationStatus", { formData });
+      } else {
+        navigator.navigate("EziCashPartnerApplication", {formData});
+      }
+    }
+    
   }
 
   return (

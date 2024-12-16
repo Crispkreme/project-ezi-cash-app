@@ -2,6 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ImageBackground, Modal, Pressable } from "react-native";
 import { __gstyles__ } from "../globalStylesheet";
+import { socket } from "./Main";
 
 const PartnerRequests = ({ route, navigation }) => {
   
@@ -26,11 +27,54 @@ const PartnerRequests = ({ route, navigation }) => {
   const viewRequests = () => {
     navigator.navigate("PartnerRequests", {formData});
   }
-  const acceptRequest = (transaction) => {
-    setTransactionData(transaction);
-    setIsModalVisible(prev => !prev);
-  }
+  const acceptRequest = async (transaction) => {
+    try {
+      setTransactionData(transaction);
+      setIsModalVisible((prev) => !prev);
+      console.log("transaction", transaction);
+  
+      if (!formData?.user_detail_id) {
+        throw new Error("Partner ID is missing in formData.");
+      }
+  
+      const payload = {
+        individual_id: transaction.user_detail_id,
+        partner_id: formData.user_detail_id,
+        transaction_id: transaction.id,
+        transaction_status: "Approved",
+        approved_at: new Date().toISOString(),
+      };
+  
+      const response = await fetch(`${process.env.base_url}/approve-cash-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        alert("Transaction approved successfully.");
+        socket.emit('approve-request', 'hello world');
+        console.log(data.message);
 
+        navigator.navigate("ApprovedRequest", {
+          formData,
+          transaction
+        });
+
+      } else {
+        const errorData = await response.json();
+        console.error("Error:", errorData);
+        alert(errorData.message || "Failed to approve the transaction.");
+      }
+    } catch (error) {
+      console.error("Error connecting to the server:", error);
+      alert("Error connecting to the server. Please check your network.");
+    }
+  };
+  
   useEffect(() => {
     const fetchTransaction = async () => {
       try {
@@ -50,6 +94,7 @@ const PartnerRequests = ({ route, navigation }) => {
         const parsedResponse = await response.json();
 
         if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
+          console.log(parsedResponse);
           setTransactions(parsedResponse.data);
         } else {
           setTransactions([]);
@@ -271,7 +316,7 @@ const PartnerRequests = ({ route, navigation }) => {
                 </View>
               </View>
             </View>
-          </Modal>;
+          </Modal>
         </View>
       </View>
     </ImageBackground>

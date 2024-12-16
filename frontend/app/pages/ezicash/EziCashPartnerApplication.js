@@ -23,7 +23,6 @@ const EziCashPartnerApplication = ({route}) => {
     partnership_type: "",
     phone_no: "",
     email: "",
-    legal_address: "",
     city: "",
     state: "",
     zip: "",
@@ -195,17 +194,6 @@ const EziCashPartnerApplication = ({route}) => {
               placeholder="Email Address"
               value={applyData.email}
               onChangeText={(value) => handleInputChange("email", value)}
-            />
-          </TouchableOpacity>
-          
-
-          <Text className='text-sm text-gray-400 mb-2'>Legal Address</Text>
-          <TouchableOpacity style={styles.shadow} className='rounded-md mb-2'>
-            <TextInput
-              className='border border-gray-300 rounded-md p-4 bg-white'
-              placeholder="Legal Address"
-              value={applyData.legal_address}
-              onChangeText={(value) => handleInputChange("legal_address", value)}
             />
           </TouchableOpacity>
           
