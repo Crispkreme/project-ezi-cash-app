@@ -27,7 +27,7 @@ const AddAmount = ({ route, navigation }) => {
         });
       } else {
         navigator.navigate("SearchPartner", {
-          curFormData,
+          formData: {...curFormData},
           amount: state.amount,
         });
       }
