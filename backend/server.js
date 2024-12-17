@@ -609,7 +609,24 @@ app.get("/get-wallet/:user_detail_id", async (req, res) => {
     });
   });
 });
-app.post('/save-business-hours', (req, res) => {
+
+app.get('/get-business-hours/:user_detail_id', (req, res) => {
+  try {
+    db.query('SELECT * FROM business_hours a INNER JOIN user_details b ON a.partner_id = b.user_detail_id', [req.params.user_detail_id],
+      (err, info) => {
+        if(err) {
+          console.log(err);
+          return res.status(500).json({message: 'Unsuccessful'});
+        }
+
+        return res.status(200).json({message:'Successful', data: info});
+      }
+    )
+  } catch(e) {
+    return res.status(500).json({message:'Unsuccessful'})
+  }
+});
+app.post('/save-business-hours', async (req, res) => {
 
   const { schedule } = req.body;
 
@@ -620,21 +637,46 @@ app.post('/save-business-hours', (req, res) => {
   const values = [];
 
   for (const [day, { partner_id, isOpen, open_at, close_at, business_date }] of Object.entries(schedule)) {
+    
     const isOpenValue = isOpen ? 1 : 0;
-
+    console.log(isOpenValue);
     const openTime = new Date(`${business_date}T${open_at}`).toTimeString().slice(0, 8);
     const closeTime = new Date(`${business_date}T${close_at}`).toTimeString().slice(0, 8);
 
     if (!openTime || !closeTime) {
       return res.status(400).json({ message: `Invalid time format for ${day}.` });
     }
-    db.query(`INSERT INTO business_hours (partner_id, isOpen, day, open_at, close_at, business_date, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,[partner_id, isOpenValue, day, openTime, closeTime, business_date, createdAt, updatedAt],
-    (error,result)=>{
-      if(error){
-        return res.status(500).json({ message: `Unable to save business hours'.` });
+
+    db.query(`SELECT * FROM business_hours WHERE day = ? AND partner_id = ?`, [day, partner_id],
+      (err, result) => {
+        if(err) {
+          return res.status(500).json({message:' Unsuccessful!'});
+        }
+        const existing = result.length > 0 ? result[0] : undefined;
+        
+        if(existing) {
+          db.query('UPDATE business_hours SET isOpen=?, open_at=?, close_at=?, business_date=?, updated_at=? WHERE business_hour_id = ?',
+            [ isOpenValue, openTime, closeTime, business_date, updatedAt, existing.business_hour_id],
+            (err, _) => {
+              if(err) {
+                return res.status(500).json({message: 'Unsuccessful'});
+              }
+
+            }
+          )
+        } else {
+          db.query(`INSERT INTO business_hours (partner_id, isOpen, day, open_at, close_at, business_date, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,[partner_id, isOpenValue, day, openTime, closeTime, business_date, createdAt, updatedAt],
+          (error,result)=>{
+            if(error){
+              return res.status(500).json({ message: `Unable to save business hours'.` });
+            }
+
+          })
+        }
       }
-    })
+    )
+    
   }
   return res.status(200).json({ message: `Success'.` });
 });
