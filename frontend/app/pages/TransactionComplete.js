@@ -1,16 +1,13 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
-import { __gstyles__, colors } from "../globalStylesheet";
+import { useState } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { __gstyles__ } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
-import { AirbnbRating, Rating } from "react-native-ratings";
 
 const TransactionComplete = ({ route, navigation }) => {
-  const { formData, partner, payment } = route.params;
+  const { formData, transactionData } = route.params;
 
-  const wLabels = {...formData};
+  // const wLabels = {...formData};
   const navigator = useNavigation();
 
   const [state, setState] = useState({
@@ -22,7 +19,7 @@ const TransactionComplete = ({ route, navigation }) => {
 
   if(formData.partner_type === "") {
     setTimeout(() => {
-      navigator.navigate("RatePartner", {formData, partner, payment});
+      navigator.navigate("RatePartner", {formData, transactionData});
     },3000);
   }
 
@@ -45,7 +42,7 @@ const TransactionComplete = ({ route, navigation }) => {
               </View>
             </View>
             <View style={{justifyContent:'flex-end', alignItems: 'flex-end'}}>
-              <Text className='text-sm'>{partner.legal_name}</Text>
+              <Text className='text-sm'>{formData.name}</Text>
             </View>
           </View>
           
@@ -55,7 +52,7 @@ const TransactionComplete = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Service</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>{payment.service}</Text>
+            <Text className='text-gray-400 text-base text-primary'>{transactionData.service}</Text>
           </View>
 
           <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
@@ -64,7 +61,7 @@ const TransactionComplete = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Amount</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>{parseInt(payment.amount).toFixed(2)}</Text>
+            <Text className='text-gray-400 text-base text-primary'>{parseInt(transactionData.amount).toFixed(2)}</Text>
           </View>
 
           <View style={{justifyContent: 'space-between'}} className='flex-row items-center py-2 px-4'>

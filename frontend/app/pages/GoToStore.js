@@ -84,7 +84,12 @@ const GoToStore = ({ route }) => {
     
         const { approvalUrl } = body;
         if (approvalUrl) {
-          navigator.navigate("PayPalWebView", { uri: approvalUrl, data: body });
+          navigator.navigate("PayPalWebView", {
+            uri: approvalUrl,
+            data: body,
+            formData,
+            transactionData,
+          });
         } else {
           alert("Approval URL not found in the server response.");
         }

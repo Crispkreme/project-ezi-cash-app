@@ -4,10 +4,12 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { __gstyles__ } from "../globalStylesheet";
 
 const FinishTransaction = ({ route }) => {
-  const { paymentId, payerId, data, formData, partner, payment } = route.params;
+  const { paymentId, payerId, data, formData, transactionData } = route.params;
+  
+  console.log("paymentId", paymentId);
+  console.log("payerId", payerId);
 
   const navigator = useNavigation();
-
   const handleConfirm = async () => {
     try {
       const payload = {
@@ -46,7 +48,7 @@ const FinishTransaction = ({ route }) => {
 
         if (response.ok) {
           alert('Payment success');
-          navigator.navigate("TransactionComplete", { formData, partner, payment });
+          navigator.navigate("TransactionComplete", { formData, transactionData });
         } else {
           alert('Payment Failed', parsedResponse.message || 'An error occurred.');
         }
