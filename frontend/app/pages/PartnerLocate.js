@@ -162,36 +162,6 @@ const PartnerLocate = ({ route }) => {
     }
   };
   
-  const handleConfirm = async () => {
-    try {
-      const payload = { formData, transactionData };
-  
-      const response = await fetch(`${process.env.base_url}/paypal`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-  
-      const body = await response.json();
-      console.log("Server Response:", body);
-  
-      if (!response.ok) {
-        alert(body.message || "Failed to process payment.");
-        return;
-      }
-  
-      const { approvalUrl } = body;
-  
-      if (approvalUrl) {
-        navigator.navigate("PayPalWebView", { uri: approvalUrl, data: body });
-      } else {
-        alert("Approval URL not found in the server response.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred. Please try again.");
-    }
-  };
   
   const handleReceiveMessage = (message) => {
     alert('asdasdasdasd');
@@ -210,10 +180,10 @@ const PartnerLocate = ({ route }) => {
     socket.on("receive-message", (message) => {
       alert(message);
     });
-    // setInit(true);
-    // fetchMessages();
-    // fetchTransactions();
-    // joinRoom();
+    setInit(true);
+    fetchMessages();
+    fetchTransactions();
+    joinRoom();
   }, []);
 
   return (

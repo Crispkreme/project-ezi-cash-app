@@ -389,7 +389,6 @@ app.get('/get-pending-transaction/:user_id', async (req, res) => {
           console.log(err);
           return res.status(500).json({message:'Unsuccessful'});
         }
-        console.log("transactionID:", result);
         return res.status(200).json({message: 'Successful!', data: result});
       }
     )
@@ -931,7 +930,7 @@ app.post('/paypal', (req, res) => {
 
   const { service, amount, total_amount } = req.body.transactionData;
   const { name, phone, balance, address, user_id } = req.body.formData;
-
+  
   const create_payment_json = {
     intent: 'sale',
     payer: {
@@ -948,7 +947,7 @@ app.post('/paypal', (req, res) => {
             {
               name: service,
               sku: '001',
-              price: parseFloat(total_amount).toFixed(2),
+              price: (parseFloat(amount) + 15).toFixed(2),
               currency: 'USD',
               quantity: 1,
             },
@@ -956,9 +955,9 @@ app.post('/paypal', (req, res) => {
         },
         amount: {
           currency: 'USD',
-          total: parseFloat(total_amount).toFixed(2),
+          total: (parseFloat(amount) + 15).toFixed(2),
         },
-        description: `${name} has ${service} with a total amount of $${parseFloat(total_amount).toFixed(2)}`,
+        description: `${name} has ${service} with a total amount of $${(parseFloat(amount) + 15).toFixed(2)}`,
       },
     ],
   };
@@ -983,14 +982,14 @@ app.post('/paypal', (req, res) => {
 
 app.post('/success', (req, res) => {
   const { PayerID, paymentId, data } = req.body;
-
+  console.log("data:", data);
   if (!PayerID || !paymentId) {
     console.error("Missing payment information");
     return res.status(400).json({ message: 'Payment information is missing.' });
   }
 
   const payment = data?.body?.payment;
-
+  
   if (!payment || typeof payment.total_amount === 'undefined') {
     console.error("Invalid data or payment structure:", data);
     return res.status(400).json({ message: 'Payment data is missing or malformed.' });
@@ -1014,20 +1013,36 @@ app.post('/success', (req, res) => {
       return res.status(500).json({ message: 'Error executing PayPal payment.', error: error.response || error });
     }
 
-    const { store_id, type, bank, service, amount, total_amount, balance } = payment;
-    const individual_id = data.body.user_id;
+    const { type, bank, service, amount, total_amount, balance } = payment || {};
     const createdAt = new Date().toISOString();
     const updatedAt = createdAt;
+    const transaction_status = "Success";
 
-    const query1 = `
-      INSERT INTO transactions 
-      (store_id, individual_id, type, bank, service, amount, total_amount, balance, payer_id, payment_id, updated_at, created_at) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    const approved_at = new Date().toISOString(); 
+    const transaction_id = payment.id;
+    const store_id = payment.partner_id;
+    const individual_id = payment.user_id;
+    // const store_id = 
+
+    if (!transaction_id) {
+      console.error("Missing transaction ID.");
+      throw new Error("Transaction ID is required to update the transaction.");
+    }
+
+    const updateTransactionQuery = `
+      UPDATE transactions
+      SET 
+        transaction_status = ?, 
+        approved_at = ?, 
+        updated_at = ?
+      WHERE id = ?
     `;
+    const updateTransactionValues = [transaction_status, approved_at, updatedAt, transaction_id];
 
-    const values1 = [ store_id, individual_id, type, bank, service, amount, total_amount, balance, PayerID, paymentId, updatedAt, createdAt ];
+    console.log("Update Transaction Query:", updateTransactionQuery);
+    console.log("Update Transaction Values:", updateTransactionValues);
 
-    db.query(query1, values1, (dbError1, dbResult1) => {
+    db.query(updateTransactionQuery, updateTransactionValues, (dbError1, dbResult1) => {
       if (dbError1) {
         console.error('Database Error (Transactions):', dbError1);
         return res.status(500).json({ message: 'Database error occurred while saving transaction.', error: dbError1 });
