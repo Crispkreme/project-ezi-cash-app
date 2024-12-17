@@ -210,7 +210,7 @@ const SearchPartner = ({ route, navigation }) => {
         <View>
           {Array.isArray(partner) && partner.length > 0 ? (
             partner.map((item, index) => (
-              <View key={item.business_hour_id || index}>
+              <View key={item.partner_id || index}>
                 <TouchableOpacity
                   style={[__gstyles__.shadow]}
                   className="bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300"

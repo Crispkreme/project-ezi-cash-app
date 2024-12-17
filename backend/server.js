@@ -443,27 +443,28 @@ app.get("/get-partners", async (req, res) => {
     const currentDate = now.toISOString().split("T")[0];
     const currentTime = now.toTimeString().split(" ")[0];
     const query = `
-      SELECT 
+      SELECT DISTINCT 
         b.*, 
-        ut.*, 
+        ud.*, 
         pa.legal_name AS store_name, 
         pa.business_state, 
         pa.business_city
       FROM 
         business_hours b
       INNER JOIN 
-        partnership_application pa 
-        ON b.partner_id = pa.partner_application_id
+        user_details ud 
+        ON b.partner_id = ud.user_detail_id
       INNER JOIN 
-        users_table ut 
+        partnership_application pa 
+        ON pa.user_id = ud.user_id
+      INNER JOIN
+        users_table ut
         ON pa.user_id = ut.user_id
       WHERE 
         b.isOpen = 1
         AND ut.partner_type IN ('Individual', 'Store')
         AND b.day = ?
-        AND b.business_date = ?
-        AND b.open_at <= ?
-        AND b.close_at >= ?;
+        
     `;
 
     db.query(query, [currentDay, currentDate, currentTime, currentTime], (err, results) => {
