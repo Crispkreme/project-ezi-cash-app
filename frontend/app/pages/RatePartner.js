@@ -1,14 +1,12 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image, TextInput } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
-import { __gstyles__, colors } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
-import { AirbnbRating, Rating } from "react-native-ratings";
+import { Rating } from "react-native-ratings";
 
 const RatePartner = ({ route, navigation }) => {
-  const { formData, search, key, partner } = route.params;
+  const { formData, transactionData } = route.params;
 
   const wLabels = {...formData};
   const navigator = useNavigation();
@@ -45,7 +43,7 @@ const RatePartner = ({ route, navigation }) => {
             </View>
           </View>
           <View style={{justifyContent:'flex-end', alignItems: 'flex-end'}}>
-            <Text className='text-sm'>{partner.legal_name}</Text>
+            <Text className='text-sm'>{formData.name}</Text>
           </View>
         </View>
 
