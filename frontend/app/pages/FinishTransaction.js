@@ -1,45 +1,89 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput, Touchable } from "react-native";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { __gstyles__ } from "../globalStylesheet";
 
 const FinishTransaction = ({ route }) => {
-  const { formData, partner, payment } = route.params;
+  const { paymentId, payerId, data, formData, partner, payment } = route.params;
 
-  const wLabels = {...formData};
   const navigator = useNavigation();
 
-  const [state, setState] = useState({
-    linkedWallet: '09222222',
-    amount: 0
-  });
-
   const handleConfirm = async () => {
-    navigator.navigate("TransactionComplete", { formData, partner, payment });
-  };
+    try {
+      const payload = {
+        PayerID: payerId,
+        paymentId,
+        data: {
+          ...data,
+          body: {
+            ...data.body,
+            payment: data.body.transactionData,
+          },
+        },
+      };
 
-  const handleNext = () => {
-    alert(5);
+      console.log("Payload:", payload);
+
+      const response = await fetch(`${process.env.base_url}/success`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        console.error("Error Response:", responseText);
+        alert("Payment Error", `Server returned: ${responseText}`);
+        return;
+      }
+
+      try {
+        const parsedResponse = JSON.parse(responseText);
+        console.log("Response Data:", parsedResponse);
+
+        if (response.ok) {
+          alert('Payment success');
+          navigator.navigate("TransactionComplete", { formData, partner, payment });
+        } else {
+          alert('Payment Failed', parsedResponse.message || 'An error occurred.');
+        }
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        alert("Response parsing error", "There was an issue parsing the server response.");
+      }
+    } catch (error) {
+      console.error('Error executing payment:', error);
+      alert('Payment Error', 'An error occurred. Please try again.');
+    }
   };
 
   return (
-    <View style={styles.container} className=''>
-      
-      <Text style={{marginBottom: 120}} className='text-sm text-primary text-center'>Click Icon to finish the rest of the application</Text>
-      <TouchableOpacity onClick={handleNext} style={[__gstyles__.shadow, {padding: 40}]} className='bg-primary-bg rounded-lg mb-4 border border-gray-300 self-center'>
-        <Image alt="cash in" source={require("../../public/image/transaction-complete.png")}></Image>
+    <View style={styles.container}>
+      <Text style={{ marginBottom: 120 }} className="text-sm text-primary text-center">
+        Click Icon to finish the rest of the application
+      </Text>
+      <TouchableOpacity
+        onPress={() => alert('Next action')}
+        style={[__gstyles__.shadow, { padding: 40 }]}
+        className="bg-primary-bg rounded-lg mb-4 border border-gray-300 self-center"
+      >
+        <Image alt="cash in" source={require("../../public/image/transaction-complete.png")} />
       </TouchableOpacity>
 
-      <View className='absolute py-4 mx-auto self-center bottom-4 w-full'>
-        <TouchableOpacity className='bg-primary p-4 rounded-lg' onPress={handleConfirm}>
-          <Text className='font-bold text-white text-center w-full'>Completed</Text>
+      <View className="absolute py-4 mx-auto self-center bottom-4 w-full">
+        <TouchableOpacity className="bg-primary p-4 rounded-lg" onPress={handleConfirm}>
+          <Text className="font-bold text-white text-center w-full">Completed</Text>
         </TouchableOpacity>
-        <Text style={{marginBottom: 10}} className='mt-4 text-sm text-primary text-center'>Click Complete button after finishing 
-        the transaction.</Text>
+        <Text
+          style={{ marginBottom: 10 }}
+          className="mt-4 text-sm text-primary text-center"
+        >
+          Click Complete button after finishing the transaction.
+        </Text>
       </View>
-      
     </View>
   );
 };

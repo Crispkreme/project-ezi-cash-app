@@ -25,7 +25,7 @@ const PayPalWebView = () => {
       const payerId = urlParams.get('PayerID');
 
       if (paymentId && payerId) {
-        navigation.navigate('GoToStore', { paymentId, payerId, data });
+        navigation.navigate('FinishTransaction', { paymentId, payerId, data });
       }
     }
 

@@ -389,7 +389,6 @@ app.get('/get-pending-transaction/:user_id', async (req, res) => {
           console.log(err);
           return res.status(500).json({message:'Unsuccessful'});
         }
-        console.log(req.params.user_id)
         return res.status(200).json({message: 'Successful!', data: result});
       }
     )
@@ -825,6 +824,12 @@ app.get("/get-transaction-request/:user_detail_id", async (req, res) => {
 app.post('/send-message', (req, res) => {
   const { sender_id, receiver_id, message } = req.body;
 
+  console.log([
+    {sender_id: sender_id},
+    {receiver_id: receiver_id},
+    {message: message},
+  ]);
+
   if (!sender_id || !receiver_id || !message) {
     return res.status(400).json({ message: "Missing required fields." });
   }
@@ -926,7 +931,7 @@ app.post('/paypal', (req, res) => {
 
   const { service, amount, total_amount } = req.body.transactionData;
   const { name, phone, balance, address, user_id } = req.body.formData;
-
+  
   const create_payment_json = {
     intent: 'sale',
     payer: {
@@ -943,7 +948,7 @@ app.post('/paypal', (req, res) => {
             {
               name: service,
               sku: '001',
-              price: parseFloat(total_amount).toFixed(2),
+              price: (parseFloat(amount) + 15).toFixed(2),
               currency: 'USD',
               quantity: 1,
             },
@@ -951,9 +956,9 @@ app.post('/paypal', (req, res) => {
         },
         amount: {
           currency: 'USD',
-          total: parseFloat(total_amount).toFixed(2),
+          total: (parseFloat(amount) + 15).toFixed(2),
         },
-        description: `${name} has ${service} with a total amount of $${parseFloat(total_amount).toFixed(2)}`,
+        description: `${name} has ${service} with a total amount of $${(parseFloat(amount) + 15).toFixed(2)}`,
       },
     ],
   };
@@ -978,14 +983,14 @@ app.post('/paypal', (req, res) => {
 
 app.post('/success', (req, res) => {
   const { PayerID, paymentId, data } = req.body;
-
+  console.log("data:", data);
   if (!PayerID || !paymentId) {
     console.error("Missing payment information");
     return res.status(400).json({ message: 'Payment information is missing.' });
   }
 
   const payment = data?.body?.payment;
-
+  
   if (!payment || typeof payment.total_amount === 'undefined') {
     console.error("Invalid data or payment structure:", data);
     return res.status(400).json({ message: 'Payment data is missing or malformed.' });
@@ -1009,20 +1014,36 @@ app.post('/success', (req, res) => {
       return res.status(500).json({ message: 'Error executing PayPal payment.', error: error.response || error });
     }
 
-    const { store_id, type, bank, service, amount, total_amount, balance } = payment;
-    const individual_id = data.body.user_id;
+    const { type, bank, service, amount, total_amount, balance } = payment || {};
     const createdAt = new Date().toISOString();
     const updatedAt = createdAt;
+    const transaction_status = "Success";
 
-    const query1 = `
-      INSERT INTO transactions 
-      (store_id, individual_id, type, bank, service, amount, total_amount, balance, payer_id, payment_id, updated_at, created_at) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    const approved_at = new Date().toISOString(); 
+    const transaction_id = payment.id;
+    const store_id = payment.partner_id;
+    const individual_id = payment.user_id;
+    // const store_id = 
+
+    if (!transaction_id) {
+      console.error("Missing transaction ID.");
+      throw new Error("Transaction ID is required to update the transaction.");
+    }
+
+    const updateTransactionQuery = `
+      UPDATE transactions
+      SET 
+        transaction_status = ?, 
+        approved_at = ?, 
+        updated_at = ?
+      WHERE id = ?
     `;
+    const updateTransactionValues = [transaction_status, approved_at, updatedAt, transaction_id];
 
-    const values1 = [ store_id, individual_id, type, bank, service, amount, total_amount, balance, PayerID, paymentId, updatedAt, createdAt ];
+    console.log("Update Transaction Query:", updateTransactionQuery);
+    console.log("Update Transaction Values:", updateTransactionValues);
 
-    db.query(query1, values1, (dbError1, dbResult1) => {
+    db.query(updateTransactionQuery, updateTransactionValues, (dbError1, dbResult1) => {
       if (dbError1) {
         console.error('Database Error (Transactions):', dbError1);
         return res.status(500).json({ message: 'Database error occurred while saving transaction.', error: dbError1 });
@@ -1578,10 +1599,21 @@ app.get('/get-partners-dashboard', async (req, res) => {
 
 io.on('connection', (socket) => {
   console.log('New connection', socket.id);
-
+  socket.on('message', (msg) => {
+    console.log('Recieved');
+  });
   socket.on('approve-request', (message) => {
     console.log(message);
     io.emit('recieve-request', message);
+  });
+  socket.on("join-room", (roomId) => {
+    console.log('joined room socket', roomId);
+    socket.join(roomId);
+    console.log(`Socket ${socket.id} joined room ${roomId}`);
+  });
+  socket.on("send-message", (message) => {
+    const { sender_id, receiver_id } = message;
+    io.emit("receive-message", message);
   });
 
   socket.on('disconnect', () => {
