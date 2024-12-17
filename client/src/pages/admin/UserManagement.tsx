@@ -63,12 +63,14 @@ export default function UserManagement() {
             lastlogin: diffDay > 0 ? `${diffDay} days ago` : diffHour > 0 && diffDay === 0 ? `${diffHour} hours ago` : `${diffMinute} minutes ago` , 
             date_added: new Date(a.created_at)
           }
-        })
+        });
+
+        const sorted = deptTemp.sort((a,b) => b.date_added.getTime() - a.date_added.getTime())
 
         setUsers(temp);
         setSearchRes(temp);
-        setSearchDept(deptTemp);
-        setDept(deptTemp);
+        setSearchDept(sorted);
+        setDept(sorted);
       }
     }
 
