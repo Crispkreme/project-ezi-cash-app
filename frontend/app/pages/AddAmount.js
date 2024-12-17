@@ -20,7 +20,6 @@ const AddAmount = ({ route, navigation }) => {
     const res = await fetch(process.env.base_url + "/get-pending-transaction/" + formData.user_id);
     if(res.ok) {
       const body = await res.json();
-      console.log([...body.data][0].id);
       if([...body.data].length > 0) {
         navigator.navigate("WaitingApproval", {
           formData: {...curFormData},

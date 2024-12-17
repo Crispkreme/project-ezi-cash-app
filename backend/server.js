@@ -389,10 +389,12 @@ app.get('/get-pending-transaction/:user_id', async (req, res) => {
           console.log(err);
           return res.status(500).json({message:'Unsuccessful'});
         }
+        console.log(result)
         return res.status(200).json({message: 'Successful!', data: result});
       }
     )
   } catch(e) {
+    console.log(e)
     return res.status(500).json({message: 'Unsuccessful!'});
   }
 });
@@ -626,22 +628,15 @@ app.post('/save-business-hours', (req, res) => {
     if (!openTime || !closeTime) {
       return res.status(400).json({ message: `Invalid time format for ${day}.` });
     }
-
-    queries.push(`
-      INSERT INTO business_hours (partner_id, isOpen, day, open_at, close_at, business_date, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    values.push(partner_id, isOpenValue, day, openTime, closeTime, business_date, createdAt, updatedAt);
+    db.query(`INSERT INTO business_hours (partner_id, isOpen, day, open_at, close_at, business_date, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,[partner_id, isOpenValue, day, openTime, closeTime, business_date, createdAt, updatedAt],
+    (error,result)=>{
+      if(error){
+        return res.status(500).json({ message: `Unable to save business hours'.` });
+      }
+    })
   }
-
-  db.query(queries.join(';'), values, (error, result) => {
-    if (error) {
-      console.error('Database Error:', error);
-      return res.status(500).json({ message: 'Database error occurred.', error });
-    }
-
-    res.json({ message: 'Business hours saved successfully.' });
-  });
+  return res.status(200).json({ message: `Success'.` });
 });
 app.get('/get-total-transaction/:partner_id', async (req, res) => {
 
@@ -1122,8 +1117,8 @@ app.post('/web-verification-code', async (req, res) => {
       port:465,
       secure: true,
       auth: {
-        user: "cjvicro@gmail.com",
-        pass: "ztbepsrmnypjjvyt"
+        user: "ezicashapplication",
+        pass: "qhzhlcbbzyeuoexk"
       }
     });
 
