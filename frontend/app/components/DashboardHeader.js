@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { View, Text, ImageBackground, StyleSheet, Image } from "react-native";
+import { View, Text, ImageBackground, StyleSheet, Image, TouchableOpacity } from "react-native";
 
 export default function DashboardHeader({profile = false}) {
 
@@ -9,6 +9,10 @@ export default function DashboardHeader({profile = false}) {
 
   const handleBack = () => {
     navigation.goBack();
+  }
+
+  const goToNotification = () => {
+    navigation.navigate("Notification", {formData});
   }
   return (
     <ImageBackground style={styles.background} className='bg-primary-bg' resizeMode="contain" source={require("../../public/image/dashboard-bg.png")}>
@@ -29,7 +33,9 @@ export default function DashboardHeader({profile = false}) {
             {formData.name}
           </Text>
         </View>
-        <Image style={{marginHorizontal: profile ? 20 : 30, top: profile ? -50 : 0}} source={require("../../public/icn/notification-icn.png")}/>
+        <TouchableOpacity onPress={goToNotification}>
+          <Image style={{marginHorizontal: profile ? 20 : 30, top: profile ? -50 : 0}} source={require("../../public/icn/notification-icn.png")}/>
+        </TouchableOpacity>
       </View>
     </ImageBackground>
   )

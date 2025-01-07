@@ -10,6 +10,7 @@ import {
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { socket } from "./Main";
 
 const PartnerLocate = ({ route }) => {
   
@@ -17,8 +18,10 @@ const PartnerLocate = ({ route }) => {
 
   const navigator = useNavigation();
   const [init, setInit] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [transactions, setTransactions] = useState([]);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [curMarker, setCurMarker] = useState({
     latitude: 0, 
@@ -98,32 +101,48 @@ const PartnerLocate = ({ route }) => {
         `${process.env.base_url}/get-user-message?partner_id=${transactionData.partner_id}&user_id=${transactionData.user_id}`,
         { method: "GET", headers: { "Content-Type": "application/json" } }
       );
-
       const responseData = await response.json();
-
       setMessages(responseData.data || []);
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
   };
+  
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.base_url}/get-transactions`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const responseData = await response.json();
+      setTransactions(responseData.data || []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      setLoading(false);
+    }
+  };
+  
   const sendMessage = async () => {
     if (newMessage.trim() === "") return;
-
+  
     const messageData = {
-      sender_id: transactionData.user_id,
-      receiver_id: transactionData.partner_id,
+      sender_id: formData.user_detail_id,
+      receiver_id: transactionData.user_detail_id,
       message: newMessage.trim(),
     };
-
+  
     try {
       const response = await fetch(`${process.env.base_url}/send-message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(messageData),
       });
-
+  
       if (response.ok) {
         const sentMessage = await response.json();
+        socket.emit("send-message", sentMessage);
         setMessages((prev) => [
           ...prev,
           {
@@ -142,43 +161,29 @@ const PartnerLocate = ({ route }) => {
       console.error("Error sending message:", error);
     }
   };
-  const handleConfirm = async () => {
-    try {
-      const payload = {
-        formData,
-        transactionData,
-      };
-
-      const response = await fetch(`${process.env.base_url}/paypal`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const body = await response.json();
-      console.log("Server Response:", body);
-
-      if (!response.ok) {
-        alert(body.message || "Failed to process payment.");
-        return;
-      }
-
-      const { approvalUrl } = body;
-
-      if (approvalUrl) {
-        navigator.navigate("PayPalWebView", { uri: approvalUrl, data: body });
-      } else {
-        alert("Approval URL not found in the server response.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred. Please try again.");
-    }
+  
+  
+  const handleReceiveMessage = (message) => {
+    alert('asdasdasdasd');
+    setMessages((prev) => [...prev, message]);
   };
-
+  
+  const joinRoom = () => {
+    const roomId = transactionData.id;
+    console.log('room id', roomId);
+    socket.emit("send-message", roomId);
+    
+    console.log(`Joined room: ${roomId}`);
+  };
+  
   useEffect(() => {
-    fetchMessages();
+    socket.on("receive-message", (message) => {
+      alert(message);
+    });
     setInit(true);
+    fetchMessages();
+    fetchTransactions();
+    joinRoom();
   }, []);
 
   return (
@@ -272,7 +277,6 @@ const PartnerLocate = ({ route }) => {
       <View className="py-4 mt-6">
         <TouchableOpacity
           className="bg-primary p-4 rounded-lg"
-          onPress={handleConfirm}
         >
           <Text className="text-white text-center font-bold">Arrived</Text>
         </TouchableOpacity>

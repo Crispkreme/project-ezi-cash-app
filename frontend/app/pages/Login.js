@@ -66,6 +66,17 @@ const Login = ({route}) => {
           if (otpResponse.ok) {
             const data = await otpResponse.json();
             const otp = data.otp;
+            console.log(otp);
+            const smsResponse = await fetch(process.env.base_url + "/send-sms-otp", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ mobileNumber: mobileNumber, otp: otp }),
+            });
+            
+            const smsData = await smsResponse.json();
+            console.log("SMS Response:", smsData);
 
             alert("OTP sent successfully!");
     
@@ -76,27 +87,6 @@ const Login = ({route}) => {
               setMPIN: false,
               formData: res
             });
-            
-            // const smsResponse = await fetch(process.env.base_url + "/send-sms-otp", {
-            //   method: "POST",
-            //   headers: {
-            //     "Content-Type": "application/json",
-            //   },
-            //   body: JSON.stringify({ mobileNumber: mobileNumber, otp: otp }), // Include both mobileNumber and otp
-            // });
-            
-            // const smsData = await smsResponse.json();
-            // console.log("SMS Response:", smsData);
-
-            // alert("OTP sent successfully!");
-    
-            // navigation.navigate("RegisterOTP", {
-            //   mobileNumber: state.loggedNumber,
-            //   otp,
-            //   isLogin: true,
-            //   setMPIN: false,
-            //   formData: res
-            // });
             
           } else {
             alert("Failed to send OTP. Please try again.");

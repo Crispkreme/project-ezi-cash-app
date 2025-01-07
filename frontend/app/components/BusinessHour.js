@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { __gstyles__ } from "../globalStylesheet";
 import { View, Text, Switch, TouchableOpacity } from 'react-native';
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
@@ -15,6 +15,87 @@ export default function BusinessHour({ formData }) {
         friday: { toggle: false, am: new Date(), pm: new Date() },
         saturday: { toggle: false, am: new Date(), pm: new Date() },
     });
+
+    useEffect(() => {
+      const getDt = async () => {
+        const res = await fetch(`${process.env.BASE_URL}/get-business-hours/` + formData.user_detail_id);
+
+        if(res.ok) {
+          const body = await res.json();
+          const dt = [...body.data];
+
+          const sunday = dt.filter(d => d.day === 'Sunday');
+          const monday = dt.filter(d => d.day === 'Monday');
+          const tuesday = dt.filter(d => d.day === 'Tuesday');
+          const wednesday = dt.filter(d => d.day === 'Wednesday');
+          const thursday = dt.filter(d => d.day === 'Thursday');
+          const friday = dt.filter(d => d.day === 'Friday');
+          const saturday = dt.filter(d => d.day === 'Saturday');
+
+          console.log(sunday);
+          const sundayOpenDt = new Date();
+          const sundayCloseDt = new Date();
+          if(sunday.length > 0) {
+            sundayOpenDt.setHours(sunday[0].open_at.split(":")[0], sunday[0].open_at.split(":")[1], sunday[0].open_at.split(":")[2])
+            sundayCloseDt.setHours(sunday[0].close_at.split(":")[0], sunday[0].close_at.split(":")[1], sunday[0].close_at.split(":")[2])
+          }
+          
+          const mondayOpenDt = new Date();
+          const mondayCloseDt = new Date();
+          if(monday.length > 0) {
+            mondayOpenDt.setHours(monday[0].open_at.split(":")[0], monday[0].open_at.split(":")[1], monday[0].open_at.split(":")[2])
+            mondayCloseDt.setHours(monday[0].close_at.split(":")[0], monday[0].close_at.split(":")[1], monday[0].close_at.split(":")[2])
+          }
+
+          const tuesdayOpenDt = new Date();
+          const tuesdayCloseDt = new Date();
+          if(tuesday.length > 0) {
+            tuesdayOpenDt.setHours(tuesday[0].open_at.split(":")[0], tuesday[0].open_at.split(":")[1], tuesday[0].open_at.split(":")[2])
+            tuesdayCloseDt.setHours(tuesday[0].close_at.split(":")[0], tuesday[0].close_at.split(":")[1], tuesday[0].close_at.split(":")[2])
+          }
+
+          const wednesdayOpenDt = new Date();
+          const wednesdayCloseDt = new Date();
+          if(wednesday.length > 0) {
+            wednesdayOpenDt.setHours(wednesday[0].open_at.split(":")[0], wednesday[0].open_at.split(":")[1], wednesday[0].open_at.split(":")[2])
+            wednesdayCloseDt.setHours(wednesday[0].close_at.split(":")[0], wednesday[0].close_at.split(":")[1], wednesday[0].close_at.split(":")[2])
+          }
+
+          const thursdayOpenDt = new Date();
+          const thursdayCloseDt = new Date();
+          if(thursday.length > 0 ) {
+            thursdayOpenDt.setHours(thursday[0].open_at.split(":")[0], thursday[0].open_at.split(":")[1], thursday[0].open_at.split(":")[2])
+            thursdayCloseDt.setHours(thursday[0].close_at.split(":")[0], thursday[0].close_at.split(":")[1], thursday[0].close_at.split(":")[2])
+          }
+
+          const fridayOpenDt = new Date();
+          const fridayCloseDt = new Date();
+          if(friday.length > 0) {
+            fridayOpenDt.setHours(friday[0].open_at.split(":")[0], friday[0].open_at.split(":")[1], friday[0].open_at.split(":")[2])
+            fridayCloseDt.setHours(friday[0].close_at.split(":")[0], friday[0].close_at.split(":")[1], friday[0].close_at.split(":")[2])
+          }
+
+          const saturdayOpenDt = new Date();
+          const saturdayCloseDt = new Date();
+          if(saturday.length > 0) {
+            saturdayOpenDt.setHours(saturday[0].open_at.split(":")[0], saturday[0].open_at.split(":")[1], saturday[0].open_at.split(":")[2])
+            saturdayCloseDt.setHours(saturday[0].close_at.split(":")[0], saturday[0].close_at.split(":")[1], saturday[0].close_at.split(":")[2])
+          }
+
+          setSchedule({
+            sunday: { toggle: sunday.length > 0 ? sunday[0].isOpen : false, am: sundayOpenDt, pm: sundayCloseDt},
+            monday: { toggle: monday.length > 0 ? monday[0].isOpen : false, am: mondayOpenDt, pm: mondayCloseDt},
+            tuesday: { toggle: tuesday.length > 0 ? tuesday[0].isOpen : false, am: tuesdayOpenDt, pm: tuesdayCloseDt },
+            wednesday: { toggle: wednesday.length > 0 ? wednesday[0].isOpen : false, am: wednesdayOpenDt, pm: wednesdayCloseDt },
+            thursday: { toggle: thursday.length > 0 ? thursday[0].isOpen : false, am: thursdayOpenDt, pm: thursdayCloseDt },
+            friday: { toggle: friday.length > 0 ? friday[0].isOpen : false, am: fridayOpenDt, pm: fridayCloseDt },
+            saturday: { toggle: saturday.length > 0 ? saturday[0].isOpen : false, am: saturdayOpenDt, pm: saturdayCloseDt },
+          })
+        }
+      }
+
+      getDt();
+    },[]);
     const toggleEditMode = () => setEdit(!edit);
 
     const saveSchedule = async () => {
@@ -38,16 +119,14 @@ export default function BusinessHour({ formData }) {
     
             const formattedSchedule = Object.keys(schedule).reduce((acc, day, index) => {
                 const dayIndex = index;
-                if (schedule[day].toggle) {
-                    acc[day] = {
-                        partner_id: formData.user_detail_id,
-                        isOpen: schedule[day].toggle,
-                        day: day.charAt(0).toUpperCase() + day.slice(1),
-                        open_at: formatTimeForDatabase(schedule[day].am),
-                        close_at: formatTimeForDatabase(schedule[day].pm),
-                        business_date: calculateBusinessDate(dayIndex),
-                    };
-                }
+                acc[day] = {
+                  partner_id: formData.user_detail_id,
+                  isOpen: schedule[day].toggle,
+                  day: day.charAt(0).toUpperCase() + day.slice(1),
+                  open_at: formatTimeForDatabase(schedule[day].am),
+                  close_at: formatTimeForDatabase(schedule[day].pm),
+                  business_date: calculateBusinessDate(dayIndex),
+                };
                 return acc;
             }, {});
     

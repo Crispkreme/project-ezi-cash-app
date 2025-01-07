@@ -16,7 +16,7 @@ const PartnerRequests = ({ route, navigation }) => {
   const [yesterdayTransactions, setYesterdayTransactions] = useState([]);
 
   const viewProfile = () => {
-    navigator.navigate("ProfileProfile", {formData});
+    navigator.navigate("PartnerProfile", {formData});
   }
   const viewDashboard = () => {
     navigator.navigate("PartnerDashboard", {formData});
@@ -52,7 +52,6 @@ const PartnerRequests = ({ route, navigation }) => {
         const parsedResponse = await response.json();
 
         if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
-          console.log(parsedResponse);
           setTransactions(parsedResponse.data);
         } else {
           setTransactions([]);
@@ -85,12 +84,12 @@ const PartnerRequests = ({ route, navigation }) => {
   };
   const groupedTransactions = groupTransactionsByDate(transactions) || {};
 
-  const handleConfirm = async (transactionDetails, formData) => {
+  const handleConfirm = async (transactionData, formData) => {
     
     const payload = {
-      individual_id: transactionDetails.user_detail_id,
+      individual_id: transactionData.user_detail_id,
       partner_id: formData.user_detail_id,
-      transaction_id: transactionDetails.id,
+      transaction_id: transactionData.id,
       transaction_status: "Approved",
       approved_at: new Date().toISOString(),
     };
@@ -107,7 +106,13 @@ const PartnerRequests = ({ route, navigation }) => {
   
       if (response.ok) {
         setIsModalVisible(false);
-        alert("Request approved successfully.");  
+        alert("Request approved successfully."); 
+
+        navigator.navigate("PartnerLocate", {
+          formData,
+          transactionData,
+        });
+        
       } else {
         const errorData = await response.json();
         console.error("Error:", errorData);

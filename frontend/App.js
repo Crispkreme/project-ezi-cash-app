@@ -48,6 +48,8 @@ import PartnerLocate from './app/pages/PartnerLocate';
 import PartnerServiceManagement from './app/pages/PartnerServiceManagement';
 import SuccessfulApplication from './app/pages/ezicash/SuccessfulApplication';
 import ApplicationStatus from './app/pages/ezicash/ApplicationStatus';
+import PartnerProfile from './app/pages/PartnerProfile';
+import Notification from './app/pages/Notification';
 
 const Stack = createStackNavigator({
   screens: {
@@ -190,10 +192,22 @@ const Stack = createStackNavigator({
         header:() => <DashboardHeader profile={true} />
       }
     },
+    PartnerProfile: {
+      screen: PartnerProfile,
+      options: {
+        header:() => <DashboardHeader profile={true} />
+      }
+    },
     EWallet: {
       screen: EWallet,
       options: {
         header: () => <HighHeader title={"Link E-wallet"} position={"high"}/>
+      }
+    },
+    Notification: {
+      screen: Notification,
+      options: {
+        header: () => <HighHeader title={"Notification"} position={"high"}/>
       }
     },
     AddAmount: {

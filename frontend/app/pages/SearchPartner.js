@@ -139,14 +139,13 @@ const SearchPartner = ({ route, navigation }) => {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch partners");
+          alert("No available business partner");
         }
 
         const result = await response.json();
         setPartner(result.data);
       } catch (error) {
         console.error("Error fetching partners:", error);
-        Alert.alert("Error", "An error occurred while fetching partners.");
       } finally {
         setIsLoading(false);
       }
@@ -211,7 +210,7 @@ const SearchPartner = ({ route, navigation }) => {
         <View>
           {Array.isArray(partner) && partner.length > 0 ? (
             partner.map((item, index) => (
-              <View key={item.business_hour_id || index}>
+              <View key={item.partner_id || index}>
                 <TouchableOpacity
                   style={[__gstyles__.shadow]}
                   className="bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300"

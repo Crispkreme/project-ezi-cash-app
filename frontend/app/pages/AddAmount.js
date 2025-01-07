@@ -15,24 +15,23 @@ const AddAmount = ({ route, navigation }) => {
   });
   
   const [curFormData, setCurFormData] = useState({...formData});
+  
   const handleConfirm = async () => {
     const res = await fetch(process.env.base_url + "/get-pending-transaction/" + formData.user_id);
     if(res.ok) {
       const body = await res.json();
-
       if([...body.data].length > 0) {
         navigator.navigate("WaitingApproval", {
-          curFormData,
+          formData: {...curFormData},
           transactionId: [...body.data][0].id
         });
+      } else {
+        navigator.navigate("SearchPartner", {
+          formData: {...curFormData},
+          amount: state.amount,
+        });
       }
-      return;
     }
-    navigator.navigate("SearchPartner", {
-      curFormData,
-      amount: state.amount,
-    });
-
   };
   
   const getLocation = async () => {

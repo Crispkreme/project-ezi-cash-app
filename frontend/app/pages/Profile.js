@@ -3,6 +3,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { __gstyles__ } from "../globalStylesheet";
+import NavigationBar from "../components/NavigationBar";
 
 const Profile = ({ route, navigation }) => {
   const { formData } = route.params;
@@ -20,6 +21,10 @@ const Profile = ({ route, navigation }) => {
 
   const backHome = () => {
     navigator.navigate("Dashboard", {formData});
+  }
+
+  const logOut = () => {
+    navigator.navigate("Main");
   }
 
   const applyEziCash = async () => {
@@ -167,29 +172,22 @@ const Profile = ({ route, navigation }) => {
           />
         </View>
 
-      </ScrollView>
-      <View style={styles.footer} className='py-2 flex-row gap-4'>
-        
-        <TouchableOpacity style={styles.footerBtnContainer} className='relative' onPress={backHome}>
-          <Image className='' alt="cash out" source={require("../../public/icn/cash-out-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Home</Text>
+        <TouchableOpacity onPress={logOut} className='flex-row justify-between items-center p-2 px-8'>
+          <View>
+            <Text className='text-base text-primary'>
+                Logout
+            </Text>
+          </View>
+          <MaterialIcons
+            name="navigate-next"
+            size={24}
+            className='text-primary'
+            style={styles.buttonIcon}
+          />
         </TouchableOpacity>
 
-        <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
-          <Image alt="cash out" source={require("../../public/icn/transactions-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Transactions</Text>
-        </View>
-
-        <View style={styles.footerBtnContainer} className='flex-start'  onPress={handleConfirm}>
-          <Image alt="cash out" source={require("../../public/icn/profile-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Profile</Text>
-        </View>
-
-        <View style={styles.footerBtnContainer} onPress={handleConfirm}>
-          <Image alt="cash out" source={require("../../public/icn/settings-icn.png")}></Image>
-          <Text style={styles.footerBtnLabel} className='text-gray-400 mb-2 text-sm'>Settings</Text>
-        </View>
-      </View>
+      </ScrollView>
+      <NavigationBar formData={formData} partnerType={formData.partnerType}/>
     </View>
   );
 };

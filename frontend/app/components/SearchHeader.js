@@ -18,6 +18,10 @@ export default function SearchHeader() {
   const handleSearch = () => {
     navigation.setParams({ search: state.search, key: Math.random() });
   }
+
+  const goToNotification = () => {
+    navigation.navigate("Notification", {formData});
+  }
   return (
     <ImageBackground style={styles.background} className='bg-primary-bg' resizeMode="contain" source={require("../../public/image/high-bg.png")}>
       <View style={styles.container} className='absolute bottom-16'>
@@ -38,7 +42,9 @@ export default function SearchHeader() {
           </TouchableOpacity>
         </View>
         
-        <Image style={styles.notification} source={require("../../public/icn/notification-icn.png")}/>
+        <TouchableOpacity onPress={goToNotification}>
+          <Image style={styles.notification} source={require("../../public/icn/notification-icn.png")}/>
+        </TouchableOpacity>
       </View>
     </ImageBackground>
   )

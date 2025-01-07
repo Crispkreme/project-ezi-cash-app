@@ -25,7 +25,7 @@ const PartnerTransactions = ({ route, navigation }) => {
     navigator.navigate("PartnerTransactions", {formData});
   }
   const viewProfile = () => {
-    navigator.navigate("ProfileProfile", {formData});
+    navigator.navigate("PartnerProfile", {formData});
   }
   const viewDashboard = () => {
     navigator.navigate("PartnerDashboard", {formData});

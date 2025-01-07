@@ -6,7 +6,7 @@ import { View, Text } from 'react-native';
 const PayPalWebView = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { uri, data } = route.params;
+  const { uri, data, formData, transactionData } = route.params;
 
   if (!uri) {
     return (
@@ -25,7 +25,7 @@ const PayPalWebView = () => {
       const payerId = urlParams.get('PayerID');
 
       if (paymentId && payerId) {
-        navigation.navigate('GoToStore', { paymentId, payerId, data });
+        navigation.navigate('FinishTransaction', { paymentId, payerId, data, formData, transactionData });
       }
     }
 

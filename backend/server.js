@@ -271,7 +271,7 @@ app.get("/check-phone", async (req, res) => {
 app.post("/payment-transaction", async (req, res) => {
 
   const { formData, payment, partner } = req.body;
-  const { user_detail_id, service } = formData;
+  const { user_id, service } = formData;
   const { amount } = payment;
   const { store_id } = partner;
   const total_amount = parseFloat(amount) + 15;
@@ -292,7 +292,7 @@ app.post("/payment-transaction", async (req, res) => {
       FROM transactions 
       WHERE user_id = ? AND transaction_status = 'Pending' AND service = ?
     `;
-    const [pendingResult] = await db.promise().query(checkPendingQuery, [user_detail_id, service]);
+    const [pendingResult] = await db.promise().query(checkPendingQuery, [user_id, service]);
     const pendingCount = pendingResult[0]?.pendingCount || 0;
 
     if (pendingCount > 0) {
@@ -307,7 +307,7 @@ app.post("/payment-transaction", async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const transactionParams = [
-      user_detail_id,
+      user_id,
       store_id,
       payment.type,
       defaults.bank,
@@ -389,11 +389,12 @@ app.get('/get-pending-transaction/:user_id', async (req, res) => {
           console.log(err);
           return res.status(500).json({message:'Unsuccessful'});
         }
-        console.log(req.params.user_id)
+        console.log(result)
         return res.status(200).json({message: 'Successful!', data: result});
       }
     )
   } catch(e) {
+    console.log(e)
     return res.status(500).json({message: 'Unsuccessful!'});
   }
 });
@@ -436,33 +437,34 @@ app.post("/login", async (req, res) => {
 app.get("/get-partners", async (req, res) => {
   try {
     const now = new Date();
-    const currentDate = now.toISOString().split("T")[0];
+    
     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const currentDay = dayNames[now.getDay()];
+    const currentDate = now.toISOString().split("T")[0];
     const currentTime = now.toTimeString().split(" ")[0];
-
     const query = `
-      SELECT 
+      SELECT DISTINCT 
         b.*, 
-        ut.*, 
-        CONCAT(ud.first_name, ' ', IFNULL(ud.middle_name, ''), ' ', ud.last_name) AS store_name, 
-        ud.barangay, 
-        ud.city
+        ud.*, 
+        pa.legal_name AS store_name, 
+        pa.business_state, 
+        pa.business_city
       FROM 
         business_hours b
       INNER JOIN 
         user_details ud 
         ON b.partner_id = ud.user_detail_id
       INNER JOIN 
-        users_table ut 
-        ON ud.user_id = ut.user_id
+        partnership_application pa 
+        ON pa.user_id = ud.user_id
+      INNER JOIN
+        users_table ut
+        ON pa.user_id = ut.user_id
       WHERE 
         b.isOpen = 1
-        AND ut.partner_type IN ('Partner', 'Store')
+        AND ut.partner_type IN ('Individual', 'Store')
         AND b.day = ?
-        AND b.business_date = ?
-        AND b.open_at <= ?
-        AND b.close_at >= ?;
+        
     `;
 
     db.query(query, [currentDay, currentDate, currentTime, currentTime], (err, results) => {
@@ -476,6 +478,8 @@ app.get("/get-partners", async (req, res) => {
           data: [],
         });
       }
+
+      console.log(results);
 
       res.status(200).json({
         message: "Open businesses retrieved successfully.",
@@ -606,7 +610,24 @@ app.get("/get-wallet/:user_detail_id", async (req, res) => {
     });
   });
 });
-app.post('/save-business-hours', (req, res) => {
+
+app.get('/get-business-hours/:user_detail_id', (req, res) => {
+  try {
+    db.query('SELECT * FROM business_hours a INNER JOIN user_details b ON a.partner_id = b.user_detail_id', [req.params.user_detail_id],
+      (err, info) => {
+        if(err) {
+          console.log(err);
+          return res.status(500).json({message: 'Unsuccessful'});
+        }
+
+        return res.status(200).json({message:'Successful', data: info});
+      }
+    )
+  } catch(e) {
+    return res.status(500).json({message:'Unsuccessful'})
+  }
+});
+app.post('/save-business-hours', async (req, res) => {
 
   const { schedule } = req.body;
 
@@ -617,8 +638,9 @@ app.post('/save-business-hours', (req, res) => {
   const values = [];
 
   for (const [day, { partner_id, isOpen, open_at, close_at, business_date }] of Object.entries(schedule)) {
+    
     const isOpenValue = isOpen ? 1 : 0;
-
+    console.log(isOpenValue);
     const openTime = new Date(`${business_date}T${open_at}`).toTimeString().slice(0, 8);
     const closeTime = new Date(`${business_date}T${close_at}`).toTimeString().slice(0, 8);
 
@@ -626,21 +648,38 @@ app.post('/save-business-hours', (req, res) => {
       return res.status(400).json({ message: `Invalid time format for ${day}.` });
     }
 
-    queries.push(`
-      INSERT INTO business_hours (partner_id, isOpen, day, open_at, close_at, business_date, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    values.push(partner_id, isOpenValue, day, openTime, closeTime, business_date, createdAt, updatedAt);
+    db.query(`SELECT * FROM business_hours WHERE day = ? AND partner_id = ?`, [day, partner_id],
+      (err, result) => {
+        if(err) {
+          return res.status(500).json({message:' Unsuccessful!'});
+        }
+        const existing = result.length > 0 ? result[0] : undefined;
+        
+        if(existing) {
+          db.query('UPDATE business_hours SET isOpen=?, open_at=?, close_at=?, business_date=?, updated_at=? WHERE business_hour_id = ?',
+            [ isOpenValue, openTime, closeTime, business_date, updatedAt, existing.business_hour_id],
+            (err, _) => {
+              if(err) {
+                return res.status(500).json({message: 'Unsuccessful'});
+              }
+
+            }
+          )
+        } else {
+          db.query(`INSERT INTO business_hours (partner_id, isOpen, day, open_at, close_at, business_date, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,[partner_id, isOpenValue, day, openTime, closeTime, business_date, createdAt, updatedAt],
+          (error,result)=>{
+            if(error){
+              return res.status(500).json({ message: `Unable to save business hours'.` });
+            }
+
+          })
+        }
+      }
+    )
+    
   }
-
-  db.query(queries.join(';'), values, (error, result) => {
-    if (error) {
-      console.error('Database Error:', error);
-      return res.status(500).json({ message: 'Database error occurred.', error });
-    }
-
-    res.json({ message: 'Business hours saved successfully.' });
-  });
+  return res.status(200).json({ message: `Success'.` });
 });
 app.get('/get-total-transaction/:partner_id', async (req, res) => {
 
@@ -823,6 +862,12 @@ app.get("/get-transaction-request/:user_detail_id", async (req, res) => {
 app.post('/send-message', (req, res) => {
   const { sender_id, receiver_id, message } = req.body;
 
+  console.log([
+    {sender_id: sender_id},
+    {receiver_id: receiver_id},
+    {message: message},
+  ]);
+
   if (!sender_id || !receiver_id || !message) {
     return res.status(400).json({ message: "Missing required fields." });
   }
@@ -924,7 +969,7 @@ app.post('/paypal', (req, res) => {
 
   const { service, amount, total_amount } = req.body.transactionData;
   const { name, phone, balance, address, user_id } = req.body.formData;
-
+  
   const create_payment_json = {
     intent: 'sale',
     payer: {
@@ -941,7 +986,7 @@ app.post('/paypal', (req, res) => {
             {
               name: service,
               sku: '001',
-              price: parseFloat(total_amount).toFixed(2),
+              price: (parseFloat(amount) + 15).toFixed(2),
               currency: 'USD',
               quantity: 1,
             },
@@ -949,9 +994,9 @@ app.post('/paypal', (req, res) => {
         },
         amount: {
           currency: 'USD',
-          total: parseFloat(total_amount).toFixed(2),
+          total: (parseFloat(amount) + 15).toFixed(2),
         },
-        description: `${name} has ${service} with a total amount of $${parseFloat(total_amount).toFixed(2)}`,
+        description: `${name} has ${service} with a total amount of $${(parseFloat(amount) + 15).toFixed(2)}`,
       },
     ],
   };
@@ -976,14 +1021,14 @@ app.post('/paypal', (req, res) => {
 
 app.post('/success', (req, res) => {
   const { PayerID, paymentId, data } = req.body;
-
+  console.log("data:", data);
   if (!PayerID || !paymentId) {
     console.error("Missing payment information");
     return res.status(400).json({ message: 'Payment information is missing.' });
   }
 
   const payment = data?.body?.payment;
-
+  
   if (!payment || typeof payment.total_amount === 'undefined') {
     console.error("Invalid data or payment structure:", data);
     return res.status(400).json({ message: 'Payment data is missing or malformed.' });
@@ -1007,20 +1052,36 @@ app.post('/success', (req, res) => {
       return res.status(500).json({ message: 'Error executing PayPal payment.', error: error.response || error });
     }
 
-    const { store_id, type, bank, service, amount, total_amount, balance } = payment;
-    const individual_id = data.body.user_id;
+    const { type, bank, service, amount, total_amount, balance } = payment || {};
     const createdAt = new Date().toISOString();
     const updatedAt = createdAt;
+    const transaction_status = "Success";
 
-    const query1 = `
-      INSERT INTO transactions 
-      (store_id, individual_id, type, bank, service, amount, total_amount, balance, payer_id, payment_id, updated_at, created_at) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    const approved_at = new Date().toISOString(); 
+    const transaction_id = payment.id;
+    const store_id = payment.partner_id;
+    const individual_id = payment.user_id;
+    // const store_id = 
+
+    if (!transaction_id) {
+      console.error("Missing transaction ID.");
+      throw new Error("Transaction ID is required to update the transaction.");
+    }
+
+    const updateTransactionQuery = `
+      UPDATE transactions
+      SET 
+        transaction_status = ?, 
+        approved_at = ?, 
+        updated_at = ?
+      WHERE id = ?
     `;
+    const updateTransactionValues = [transaction_status, approved_at, updatedAt, transaction_id];
 
-    const values1 = [ store_id, individual_id, type, bank, service, amount, total_amount, balance, PayerID, paymentId, updatedAt, createdAt ];
+    console.log("Update Transaction Query:", updateTransactionQuery);
+    console.log("Update Transaction Values:", updateTransactionValues);
 
-    db.query(query1, values1, (dbError1, dbResult1) => {
+    db.query(updateTransactionQuery, updateTransactionValues, (dbError1, dbResult1) => {
       if (dbError1) {
         console.error('Database Error (Transactions):', dbError1);
         return res.status(500).json({ message: 'Database error occurred while saving transaction.', error: dbError1 });
@@ -1099,8 +1160,8 @@ app.post('/web-verification-code', async (req, res) => {
       port:465,
       secure: true,
       auth: {
-        user: "cjvicro@gmail.com",
-        pass: "ztbepsrmnypjjvyt"
+        user: "ezicashapplication",
+        pass: "qhzhlcbbzyeuoexk"
       }
     });
 
@@ -1192,6 +1253,30 @@ app.get('/file/:filename', async (req, res) => {
     }
   })
 });
+
+app.get('/get-notifications/:user_id/:partner_type', async (req, res) => {
+  const {user_id, partner_type} = req.params;
+
+  try {
+    
+    
+    if(partner_type === "customer") {
+      db.query("SELECT notification FROM notifications WHERE individual_id = ?", [user_id], 
+        (err, result) => {
+          if(err){
+            return res.status(400).json({message: err});
+          }
+
+          return res.status(200).json({message: 'Success!', data: result});
+        }
+      )
+    } else {
+      console.log(user_id);
+    }
+  } catch(e) {
+    return res.status(400).json({message: 'Notification Error!'});
+  }
+}) 
 
 app.get('/transactions', async (req, res) => {
   try {
@@ -1353,6 +1438,31 @@ app.patch("/suspend-partner", async (req, res) => {
     });
   } catch(e) {
     return res.status(500).json({message: 'Unsuccessful!'});
+  }
+});
+
+app.patch("/reset-password", async (req, res) => {
+  try {
+    const { password, email } = req.body;
+    console.log(req.body); 
+    
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+
+    db.query('UPDATE users_table SET user_pass = ? WHERE user_email = ?', [hash, email], 
+      (err, result) => {
+        if(err) {
+          console.log(err);
+          return res.status(500).json({message: 'Unsuccessful!'});
+        }
+
+        return res.status(200).json({message: 'Successful!'});
+      }
+    )
+
+  } catch(e) {
+    console.log(e);
+    return res.status(500).json({message:'Unsuccessful!'});
   }
 });
 
@@ -1551,14 +1661,21 @@ app.get('/get-partners-dashboard', async (req, res) => {
 
 io.on('connection', (socket) => {
   console.log('New connection', socket.id);
-
   socket.on('message', (msg) => {
     console.log('Recieved');
   });
-
   socket.on('approve-request', (message) => {
     console.log(message);
     io.emit('recieve-request', message);
+  });
+  socket.on("join-room", (roomId) => {
+    console.log('joined room socket', roomId);
+    socket.join(roomId);
+    console.log(`Socket ${socket.id} joined room ${roomId}`);
+  });
+  socket.on("send-message", (message) => {
+    const { sender_id, receiver_id } = message;
+    io.emit("receive-message", message);
   });
 
   socket.on('disconnect', () => {

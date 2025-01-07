@@ -4,6 +4,7 @@ import { View, Text, ImageBackground, StyleSheet, Image, TouchableOpacity } from
 export default function HighHeader({title, position}) { // position is high, mid, low
 
   const route = useRoute();
+  const { formData } = route.params || {};
   const navigation = useNavigation();
 
   const urls = {
@@ -28,6 +29,10 @@ export default function HighHeader({title, position}) { // position is high, mid
     navigation.goBack();
   }
 
+  const goToNotification = () => {
+    navigation.navigate("Notification", {formData});
+  }
+
   return (
     <ImageBackground style={stylesA[position]} className='bg-primary-bg' resizeMode="contain" source={urls[position]}>
       <View style={styles.container}>
@@ -37,7 +42,9 @@ export default function HighHeader({title, position}) { // position is high, mid
         <Text style={textStyles[position]} className={`text-white ${position === "low" ? 'w-full': ''}`}>
           {title}
         </Text>
-        <Image style={styles.notification} source={require("../../public/icn/notification-icn.png")}/>
+        <TouchableOpacity onPress={goToNotification}>
+          <Image style={styles.notification} source={require("../../public/icn/notification-icn.png")}/>
+        </TouchableOpacity>
       </View>
     </ImageBackground>
   )

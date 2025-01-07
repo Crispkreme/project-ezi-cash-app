@@ -4,10 +4,26 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput 
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { __gstyles__ } from "../globalStylesheet";
+import { socket } from "./Main";
 
 const GoToStore = ({ route }) => {
 
-  const { formData, partner, payment, paymentId, payerId, data } = route.params;
+  // const { formData, partner, payment, paymentId, payerId, data } = route.params;
+  const { formData, transactionId, transactionData } = route.params;
+  
+  useEffect(() => {
+    socket.on('receive-message', (message) => {
+      console.log('i got send message from parnterlocate')
+      if(message.receiver_id == formData.user_detail_id)
+      {
+        alert('asdasdasd');
+      }
+    });
+    // const roomId = transactionId;
+    // socket.emit("join-room", roomId);
+    // console.log(`Joined room: ${roomId}`);
+  }, []);
+
   const wLabels = {...formData};
   const navigator = useNavigation();
 
@@ -15,50 +31,14 @@ const GoToStore = ({ route }) => {
     linkedWallet: '09222222',
     amount: 0
   });
-  const handleConfirm = async () => {
-    try {
-      const payload = {
-        PayerID: payerId,
-        paymentId,
-        data,
-      };
-
-      const response = await fetch(`${process.env.base_url}/success`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const responseText = await response.text();
-
-      if (!response.ok) {
-        console.error("Error Response:", responseText);
-        alert("Payment Error", `Server returned: ${responseText}`);
-        return;
-      }
-
-      try {
-        const parsedResponse = JSON.parse(responseText);
-        console.log("Response Data:", parsedResponse);
-
-        if (response.ok) {
-          alert('Payment success');
-          navigator.navigate('SuccessfulLink', { payment: parsedResponse });
-        } else {
-          alert('Payment Failed', parsedResponse.message || 'An error occurred.');
-        }
-      } catch (parseError) {
-        console.error('Error parsing response:', parseError);
-        alert("Response parsing error", "There was an issue parsing the server response.");
-      }
-    } catch (error) {
-      console.error('Error executing payment:', error);
-      alert('Payment Error', 'An error occurred. Please try again.');
-    }
-  };
+  
   const sendMessage = async () => {
+    const sentMessage = {
+      sender_id: formData.user_detail_id,
+      receiver_id: transactionData.user_detail_id,
+      message: 'asdasdasd',
+    };
+    socket.emit("send-message", sentMessage);
   };
   const handleNext = () => {
     alert(5);
@@ -84,6 +64,40 @@ const GoToStore = ({ route }) => {
     });
     setInit(true);
   },[]);
+
+  const handleConfirm = async () => {
+      try {
+        const payload = { formData, transactionData };
+
+        const response = await fetch(`${process.env.base_url}/paypal`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+    
+        const body = await response.json();
+    
+        if (!response.ok) {
+          alert(body.message || "Failed to process payment.");
+          return;
+        }
+    
+        const { approvalUrl } = body;
+        if (approvalUrl) {
+          navigator.navigate("PayPalWebView", {
+            uri: approvalUrl,
+            data: body,
+            formData,
+            transactionData,
+          });
+        } else {
+          alert("Approval URL not found in the server response.");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred. Please try again.");
+      }
+    };
 
   return (
     <View style={styles.container}>

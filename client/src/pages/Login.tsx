@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CredentialTitle from "../components/CredentialTitle";
 import Form from "../components/Form";
 import CredentialLayout from "../layout/CredentialLayout";
@@ -19,8 +19,17 @@ export default function Login() {
     setFormData(prev => ({...prev, [formKey]: value}));
   }
 
+  useEffect(()=>{
+    sessionStorage.removeItem('registration');
+    sessionStorage.removeItem('verification-code');
+    sessionStorage.removeItem('user-login');
+    sessionStorage.removeItem('user-signup');
+    sessionStorage.removeItem('reset');
+  
+  },[])
   const submit = async (e:React.MouseEvent) => {
     e.preventDefault();
+    
     const missingFields:Array<String> = [];
     Object.entries(formData).forEach(([key, val]) => {
       if(val === '') {
