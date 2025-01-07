@@ -135,7 +135,11 @@ const EziCashPartnerApplication = ({route}) => {
   });
   
   const openDocument = async (key) => {
-    const file = await DocumentPicker.getDocumentAsync();
+    const file = await DocumentPicker.getDocumentAsync({
+      type: ['image/*', 'application/pdf']
+    });
+
+    if(file.canceled) return;
     setFileNames(prev => ({
       ...prev,
       [key]: file.assets[0].name

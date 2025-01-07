@@ -271,7 +271,7 @@ app.get("/check-phone", async (req, res) => {
 app.post("/payment-transaction", async (req, res) => {
 
   const { formData, payment, partner } = req.body;
-  const { user_detail_id, service } = formData;
+  const { user_id, service } = formData;
   const { amount } = payment;
   const { store_id } = partner;
   const total_amount = parseFloat(amount) + 15;
@@ -292,7 +292,7 @@ app.post("/payment-transaction", async (req, res) => {
       FROM transactions 
       WHERE user_id = ? AND transaction_status = 'Pending' AND service = ?
     `;
-    const [pendingResult] = await db.promise().query(checkPendingQuery, [user_detail_id, service]);
+    const [pendingResult] = await db.promise().query(checkPendingQuery, [user_id, service]);
     const pendingCount = pendingResult[0]?.pendingCount || 0;
 
     if (pendingCount > 0) {
@@ -307,7 +307,7 @@ app.post("/payment-transaction", async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const transactionParams = [
-      user_detail_id,
+      user_id,
       store_id,
       payment.type,
       defaults.bank,
@@ -1253,6 +1253,30 @@ app.get('/file/:filename', async (req, res) => {
     }
   })
 });
+
+app.get('/get-notifications/:user_id/:partner_type', async (req, res) => {
+  const {user_id, partner_type} = req.params;
+
+  try {
+    
+    
+    if(partner_type === "customer") {
+      db.query("SELECT notification FROM notifications WHERE individual_id = ?", [user_id], 
+        (err, result) => {
+          if(err){
+            return res.status(400).json({message: err});
+          }
+
+          return res.status(200).json({message: 'Success!', data: result});
+        }
+      )
+    } else {
+      console.log(user_id);
+    }
+  } catch(e) {
+    return res.status(400).json({message: 'Notification Error!'});
+  }
+}) 
 
 app.get('/transactions', async (req, res) => {
   try {

@@ -277,7 +277,6 @@ const PartnerLocate = ({ route }) => {
       <View className="py-4 mt-6">
         <TouchableOpacity
           className="bg-primary p-4 rounded-lg"
-          onPress={handleConfirm}
         >
           <Text className="text-white text-center font-bold">Arrived</Text>
         </TouchableOpacity>

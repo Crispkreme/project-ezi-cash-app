@@ -66,7 +66,7 @@ const Login = ({route}) => {
           if (otpResponse.ok) {
             const data = await otpResponse.json();
             const otp = data.otp;
-            
+            console.log(otp);
             const smsResponse = await fetch(process.env.base_url + "/send-sms-otp", {
               method: "POST",
               headers: {

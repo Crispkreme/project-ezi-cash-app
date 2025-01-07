@@ -52,7 +52,6 @@ const PartnerRequests = ({ route, navigation }) => {
         const parsedResponse = await response.json();
 
         if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
-          console.log(parsedResponse);
           setTransactions(parsedResponse.data);
         } else {
           setTransactions([]);
