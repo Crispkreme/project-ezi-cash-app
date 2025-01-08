@@ -2,6 +2,7 @@ import React from 'react';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { View, Text } from 'react-native';
+import { socket } from "./Main";
 
 const PayPalWebView = () => {
   const route = useRoute();
@@ -25,7 +26,8 @@ const PayPalWebView = () => {
       const payerId = urlParams.get('PayerID');
 
       if (paymentId && payerId) {
-        navigation.navigate('FinishTransaction', { paymentId, payerId, data, formData, transactionData });
+        socket.emit('finish-transaction', JSON.stringify({ paymentId, payerId, data, formData, transactionData }));
+        navigation.navigate('FinishTransaction', { paymentId, payerId, data, formData, transactionData, isPartner: false });
       }
     }
 

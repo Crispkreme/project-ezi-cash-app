@@ -10,39 +10,105 @@ const Notification = ({ route, navigation }) => {
   const wLabels = {...formData};
   const navigator = useNavigation();
 
+  const [notifications, setNotifications] = useState([]);
+
   const [state, setState] = useState({
     linkedWallet: formData?.phone || "",
   });
 
   useEffect(() => {
     const getDt = async () => {
-      console.log(process.env.base_url + '/get-notifications/' + formData.user_id + '/' + (formData.partner_type === "" ? "customer" : formData.partner_type));
-      const dt = await fetch(process.env.base_url + '/get-notifications/' + formData.user_id + '/' + (formData.partner_type === "" ? "customer" : formData.partner_type));
+      const dt = await fetch(process.env.base_url + '/get-notifications/' + (formData.partner_type === "" ? formData.user_id : formData.partner_application_id) + '/' + (formData.partner_type === "" ? "customer" : formData.partner_type));
       
       const body = await dt.json();
       if(!dt.ok) {
         alert(body.message);
       }
 
-      console.log(body.data);
+      setNotifications(body.data);
     }
 
     getDt();
   },[]);
 
+  const goToTransaction = async (transaction_id, notification_type) => {
+    if(notification_type === "Request" && formData.partner_type === "") {
+      navigator.navigate("WaitingApproval", {formData, transaction_id});
+    } else if(notification_type === "Approved" && formData.partner_type === ""){
+      const response = await fetch(`${process.env.base_url}/get-user-transaction?transactionId=${transaction_id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
+      const responseData = await response.json();
+      navigator.navigate("GoToStore", {
+        formData,
+        transactionId: transaction_id,
+        transactionData: responseData.data,
+      });
+    } else if(notification_type === "Success"){
+      const response = await fetch(`${process.env.base_url}/get-user-transaction?transactionId=${transaction_id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const responseData = await response.json();
+      navigator.navigate("TransactionComplete", { formData, transactionData: responseData.data, checkReceipt: true });
+    } else if(notification_type === "Request" && formData.partner_type !== "") {
+      navigator.navigate("PartnerRequests", {formData});
+    } else if(notification_type === "Approved" && formData.partner_type !== ""){
+      const response = await fetch(`${process.env.base_url}/get-user-transaction?transactionId=${transaction_id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const responseData = await response.json();
+      navigator.navigate("PartnerLocate", {
+        formData,
+        transactionId: transaction_id,
+        transactionData: responseData.data,
+      });
+    }
+  }
   return (
     <View style={styles.container}>
       
       <ScrollView>
 
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300'>
-          <View style={{justifyContent: 'space-between'}} className='flex-row items-center p-2 px-4'>
-            <Text>
-              Notification
-            </Text>
-          </View>
-        </TouchableOpacity>
+        {
+          notifications.map( (n, idx) => {
+            return (
+              <TouchableOpacity onPress={() => goToTransaction(n.transaction_id, n.notification_type)} key={idx} style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300'>
+                <View style={{justifyContent: 'space-between', flexDirection: 'column'}} className=' items-start gap-2 p-2 px-4'>
+                  <Text className='font-bold'>
+                    {n.notification_type === "Request" ?
+                      formData.partner_type === "" ? "Request Application" : "New Request"
+                    :n.notification_type === "Approved" ? 
+                      formData.partner_type === "" ? "Request Approved": "Request Approved"
+                    :n.notification_type === "Success" ?
+                      formData.partner_type === "" ? "Request Success": "Request Success"
+                    :""}
+                  </Text>
+                  <Text>
+                    {n.notification_type === "Request" ? 
+                      formData.partner_type === "" ? `Requested ${n.service} Service to ${n.legal_name} amounting ₱${n.total_amount}. Waiting for approval.` : `${n.name} requested to ${n.service}`
+                    :n.notification_type === "Approved" ? 
+                      formData.partner_type === "" ? `Your ${n.service} request with ${n.legal_name} has been Approved!`: `You approved the ${n.service} request from ${n.name}`
+                    :n.notification_type === "Success" ? 
+                      formData.partner_type === "" ? `Your ${n.service} request with ${n.legal_name} is successful!`: `${n.service} service from ${n.name} is successful!`
+                    :""}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )
+          })
+        }
       </ScrollView>
     </View>
   );

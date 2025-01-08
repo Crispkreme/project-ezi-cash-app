@@ -85,17 +85,15 @@ const PartnerRequests = ({ route, navigation }) => {
   const groupedTransactions = groupTransactionsByDate(transactions) || {};
 
   const handleConfirm = async (transactionData, formData) => {
-    
     const payload = {
-      individual_id: transactionData.user_detail_id,
-      partner_id: formData.user_detail_id,
+      individual_id: transactionData.user_id,
+      partner_id: transactionData.partner_id,
       transaction_id: transactionData.id,
       transaction_status: "Approved",
       approved_at: new Date().toISOString(),
     };
     
     try {
-      socket.emit('approve-request', 'hello world');
       const response = await fetch(`${process.env.base_url}/approve-cash-request`, {
         method: "POST",
         headers: {
@@ -105,6 +103,7 @@ const PartnerRequests = ({ route, navigation }) => {
       });
   
       if (response.ok) {
+        socket.emit('approve-request', 'hello world');
         setIsModalVisible(false);
         alert("Request approved successfully."); 
 
@@ -124,6 +123,10 @@ const PartnerRequests = ({ route, navigation }) => {
     }
   };
 
+  const goToNotification = () => {
+    navigator.navigate("Notification", {formData})
+  }
+
   return (
     <ImageBackground style={{flex: 1}} source={require("../../public/image/background.png")}>
       <View>
@@ -133,7 +136,9 @@ const PartnerRequests = ({ route, navigation }) => {
               <Text style={{fontSize: 26}}>Requests{"\n"}</Text>
             </Text>
           </Text>
-          <Image source={require("../../public/icn/notification-icn.png")}/>
+          <TouchableOpacity onPress={goToNotification}>
+            <Image source={require("../../public/icn/notification-icn.png")}/>
+          </TouchableOpacity>
         </View>
       </View>
 

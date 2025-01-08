@@ -107,6 +107,7 @@ const SearchPartner = ({ route, navigation }) => {
         address: `79 Cabreros St ${item.barangay}, ${item.city}`,
         type: item.partner_type,
         store_id: item.partner_id,
+        partner_application_id: item.partner_application_id
       },
     });
   };

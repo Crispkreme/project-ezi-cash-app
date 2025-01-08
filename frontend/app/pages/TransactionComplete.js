@@ -5,7 +5,7 @@ import { __gstyles__ } from "../globalStylesheet";
 import HighHeader from "../components/HighHeader";
 
 const TransactionComplete = ({ route, navigation }) => {
-  const { formData, transactionData } = route.params;
+  const { formData, transactionData, checkReceipt, isPartner } = route.params;
 
   // const wLabels = {...formData};
   const navigator = useNavigation();
@@ -17,7 +17,7 @@ const TransactionComplete = ({ route, navigation }) => {
     accepted: false
   });
 
-  if(formData.partner_type === "") {
+  if(formData.partner_type === "" && !checkReceipt) {
     setTimeout(() => {
       navigator.navigate("RatePartner", {formData, transactionData});
     },3000);

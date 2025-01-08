@@ -98,7 +98,7 @@ const PartnerLocate = ({ route }) => {
   const fetchMessages = async () => {
     try {
       const response = await fetch(
-        `${process.env.base_url}/get-user-message?partner_id=${transactionData.partner_id}&user_id=${transactionData.user_id}`,
+        `${process.env.base_url}/get-user-message/${transactionData.id}`,
         { method: "GET", headers: { "Content-Type": "application/json" } }
       );
       const responseData = await response.json();
@@ -128,8 +128,9 @@ const PartnerLocate = ({ route }) => {
     if (newMessage.trim() === "") return;
   
     const messageData = {
-      sender_id: formData.user_detail_id,
-      receiver_id: transactionData.user_detail_id,
+      sender_id: transactionData.partner_id,
+      receiver_id: transactionData.user_id,
+      transaction_id: transactionData.id,
       message: newMessage.trim(),
     };
   
@@ -163,11 +164,6 @@ const PartnerLocate = ({ route }) => {
   };
   
   
-  const handleReceiveMessage = (message) => {
-    alert('asdasdasdasd');
-    setMessages((prev) => [...prev, message]);
-  };
-  
   const joinRoom = () => {
     const roomId = transactionData.id;
     console.log('room id', roomId);
@@ -177,8 +173,27 @@ const PartnerLocate = ({ route }) => {
   };
   
   useEffect(() => {
+    socket.on("finish-transaction", message => {
+      const dt = JSON.parse(message);
+      if(formData.partner_application_id === dt.transactionData.partner_id) {
+        navigator.navigate('FinishTransaction', { ...dt, checkReceipt: true, isPartner: false });
+      }
+    });
+
     socket.on("receive-message", (message) => {
-      alert(message);
+      if(message.receiver_id == formData.partner_application_id)
+      {
+        setMessages((prev) => [
+          ...prev,
+          {
+            ...message,
+            sender_id: message.sender_id,
+            receiver_id: message.receiver_id,
+            message: message.message,
+            created_at: message.created_at,
+          },
+        ]);
+      }
     });
     setInit(true);
     fetchMessages();

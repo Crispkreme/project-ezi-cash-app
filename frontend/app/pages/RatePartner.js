@@ -24,7 +24,7 @@ const RatePartner = ({ route, navigation }) => {
     } else {
 
     }
-  },[key]);
+  },[]);
   
   return (
     <View style={{flex: 1}}>

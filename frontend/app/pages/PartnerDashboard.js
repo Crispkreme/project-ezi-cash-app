@@ -88,6 +88,10 @@ const PartnerDashboard = ({ route, navigation }) => {
   };
   const groupedTransactions = groupTransactionsByDate(transactions);
 
+  const goToNotification = () => {
+    navigator.navigate("Notification", {formData})
+  }
+
   return (
     <ImageBackground style={{flex: 1}} source={require("../../public/image/background.png")}>
       <View>
@@ -100,7 +104,9 @@ const PartnerDashboard = ({ route, navigation }) => {
               {formData.first_name} {formData.middle_name} {formData.last_name}
             </Text>
           </Text>
-          <Image source={require("../../public/icn/notification-icn.png")}/>
+          <TouchableOpacity onPress={goToNotification}>
+            <Image source={require("../../public/icn/notification-icn.png")}/>
+          </TouchableOpacity>
         </View>
         
         <View className={`flex-row items-start gap-4 p-8`}>

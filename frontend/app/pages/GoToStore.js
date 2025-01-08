@@ -1,8 +1,8 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput, FlatList } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { __gstyles__ } from "../globalStylesheet";
 import { socket } from "./Main";
 
@@ -13,15 +13,21 @@ const GoToStore = ({ route }) => {
   
   useEffect(() => {
     socket.on('receive-message', (message) => {
-      console.log('i got send message from parnterlocate')
-      if(message.receiver_id == formData.user_detail_id)
+      alert(message);
+      if(message.receiver_id == formData.user_id)
       {
-        alert('asdasdasd');
+        setMessages((prev) => [
+          ...prev,
+          {
+            ...message,
+            sender_id: message.sender_id,
+            receiver_id: message.receiver_id,
+            message: message.message,
+            created_at: message.created_at,
+          },
+        ]);
       }
     });
-    // const roomId = transactionId;
-    // socket.emit("join-room", roomId);
-    // console.log(`Joined room: ${roomId}`);
   }, []);
 
   const wLabels = {...formData};
@@ -31,28 +37,131 @@ const GoToStore = ({ route }) => {
     linkedWallet: '09222222',
     amount: 0
   });
-  
-  const sendMessage = async () => {
-    const sentMessage = {
-      sender_id: formData.user_detail_id,
-      receiver_id: transactionData.user_detail_id,
-      message: 'asdasdasd',
-    };
-    socket.emit("send-message", sentMessage);
-  };
-  const handleNext = () => {
-    alert(5);
-  };
-  const onRegionChange = (region) => {
-    setMap(region);
-  }
+
   const [init, setInit] = useState(false);
   const [map, setMap] = useState({
     latitude: 10.31423656557551,
     longitude: 123.90543601653494,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
-  })
+  });
+  const [messages, setMessages] = useState([]);
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [curMarker, setCurMarker] = useState({
+    latitude: 0, 
+    longitude: 0,
+  });
+
+  const fetchMessages = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.base_url}/get-user-message/${transactionData.id}`,
+        { method: "GET", headers: { "Content-Type": "application/json" } }
+      );
+      const responseData = await response.json();
+      setMessages(responseData.data || []);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.base_url}/get-transactions`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const responseData = await response.json();
+      setTransactions(responseData.data || []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      setLoading(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (newMessage.trim() === "") return;
+  
+    const messageData = {
+      sender_id: formData.user_id,
+      receiver_id: transactionData.partner_id,
+      transaction_id: transactionData.id,
+      message: newMessage.trim(),
+    };
+  
+    try {
+      const response = await fetch(`${process.env.base_url}/send-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(messageData),
+      });
+  
+      if (response.ok) {
+        const sentMessage = await response.json();
+        socket.emit("send-message", sentMessage);
+        setMessages((prev) => [
+          ...prev,
+          {
+            ...sentMessage,
+            sender_id: sentMessage.sender_id,
+            receiver_id: sentMessage.receiver_id,
+            message: sentMessage.message,
+            created_at: sentMessage.created_at,
+          },
+        ]);
+        setNewMessage("");
+      } else {
+        console.error("Failed to send message");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const joinRoom = () => {
+    const roomId = transactionData.id;
+    console.log('room id', roomId);
+    socket.emit("send-message", roomId);
+    
+    console.log(`Joined room: ${roomId}`);
+  };
+
+  const handleConfirm = async () => {
+    try {
+      const payload = { formData, transactionData };
+
+      const response = await fetch(`${process.env.base_url}/paypal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+  
+      const body = await response.json();
+  
+      if (!response.ok) {
+        alert(body.message || "Failed to process payment.");
+        return;
+      }
+  
+      const { approvalUrl } = body;
+      if (approvalUrl) {
+        navigator.navigate("PayPalWebView", {
+          uri: approvalUrl,
+          data: body,
+          formData,
+          transactionData,
+        });
+      } else {
+        alert("Approval URL not found in the server response.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
 
   useEffect(() => {
     console.log("init");
@@ -63,125 +172,107 @@ const GoToStore = ({ route }) => {
       longitudeDelta: 0.0421,
     });
     setInit(true);
+    fetchMessages();
+    fetchTransactions();
+    joinRoom();
   },[]);
 
-  const handleConfirm = async () => {
-      try {
-        const payload = { formData, transactionData };
-
-        const response = await fetch(`${process.env.base_url}/paypal`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-    
-        const body = await response.json();
-    
-        if (!response.ok) {
-          alert(body.message || "Failed to process payment.");
-          return;
-        }
-    
-        const { approvalUrl } = body;
-        if (approvalUrl) {
-          navigator.navigate("PayPalWebView", {
-            uri: approvalUrl,
-            data: body,
-            formData,
-            transactionData,
-          });
-        } else {
-          alert("Approval URL not found in the server response.");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        alert("An error occurred. Please try again.");
-      }
-    };
-
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-gray-100 p-4">
+      <View style={{ flex: 1 }}>
+        {init ? (
+          <MapView
+            onMapReady={() => {
+              console.log("Map is ready!");
+            }}
+            style={{ flex: 1, height: 450, width: '100%' }}
+            region={map}
+            provider={PROVIDER_GOOGLE}
+          >
+            <Marker
+              pinColor="red"
+              coordinate={{
+                latitude: 10.31423656557551,
+                longitude: 123.90543601653494,
+              }}
+              title="Partner Location"
+              description="Partner Location"
+            />
+            {curMarker.latitude !== 0 && (
+              <Marker
+                pinColor="red"
+                coordinate={curMarker}
+                title="Your Location"
+                description="Your Location"
+              />
+            )}
+
+            <Polyline
+              coordinates={routeCoordinates}
+              strokeColor="#0000FF"
+              strokeWidth={6}
+            />
+          </MapView>
+        ) : (
+          <Text> Loading ... </Text>
+        )}
+      </View>
+
+      <View style={styles.header}>
+        <Text className="text-primary text-xl font-semibold mb-4">Chat</Text>
+      </View>
       
-      <ScrollView>
-        <View style={{flex: 1}}>
-          {
-            init ? (
-              <MapView
-                onMapReady={() => {
-                  console.log("Map is ready!");
-                  
-                }}
-                  style={{ flex: 1, height: 450, width:500 }}
-                  region={map}
-                  provider={PROVIDER_GOOGLE}
-                >
-                  <Marker 
-                    pinColor="red" 
-                    coordinate={{
-                      latitude: 10.31423656557551, 
-                      longitude: 123.90543601653494
-                    }}
-                    title="asdasd"
-                    description="asdasd"
-                  >
-                    <View style={{flex: 1, height: 50, width: 50}}>
-                      <Image source={require("../../public/icn/pointer.png")}></Image>
-                    </View>
-                  </Marker>
-                </MapView>
-            ) : (
-              <Text>Loading...</Text>
-            )
-          }
-        </View>
-
-        <View style={styles.header}>
-          <Text className='text-primary text-left font-semibold text-xl pt-8'>Chat</Text>
-        </View>
-
-        <TouchableOpacity style={[__gstyles__.shadow]} className='bg-primary-bg p-4 rounded-lg mb-4 border border-gray-300'>
-          <View className=' p-2 px-4'>
-            <View className='gap-2'>
-              <View style={styles.leftSection}>
-                <Text className='font-semibold bg-primary self-start rounded-full text-lg text-primary'>E-Wallet</Text>
-                <Text className='text-sm'>Ezicash Partner</Text>
-              </View>
-              <View className='text-right'>
-                <Text className='font-semibold bg-gray-400 text-gray-400 self-end rounded-full text-lg'>E-Wallet</Text>
-                <Text className='text-sm text-right'>You</Text>
+      <View className="flex-1 bg-white p-4 rounded-lg shadow border border-gray-300">
+        <FlatList
+          data={messages}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <View
+              className={`flex mb-2 ${
+                item.sender_id === transactionData.user_id
+                  ? "items-end"
+                  : "items-start"
+              }`}
+            >
+              <View
+                className={`max-w-[70%] px-4 py-2 rounded-lg ${
+                  item.sender_id === transactionData.user_id
+                    ? "bg-green-100"
+                    : "bg-red-100"
+                }`}
+              >
+                <Text className="text-sm">{item.message}</Text>
               </View>
             </View>
-          </View>
-          <View className="flex-row">
-            <TextInput
-              className="w-full p-4 mt-4 mb-4 text-sm bg-gray-200"
-              placeholder="Send message"
-              value={state.message}
-              onChangeText={(am) => setState((prev) => ({ ...prev, message: am }))}
-              maxLength={10}
-            />
-            
-            <TouchableOpacity
-              onPress={() => {sendMessage()}}
-              style={{ position: 'absolute', right: 16, top: 16 }}
-            >
-              <MaterialIcons
-                name="send"
-                size={16}
-                className="text-gray-700"
-                style={styles.buttonIcon}
-              />
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
+          )}
+          contentContainerStyle={{ paddingBottom: 10 }}
+          showsVerticalScrollIndicator={false}
+        />
 
-        <View className='py-4 mx-auto self-center bottom-4 w-full'>
-          <TouchableOpacity className='bg-primary p-4 rounded-lg' onPress={handleConfirm}>
-            <Text className='font-bold text-white text-center w-full'>Arrived</Text>
+        <View className="flex flex-row items-center mt-4">
+          <TextInput
+            className="flex-1 p-4 bg-gray-200 rounded-lg text-sm"
+            placeholder="Type a message..."
+            value={newMessage}
+            onChangeText={setNewMessage}
+          />
+          <TouchableOpacity
+            className="ml-2 p-2 rounded-full"
+            onPress={sendMessage}
+          >
+            <MaterialIcons name="send" size={24} color="bg-blue-500" />
           </TouchableOpacity>
         </View>
-      </ScrollView>
-      
+      </View>
+
+      <View className="py-4 mt-6">
+        <TouchableOpacity
+          className="bg-primary p-4 rounded-lg"
+          onPress={handleConfirm}
+        >
+          <Text className="text-white text-center font-bold">Arrived</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

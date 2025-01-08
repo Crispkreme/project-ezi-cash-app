@@ -16,6 +16,7 @@ const WaitingApproval = () => {
   const fetchTransaction = async () => {
     console.log('got approved');
     try {
+      console.log(transactionId);
       const response = await fetch(`${process.env.base_url}/get-user-transaction?transactionId=${transactionId}`, {
         method: 'GET',
         headers: {
@@ -28,6 +29,12 @@ const WaitingApproval = () => {
       if (responseData.data) {
         setTransactionStatus(responseData.data.transaction_status);
         setTransactionData(responseData.data);
+        console.log(responseData.data);
+        navigator.navigate("GoToStore", {
+          formData,
+          transactionId,
+          transactionData: responseData.data,
+        });
       }
 
     } catch (error) {
@@ -44,13 +51,8 @@ const WaitingApproval = () => {
 
   useEffect(() => {
     if (transactionStatus === 'Approved' && transactionData) {
-
       setIsLoading(false);
-      navigator.navigate("GoToStore", {
-        formData,
-        transactionId,
-        transactionData,
-      });
+      
     }
   }, [transactionStatus, transactionData, navigator, formData]);
 

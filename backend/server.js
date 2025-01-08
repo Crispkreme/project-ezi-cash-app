@@ -166,13 +166,16 @@ const getUserData = async (userId) => {
         ud.province,
         ud.barangay,
         ud.zipcode,
-        ut.partner_type
+        ut.partner_type,
+        pa.partner_application_id
       FROM 
         user_details ud
       JOIN 
         users_table ut ON ud.user_id = ut.user_id
       LEFT JOIN 
         wallets w ON ud.user_detail_id = w.user_detail_id
+      LEFT JOIN
+        partnership_application pa ON ud.user_id = pa.user_id
       WHERE 
         ud.user_id = ?;
     `;
@@ -273,7 +276,7 @@ app.post("/payment-transaction", async (req, res) => {
   const { formData, payment, partner } = req.body;
   const { user_id, service } = formData;
   const { amount } = payment;
-  const { store_id } = partner;
+  const { store_id, partner_application_id } = partner;
   const total_amount = parseFloat(amount) + 15;
   const defaults = {
     bank: "Paypal",
@@ -308,7 +311,7 @@ app.post("/payment-transaction", async (req, res) => {
     `;
     const transactionParams = [
       user_id,
-      store_id,
+      partner_application_id,
       payment.type,
       defaults.bank,
       service,
@@ -349,12 +352,15 @@ app.post("/payment-transaction", async (req, res) => {
     const notificationMessage = `A new transaction of ${amount} for ${service} has been created.`;
     const insertNotificationQuery = `
       INSERT INTO notifications 
-      (individual_id, notification, created_at, updated_at) 
-      VALUES (?, ?, ?, ?)
+      (store_id, individual_id, notification, notification_type, transaction_id, created_at, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     const notificationParams = [
+      partner_application_id,
       formData.user_id,
       notificationMessage,
+      "Request",
+      transactionResult.insertId,
       defaults.created_at,
       defaults.updated_at,
     ];
@@ -446,6 +452,7 @@ app.get("/get-partners", async (req, res) => {
       SELECT DISTINCT 
         b.*, 
         ud.*, 
+        pa.partner_application_id,
         pa.legal_name AS store_name, 
         pa.business_state, 
         pa.business_city
@@ -478,9 +485,9 @@ app.get("/get-partners", async (req, res) => {
           data: [],
         });
       }
-
+      console.log("hello");
       console.log(results);
-
+      console.log("end");
       res.status(200).json({
         message: "Open businesses retrieved successfully.",
         data: results,
@@ -552,6 +559,8 @@ app.get("/get-request", async (req, res) => {
       transactions.id,
       transactions.amount,
       transactions.transaction_status AS status,
+      transactions.user_id,
+      transactions.partner_id,
       user_details.user_detail_id
     FROM transactions
     INNER JOIN users_table ON transactions.user_id = users_table.user_id
@@ -775,8 +784,8 @@ app.get('/get-all-failed-transaction/:user_detail_id', async (req, res) => {
 });
 app.post("/approve-cash-request", (req, res) => {
   const { individual_id, partner_id, transaction_id, transaction_status, approved_at } = req.body;
-
-  if (!individual_id || !partner_id || !transaction_id || !transaction_status || !approved_at) {
+  console.log(req.body);
+  if ( !individual_id || !partner_id || !transaction_id || !transaction_status || !approved_at) {
     return res.status(400).json({ message: "Missing required fields." });
   }
 
@@ -806,10 +815,9 @@ app.post("/approve-cash-request", (req, res) => {
 
     const notificationMessage = `Request from ${individual_id} was approved by partner ${partner_id}.`;
     const insertNotificationQuery = `
-      INSERT INTO notifications (store_id, individual_id, notification, updated_at, created_at)
-      VALUES (?, ?, ?, ?, ?)
+      UPDATE notifications SET notification_type = ?, updated_at = ? WHERE transaction_id = ?
     `;
-    const notificationValues = [partner_id, individual_id, notificationMessage, updatedAt, approved_at];
+    const notificationValues = [ "Approved", updatedAt, transaction_id];
 
     db.query(insertNotificationQuery, notificationValues, (notificationError, notificationResult) => {
       if (notificationError) {
@@ -860,7 +868,7 @@ app.get("/get-transaction-request/:user_detail_id", async (req, res) => {
   }
 });
 app.post('/send-message', (req, res) => {
-  const { sender_id, receiver_id, message } = req.body;
+  const { sender_id, receiver_id, message, transaction_id } = req.body;
 
   console.log([
     {sender_id: sender_id},
@@ -868,7 +876,7 @@ app.post('/send-message', (req, res) => {
     {message: message},
   ]);
 
-  if (!sender_id || !receiver_id || !message) {
+  if (!sender_id || !receiver_id || !message || !transaction_id) {
     return res.status(400).json({ message: "Missing required fields." });
   }
 
@@ -876,11 +884,11 @@ app.post('/send-message', (req, res) => {
   const updatedAt = new Date().toISOString();
 
   const insertMessageQuery = `
-    INSERT INTO messages (sender_id, receiver_id, message, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO messages (sender_id, receiver_id, message, transaction_id, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
   
-  const messageValues = [sender_id, receiver_id, message, createdAt, updatedAt];
+  const messageValues = [sender_id, receiver_id, message, transaction_id, createdAt, updatedAt];
 
   db.query(insertMessageQuery, messageValues, (insertError, insertResult) => {
     if (insertError) {
@@ -894,6 +902,7 @@ app.post('/send-message', (req, res) => {
       sender_id,
       receiver_id,
       message,
+      transaction_id,
       created_at: createdAt,
       updated_at: updatedAt
     });
@@ -935,20 +944,18 @@ app.get("/get-user-transaction", async (req, res) => {
     res.status(500).json({ message: 'An unexpected error occurred.' });
   }
 });
-app.get("/get-user-message", async (req, res) => {
-  const { user_id, partner_id } = req.query;
-
+app.get("/get-user-message/:transaction_id", async (req, res) => {
+  const transaction_id = req.params.transaction_id;
+  console.log(transaction_id);
   try {
     const query = `
       SELECT * 
       FROM messages
       WHERE 
-        (sender_id = ? AND receiver_id = ?) 
-        OR 
-        (sender_id = ? AND receiver_id = ?)
+        transaction_id = ?
     `;
 
-    db.query(query, [user_id, partner_id, partner_id, user_id], (err, results) => {
+    db.query(query, [transaction_id], (err, results) => {
       if (err) {
         console.error("Database Error:", err);
         return res.status(500).json({ message: "Error while fetching messages." });
@@ -1091,11 +1098,10 @@ app.post('/success', (req, res) => {
 
       const notification = `has ${service} with the total amount of ${total_amount} with a transactionId of ${paymentId} on ${createdAt}`;
       const query2 = `
-        INSERT INTO notifications 
-        (store_id, individual_id, notification, updated_at, created_at) 
-        VALUES (?, ?, ?, ?, ?)
+        UPDATE notifications 
+        SET notification_type = ?, updated_at = ? WHERE transaction_id = ?
       `;
-      const values2 = [store_id, individual_id, notification, updatedAt, createdAt];
+      const values2 = [ "Success",  updatedAt, transaction_id];
 
       db.query(query2, values2, (dbError2, dbResult2) => {
         if (dbError2) {
@@ -1261,7 +1267,7 @@ app.get('/get-notifications/:user_id/:partner_type', async (req, res) => {
     
     
     if(partner_type === "customer") {
-      db.query("SELECT notification FROM notifications WHERE individual_id = ?", [user_id], 
+      db.query("SELECT notification, notification_type, transaction_id, t.service, t.total_amount, pa.legal_name, CONCAT(ud.first_name, ' ',ud.last_name) as name FROM notifications n INNER JOIN transactions t ON t.id = n.transaction_id INNER JOIN partnership_application pa ON pa.partner_application_id = n.store_id INNER JOIN user_details ud ON ud.user_id = n.individual_id WHERE individual_id = ?", [user_id], 
         (err, result) => {
           if(err){
             return res.status(400).json({message: err});
@@ -1271,7 +1277,15 @@ app.get('/get-notifications/:user_id/:partner_type', async (req, res) => {
         }
       )
     } else {
-      console.log(user_id);
+      db.query("SELECT notification, notification_type, transaction_id, t.service, t.total_amount, pa.legal_name, CONCAT(ud.first_name, ' ',ud.last_name) as name FROM notifications n INNER JOIN transactions t ON t.id = n.transaction_id INNER JOIN partnership_application pa ON pa.partner_application_id = n.store_id INNER JOIN user_details ud ON ud.user_id = n.individual_id WHERE store_id = ?", [user_id], 
+        (err, result) => {
+          if(err){
+            return res.status(400).json({message: err});
+          }
+
+          return res.status(200).json({message: 'Success!', data: result});
+        }
+      )
     }
   } catch(e) {
     return res.status(400).json({message: 'Notification Error!'});
@@ -1674,8 +1688,12 @@ io.on('connection', (socket) => {
     console.log(`Socket ${socket.id} joined room ${roomId}`);
   });
   socket.on("send-message", (message) => {
-    const { sender_id, receiver_id } = message;
+    console.log(message);
     io.emit("receive-message", message);
+  });
+
+  socket.on("finish-transaction", message => {
+    io.emit("finish-transaction", message);
   });
 
   socket.on('disconnect', () => {
