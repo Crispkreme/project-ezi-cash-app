@@ -113,7 +113,7 @@ const PaymentConfirm = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Transaction Fee</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>15.00</Text>
+            <Text className='text-gray-400 text-base text-primary'>{(parseFloat(payment.amount) * .03).toFixed(2)}</Text>
           </View>
 
           <View className='p-4'>
@@ -131,8 +131,9 @@ const PaymentConfirm = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Total Amount to Pay</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>{(
-              parseFloat(payment.amount) + parseFloat(15.0)).toFixed(2)}
+            <Text className='text-gray-400 text-base text-primary'>{
+              (parseFloat(payment.amount)+ (parseFloat(payment.amount) * .03)).toFixed(2)
+              }
             </Text>
           </View>
         </View>

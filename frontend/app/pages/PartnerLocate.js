@@ -176,7 +176,7 @@ const PartnerLocate = ({ route }) => {
     socket.on("finish-transaction", message => {
       const dt = JSON.parse(message);
       if(formData.partner_application_id === dt.transactionData.partner_id) {
-        navigator.navigate('FinishTransaction', { ...dt, checkReceipt: true, isPartner: false });
+        navigator.navigate('FinishTransaction', { ...dt, formData, checkReceipt: true, isPartner: false });
       }
     });
 

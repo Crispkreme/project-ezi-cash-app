@@ -16,8 +16,7 @@ const TransactionComplete = ({ route, navigation }) => {
     active: 0,
     accepted: false
   });
-
-  if(formData.partner_type === "" && !checkReceipt) {
+  if(formData.partner_type === "" && !checkReceipt && !isPartner) {
     setTimeout(() => {
       navigator.navigate("RatePartner", {formData, transactionData});
     },3000);
@@ -70,7 +69,7 @@ const TransactionComplete = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Transaction Fee</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>15.00</Text>
+            <Text className='text-gray-400 text-base text-primary'>{(parseInt(transactionData.amount) * .03).toFixed(2)}</Text>
           </View>
 
           <View className='p-4'>
@@ -88,7 +87,7 @@ const TransactionComplete = ({ route, navigation }) => {
                 <Text className='text-gray-400 text-base'>Total Amount to Pay</Text>
               </View>
             </View>
-            <Text className='text-gray-400 text-base text-primary'>15.00</Text>
+            <Text className='text-gray-400 text-base text-primary'>{parseInt(transactionData.amount)+ (parseInt(transactionData.amount) * .03)}</Text>
           </View>
         </View>
 

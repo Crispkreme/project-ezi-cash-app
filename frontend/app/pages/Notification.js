@@ -57,7 +57,7 @@ const Notification = ({ route, navigation }) => {
       });
 
       const responseData = await response.json();
-      navigator.navigate("TransactionComplete", { formData, transactionData: responseData.data, checkReceipt: true });
+      navigator.navigate("TransactionComplete", { formData, transactionData: responseData.data, checkReceipt: true, isPartner: formData.partner_type !== "" });
     } else if(notification_type === "Request" && formData.partner_type !== "") {
       navigator.navigate("PartnerRequests", {formData});
     } else if(notification_type === "Approved" && formData.partner_type !== ""){

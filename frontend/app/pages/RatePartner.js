@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Image, TextInput } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image, TextInput, ImageBackground, TouchableOpacity } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import HighHeader from "../components/HighHeader";
 import { Rating } from "react-native-ratings";
@@ -25,11 +25,37 @@ const RatePartner = ({ route, navigation }) => {
 
     }
   },[]);
+
+  const handleBack = () => {
+    navigator.goBack();
+  }
+
+  const goToHome = () => {
+    if(formData.partner_type === "") {
+      navigator.navigate("Dashboard", {formData});
+    } else {
+      navigator.navigate("PartnerDashboard", {formData});
+    }
+    
+  }
   
   return (
     <View style={{flex: 1}}>
       <View className='items-center'>
-        <HighHeader title="Rate eZiCash Partner" position="low" />
+        {/* <HighHeader title="Rate eZiCash Partner" position="low" /> */}
+        <ImageBackground style={styles.bgLow} className='bg-primary-bg' resizeMode="contain" source={require('../../public/image/low-bg.png')}>
+          <View style={styles.container}>
+            <TouchableOpacity onPress={handleBack}>
+              <Image style={styles.back} source={require("../../public/image/back.png")}/>
+            </TouchableOpacity>
+            <Text style={styles.lowsubtext} className={`text-white w-full`}>
+              Rate eZiCash Partner
+            </Text>
+            <TouchableOpacity onPress={goToHome}>
+              <Text>X</Text>
+            </TouchableOpacity>
+          </View>
+        </ImageBackground>
       </View>
       <View className='bg-primary-bg items-center'>
         <Image style={{zIndex: 10, marginTop: -75}} className=' ' source={require("../../public/image/profile-pic-outline.png")}/>
@@ -131,5 +157,21 @@ const styles = StyleSheet.create({
       color: "#007BFF",
       textDecorationLine: "underline",
       marginVertical: 5,
+  },
+  bgLow: {
+    zIndex:-1,
+    height: 324,
+    width: 384,
+  },
+  back: {
+    marginHorizontal: 20,
+  },
+  lowsubtext: {
+    fontSize: 20,
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
+    top: 70
   },
 });

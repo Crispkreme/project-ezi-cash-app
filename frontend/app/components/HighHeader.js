@@ -33,6 +33,12 @@ export default function HighHeader({title, position}) { // position is high, mid
     navigation.navigate("Notification", {formData});
   }
 
+  const goToDashboard = () => {
+    navigation.navigate("PartnerDashboard", {formData});
+  }
+
+  console.log("is locate " + title === "Locate");
+
   return (
     <ImageBackground style={stylesA[position]} className='bg-primary-bg' resizeMode="contain" source={urls[position]}>
       <View style={styles.container}>
@@ -42,9 +48,19 @@ export default function HighHeader({title, position}) { // position is high, mid
         <Text style={textStyles[position]} className={`text-white ${position === "low" ? 'w-full': ''}`}>
           {title}
         </Text>
-        <TouchableOpacity onPress={goToNotification}>
-          <Image style={styles.notification} source={require("../../public/icn/notification-icn.png")}/>
-        </TouchableOpacity>
+        {
+          title === "Locate" ? (
+            <TouchableOpacity onPress={goToDashboard}>
+              <Text>
+                X
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={goToNotification}>
+              <Image style={styles.notification} source={require("../../public/icn/notification-icn.png")}/>
+            </TouchableOpacity>
+          )
+        }
       </View>
     </ImageBackground>
   )

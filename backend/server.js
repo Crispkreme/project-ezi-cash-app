@@ -166,7 +166,6 @@ const getUserData = async (userId) => {
         ud.province,
         ud.barangay,
         ud.zipcode,
-        ut.partner_type,
         pa.partner_application_id
       FROM 
         user_details ud
@@ -419,7 +418,7 @@ app.post("/login", async (req, res) => {
       try {
 
         const userData = await getUserData(result[0].user_id);
-        
+        console.log(userData);
         if (!userData) {
         return res.status(404).json({ message: 'User details not found.' });
         }
